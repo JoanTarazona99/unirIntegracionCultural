@@ -3,23 +3,28 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, AsyncGenerator
 import json
 import os
 import io
+import uuid
 from pathlib import Path
 from enhanced_rag import EnhancedRAGModule
 from translator import create_translator
+from personalization import get_conversation_memory, ConversationMemory
 
 app = FastAPI(
     title="Asistente de Integración Cultural - KubGU",
     description="Backend para soporte inteligente a estudiantes extranjeros",
-    version="0.3.0"
+    version="0.4.0"
 )
 
 # Inicializar módulo RAG mejorado e traductor multiidioma
 rag_module = EnhancedRAGModule()
 translator = create_translator()
+
+# Initialize conversation memory
+conversation_memory = get_conversation_memory(max_history=10)
 
 # Check TTS/STT availability
 TTS_AVAILABLE = False
@@ -92,6 +97,12 @@ class QueryRequest(BaseModel):
     user_id: str
     language: str = "es"  # Idioma de respuesta deseado
     target_language: Optional[str] = None  # Idioma adicional para traducción
+    session_id: Optional[str] = None  # Session ID for conversation history
+
+class StreamRequest(BaseModel):
+    query: str
+    session_id: Optional[str] = None
+    language: str = "ru"
 
 class ChatResponse(BaseModel):
     query: str
@@ -194,13 +205,18 @@ async def get_rag_sources():
 async def chat(request: QueryRequest):
     """Chat principal con soporte multiidioma y RAG"""
     try:
+        # Generate or use existing session
+        session_id = request.session_id or str(uuid.uuid4())
+
         # Idioma de respuesta (default: español)
         target_lang = request.language if request.language != "ru" else "es"
 
         # Buscar en el RAG (siempre en español primero)
         rag_result = rag_module.search_and_generate(
             request.query,
-            context_type=f"chat_{target_lang}"
+            context_type=f"chat_{target_lang}",
+            language='ru' if target_lang == 'es' else target_lang,
+            session_id=session_id
         )
 
         # Respuesta original en español
@@ -211,6 +227,10 @@ async def chat(request: QueryRequest):
             answer_translated = translator.translate_text(answer_original, target_lang)
         else:
             answer_translated = answer_original
+
+        # Add to conversation memory
+        conversation_memory.add_message(session_id, 'user', request.query)
+        conversation_memory.add_message(session_id, 'assistant', answer_translated)
 
         # Extraer contexto y fuentes
         context = []
@@ -289,6 +309,101 @@ async def translate(request: TranslationRequest):
             "error": str(e),
             "status": "error"
         }
+
+# ==================== STREAMING CHAT ENDPOINT ====================
+
+@app.post("/api/chat/stream")
+async def chat_stream(request: StreamRequest):
+    """
+    Streaming chat endpoint using Server-Sent Events (SSE)
+
+    Returns tokens as they are generated from the LLM.
+    If LLM is not available, returns complete template response.
+
+    Usage:
+        POST /api/chat/stream
+        {
+            "query": "Tell me about registration",
+            "session_id": "optional-session-id",
+            "language": "ru"
+        }
+
+    Response: text/event-stream with tokens
+    """
+    session_id = request.session_id or str(uuid.uuid4())
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        """Generate SSE events from LLM stream"""
+        full_response = ""
+
+        try:
+            # Add user message to memory
+            conversation_memory.add_message(session_id, 'user', request.query)
+
+            # Send session ID first
+            yield f"data: {json.dumps({'type': 'session', 'session_id': session_id})}\n\n"
+
+            # Stream from RAG module
+            async for token in rag_module.generate_stream_async(
+                query=request.query,
+                context_type='stream_chat',
+                language=request.language,
+                session_id=session_id
+            ):
+                full_response += token
+                yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
+
+            # Send completion event
+            yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'full_length': len(full_response)})}\n\n"
+
+            # Add assistant response to memory
+            conversation_memory.add_message(session_id, 'assistant', full_response)
+
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+            "Access-Control-Allow-Origin": "*"
+        }
+    )
+
+
+@app.get("/api/chat/history/{session_id}")
+async def get_chat_history(session_id: str):
+    """Get conversation history for a session"""
+    history = conversation_memory.get_history(session_id)
+    summary = conversation_memory.get_summary(session_id)
+
+    return {
+        "session_id": session_id,
+        "history": history,
+        "summary": summary
+    }
+
+
+@app.delete("/api/chat/history/{session_id}")
+async def clear_chat_history(session_id: str):
+    """Clear conversation history for a session"""
+    conversation_memory.clear_session(session_id)
+    return {
+        "status": "cleared",
+        "session_id": session_id
+    }
+
+
+@app.get("/api/chat/sessions")
+async def list_chat_sessions():
+    """List all active chat sessions"""
+    return {
+        "active_sessions": conversation_memory.get_session_count(),
+        "total_messages": conversation_memory.get_message_count()
+    }
 
 # ==================== TTS/STT ENDPOINTS ====================
 
@@ -503,9 +618,12 @@ async def get_project_info():
     return {
         "name": "Asistente Inteligente de Integración Cultural",
         "institution": "Kubán State University (KubGU)",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "features": [
             "Semantic search with sentence-transformers",
+            "LLM integration with Ollama (llama3, qwen2, mistral)",
+            "Streaming chat via SSE",
+            "Conversation memory per session",
             "Keyword fallback search",
             "Búsqueda RAG en documentos oficiales",
             "Base de 200+ frases contextualizadas",

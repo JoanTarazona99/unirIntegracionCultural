@@ -1,9 +1,137 @@
 from typing import List, Dict, Optional
 from datetime import datetime
+from dataclasses import dataclass, field
+
+# ==================== Conversation Memory ====================
+
+@dataclass
+class ConversationMessage:
+    """Single conversation message"""
+    role: str  # 'user', 'assistant', 'system'
+    content: str
+    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+    metadata: Dict = field(default_factory=dict)
+
+
+class ConversationMemory:
+    """
+    Manages conversation history per session
+
+    Features:
+    - Store conversations by session_id
+    - Keep last N messages per session
+    - Support for multiple sessions
+    """
+
+    def __init__(self, max_history: int = 10):
+        self.max_history = max_history
+        self._conversations: Dict[str, List[ConversationMessage]] = {}
+
+    def add_message(
+        self,
+        session_id: str,
+        role: str,
+        content: str,
+        metadata: Dict = None
+    ) -> None:
+        """
+        Add message to conversation history
+
+        Args:
+            session_id: Unique session identifier
+            role: 'user', 'assistant', or 'system'
+            content: Message content
+            metadata: Optional metadata (e.g., language, model used)
+        """
+        if session_id not in self._conversations:
+            self._conversations[session_id] = []
+
+        message = ConversationMessage(
+            role=role,
+            content=content,
+            metadata=metadata or {}
+        )
+
+        self._conversations[session_id].append(message)
+
+        # Trim to max history
+        if len(self._conversations[session_id]) > self.max_history:
+            self._conversations[session_id] = self._conversations[session_id][-self.max_history:]
+
+    def get_history(self, session_id: str) -> List[Dict]:
+        """
+        Get conversation history as list of dicts
+
+        Returns:
+            List of messages: [{'role': ..., 'content': ...}, ...]
+        """
+        if session_id not in self._conversations:
+            return []
+
+        return [
+            {"role": msg.role, "content": msg.content, "timestamp": msg.timestamp}
+            for msg in self._conversations[session_id]
+        ]
+
+    def get_messages(self, session_id: str) -> List[ConversationMessage]:
+        """Get raw message objects"""
+        return self._conversations.get(session_id, [])
+
+    def clear_session(self, session_id: str) -> None:
+        """Clear history for a session"""
+        if session_id in self._conversations:
+            del self._conversations[session_id]
+
+    def clear_all(self) -> None:
+        """Clear all conversation history"""
+        self._conversations.clear()
+
+    def get_session_count(self) -> int:
+        """Get number of active sessions"""
+        return len(self._conversations)
+
+    def get_message_count(self, session_id: str = None) -> int:
+        """Get total messages, optionally filtered by session"""
+        if session_id:
+            return len(self._conversations.get(session_id, []))
+        return sum(len(msgs) for msgs in self._conversations.values())
+
+    def get_summary(self, session_id: str) -> Dict:
+        """Get summary of session conversation"""
+        messages = self._conversations.get(session_id, [])
+        if not messages:
+            return {"exists": False, "message_count": 0}
+
+        user_msgs = sum(1 for m in messages if m.role == 'user')
+        assistant_msgs = sum(1 for m in messages if m.role == 'assistant')
+
+        return {
+            "exists": True,
+            "message_count": len(messages),
+            "user_messages": user_msgs,
+            "assistant_messages": assistant_msgs,
+            "first_message": messages[0].timestamp if messages else None,
+            "last_message": messages[-1].timestamp if messages else None
+        }
+
+
+# Global conversation memory instance
+_conversation_memory: Optional[ConversationMemory] = None
+
+
+def get_conversation_memory(max_history: int = 10) -> ConversationMemory:
+    """Get or create global conversation memory instance"""
+    global _conversation_memory
+    if _conversation_memory is None:
+        _conversation_memory = ConversationMemory(max_history=max_history)
+    return _conversation_memory
+
+
+# ==================== Personalization Engine ====================
 
 class PersonalizationEngine:
     """Motor de personalización de recomendaciones"""
-    
+
     COUNTRY_PROFILES = {
         "Vietnam": {"priority_contexts": ["admin", "housing", "daily"], "language_support": "high"},
         "China": {"priority_contexts": ["academic", "housing"], "language_support": "high"},

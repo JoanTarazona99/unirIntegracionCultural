@@ -18,3 +18,7 @@ torch==2.0.1+cpu
 # TTS/STT (optional - text-to-speech and speech-to-text)
 gTTS==2.3.2
 SpeechRecognition==3.10.0
+
+# LLM integration (optional - local LLM via Ollama)
+ollama==0.1.8
+httpx==0.25.0

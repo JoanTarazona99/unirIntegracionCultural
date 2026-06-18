@@ -4,14 +4,25 @@ Integración con fuentes oficiales: КубГУ, МВД РФ, МФЦ, Госус�
 
 Features:
 - Semantic search using sentence-transformers (paraphrase-multilingual-MiniLM-L12-v2)
-- Keyword fallback if embeddings fail
+- LLM integration with Ollama (llama3, qwen2, mistral)
+- Keyword fallback if embeddings/LLM fail
 - Cosine similarity for semantic matching
+- Conversation history per session
 """
 
 import json
 import numpy as np
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Generator, AsyncGenerator
+
+# Try to import LLM module
+LLM_AVAILABLE = False
+try:
+    from llm_module import get_llm_instance, LLMModule
+    LLM_AVAILABLE = True
+    print("[RAG] LLM module available - Natural language generation enabled")
+except ImportError:
+    print("[RAG] LLM module not available - Using template responses")
 
 # Try to import sentence-transformers for semantic search
 SEMANTIC_SEARCH_AVAILABLE = False
@@ -611,14 +622,54 @@ class OfficialDocumentLibrary:
 
 
 class EnhancedRAGModule:
-    """Módulo RAG mejorado con documentos reales y búsqueda semántica"""
+    """Módulo RAG mejorado con documentos reales, búsqueda semántica y LLM"""
 
-    def __init__(self):
+    def __init__(self, use_llm: bool = True):
         self.document_library = OfficialDocumentLibrary()
         self.cache = {}
+        self.llm = None
+        self._use_llm = use_llm
 
-    def search_and_generate(self, query: str, context_type: str = "general") -> Dict:
-        """Search documents and generate contextualized response"""
+        # Initialize LLM if available
+        if use_llm and LLM_AVAILABLE:
+            try:
+                self.llm = get_llm_instance()
+                if self.llm.is_available():
+                    print("[RAG] LLM integration activated - Natural responses enabled")
+                else:
+                    print("[RAG] LLM not available - Template responses active")
+            except Exception as e:
+                print(f"[RAG] LLM initialization failed: {e}")
+                self.llm = None
+
+    def is_llm_enabled(self) -> bool:
+        """Check if LLM is currently enabled"""
+        return self.llm is not None and self.llm.is_available()
+
+    def search_and_generate(
+        self,
+        query: str,
+        context_type: str = "general",
+        language: str = "ru",
+        session_id: str = None,
+        use_llm: bool = True
+    ) -> Dict:
+        """
+        Search documents and generate contextualized response
+
+        Uses LLM if available for natural language generation,
+        otherwise falls back to template responses.
+
+        Args:
+            query: User query
+            context_type: Type of context (general, chat, profile_*)
+            language: Response language (ru, es, en)
+            session_id: Optional session ID for conversation history
+            use_llm: Whether to use LLM (default True)
+
+        Returns:
+            Dict with response, sources, and metadata
+        """
 
         # Search in document library
         results = self.document_library.search(query)
@@ -626,36 +677,131 @@ class EnhancedRAGModule:
         # Get search mode
         search_mode = self.document_library.get_search_mode()
 
-        # Generate response based on context
-        if not results:
-            response = f"""
-            No encontré información específica sobre: {query}
+        # Determine response mode
+        response_mode = "template"
+        response = None
 
-            Sugiero:
-            1. Contactar a la Administración de KubGU: +7-861-XXXXXXX
-            2. Visitar el portál: https://kubsu.ru
-            3. Escribir al МФЦ: mfc@krasnodar.ru
-            """
-        else:
-            best_match = results[0]
-            response = f"""
-            📌 INFORMACIÓN OFICIAL SOBRE: {query}
+        # Try LLM first if available and enabled
+        if use_llm and self.is_llm_enabled():
+            try:
+                response = self.llm.generate_response(
+                    query=query,
+                    context_docs=results,
+                    language=language,
+                    session_id=session_id
+                )
+                response_mode = "llm"
+            except Exception as e:
+                print(f"[RAG] LLM generation failed: {e}")
+                response = None
 
-            Fuente: {best_match['source']}
-
-            {best_match['content']}
-
-            🔗 Más información: {best_match['source_url']}
-            """
+        # Fallback to template response
+        if response is None:
+            response = self._generate_template_response(query, results, language)
+            response_mode = "template"
 
         return {
             'query': query,
-            'response': response.strip(),
+            'response': response,
             'sources_found': len(results),
-            'sources': results[:3],  # Top 3 results
+            'sources': results[:3],
             'context_type': context_type,
-            'search_mode': search_mode
+            'search_mode': search_mode,
+            'response_mode': response_mode,
+            'language': language,
+            'session_id': session_id
         }
+
+    def _generate_template_response(
+        self,
+        query: str,
+        results: List[Dict],
+        language: str
+    ) -> str:
+        """Generate template-based response"""
+        if not results:
+            if language == 'ru':
+                return f"К сожалению, я не нашел информацию по запросу '{query}'. Обратитесь в администрацию КубГУ: +7-861-XXX-XXXX или посетите https://kubsu.ru"
+            elif language == 'es':
+                return f"No encontré información sobre '{query}'. Contacte a la administración de KubGU: +7-861-XXX-XXXX o visite https://kubsu.ru"
+            else:
+                return f"Sorry, I couldn't find information about '{query}'. Contact KubGU administration: +7-861-XXX-XXXX or visit https://kubsu.ru"
+
+        best_match = results[0]
+
+        if language == 'ru':
+            return f"""📌 ОФИЦИАЛЬНАЯ ИНФОРМАЦИЯ: {query}
+
+📄 Источник: {best_match.get('source', 'КубГУ')}
+
+{best_match.get('content', '')}
+
+🔗 Подробнее: {best_match.get('source_url', 'https://kubsu.ru')}"""
+        elif language == 'es':
+            return f"""📌 INFORMACIÓN OFICIAL: {query}
+
+📄 Fuente: {best_match.get('source', 'KubGU')}
+
+{best_match.get('content', '')}
+
+🔗 Más información: {best_match.get('source_url', 'https://kubsu.ru')}"""
+        else:
+            return f"""📌 OFFICIAL INFORMATION: {query}
+
+📄 Source: {best_match.get('source', 'KubGU')}
+
+{best_match.get('content', '')}
+
+🔗 More info: {best_match.get('source_url', 'https://kubsu.ru')}"""
+
+    def generate_stream(
+        self,
+        query: str,
+        context_type: str = "general",
+        language: str = "ru",
+        session_id: str = None
+    ) -> Generator[str, None, None]:
+        """
+        Generate streaming response using LLM
+
+        Yields tokens/chunks as they are generated
+        """
+        # Search for documents first
+        results = self.document_library.search(query)
+
+        if self.is_llm_enabled():
+            yield from self.llm.generate_stream(
+                query=query,
+                context_docs=results,
+                language=language,
+                session_id=session_id
+            )
+        else:
+            yield self._generate_template_response(query, results, language)
+
+    async def generate_stream_async(
+        self,
+        query: str,
+        context_type: str = "general",
+        language: str = "ru",
+        session_id: str = None
+    ) -> AsyncGenerator[str, None]:
+        """
+        Async streaming generation for FastAPI StreamingResponse
+        """
+        # Search for documents first
+        results = self.document_library.search(query)
+
+        if self.is_llm_enabled():
+            async for token in self.llm.generate_stream_async(
+                query=query,
+                context_docs=results,
+                language=language,
+                session_id=session_id
+            ):
+                yield token
+        else:
+            yield self._generate_template_response(query, results, language)
 
     def get_recommendation(self, user_profile: Dict) -> Dict:
         """Get personalized recommendation based on profile"""
@@ -671,7 +817,11 @@ class EnhancedRAGModule:
 
         recommendations = []
         for search_query in searches:
-            result = self.search_and_generate(search_query, f"profile_{country}")
+            result = self.search_and_generate(
+                search_query,
+                context_type=f"profile_{country}",
+                language="ru"
+            )
             recommendations.append(result)
 
         return {
@@ -679,6 +829,24 @@ class EnhancedRAGModule:
             'visa_type': visa_type,
             'recommendations': recommendations
         }
+
+    # ==================== Conversation History ====================
+
+    def add_message(self, session_id: str, role: str, content: str):
+        """Add message to conversation history"""
+        if self.llm:
+            self.llm.add_message(session_id, role, content)
+
+    def get_history(self, session_id: str) -> List[Dict]:
+        """Get conversation history for session"""
+        if self.llm:
+            return self.llm.get_history(session_id)
+        return []
+
+    def clear_history(self, session_id: str):
+        """Clear conversation history for session"""
+        if self.llm:
+            self.llm.clear_session(session_id)
 
     def export_to_json(self, output_path: Path):
         """Export document library to JSON"""
