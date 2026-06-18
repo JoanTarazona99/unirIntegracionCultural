@@ -9,3 +9,12 @@ sqlalchemy==2.0.23
 python-telegram-bot==20.3
 requests==2.31.0
 aiohttp==3.9.1
+
+# Semantic search (optional - falls back to keyword if not installed)
+sentence-transformers==2.2.2
+torch==2.0.1+cpu
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# TTS/STT (optional - text-to-speech and speech-to-text)
+gTTS==2.3.2
+SpeechRecognition==3.10.0
