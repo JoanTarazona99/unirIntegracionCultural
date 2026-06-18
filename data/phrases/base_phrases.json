@@ -1,0 +1,202 @@
+[
+  {
+    "id": 1,
+    "category": "Регистрация и миграционный учёт",
+    "russian": "Мне нужно зарегистрироваться по месту пребывания",
+    "transliteration": "Mne nuzhno zaregistrirovat'sya po mestu prebyvanya",
+    "english": "I need to register my place of residence",
+    "formality": "formal",
+    "cultural_comment": "Регистрация - это обязательная административная процедура в России. Иностранные студенты чаще всего могут зарегистрироваться через МФЦ или прямо в отделении МВД.",
+    "context": ["миграция", "админ", "первый_день"]
+  },
+  {
+    "id": 2,
+    "category": "Регистрация и миграционный учёт",
+    "russian": "Где находится ближайший МФЦ?",
+    "transliteration": "Gde nakhoditsya blizhayshiy MFC?",
+    "english": "Where is the nearest Multifunctional Center?",
+    "formality": "neutral",
+    "cultural_comment": "МФЦ (Многофункциональный центр) предоставляет услуги по приёму и выдаче документов. В России это часто используемый сервис.",
+    "context": ["документы", "админ"]
+  },
+  {
+    "id": 3,
+    "category": "Регистрация и миграционный учёт",
+    "russian": "Какие документы мне нужны для регистрации?",
+    "transliteration": "Kakie dokumenty mne nuzhny dlya registratsii?",
+    "english": "What documents do I need for registration?",
+    "formality": "formal",
+    "cultural_comment": "Обычно нужны: паспорт, визовый лист и счет об оплате жилья. Требования могут отличаться в зависимости от региона.",
+    "context": ["документы", "админ"]
+  },
+  {
+    "id": 4,
+    "category": "Медицинское обслуживание",
+    "russian": "Мне нужна медицинская страховка",
+    "transliteration": "Mne nuzhna meditsinskaya strakhovka",
+    "english": "I need health insurance",
+    "formality": "formal",
+    "cultural_comment": "Медицинская страховка для иностранных студентов часто предоставляется университетом или покупается отдельно. Это обязательно для студентов на долгосрочной визе.",
+    "context": ["медицина", "админ", "первый_день"]
+  },
+  {
+    "id": 5,
+    "category": "Медицинское обслуживание",
+    "russian": "Где находится ближайшая поликлиника?",
+    "transliteration": "Gde nakhoditsya blizhayshaya poliklinika?",
+    "english": "Where is the nearest clinic?",
+    "formality": "neutral",
+    "cultural_comment": "Поликлинику можно найти по адресу, или попросить студентов-помощников помочь в навигации. В России поликлиники часто работают с 8:00 до 20:00.",
+    "context": ["медицина", "навигация"]
+  },
+  {
+    "id": 6,
+    "category": "Медицинское обслуживание",
+    "russian": "У меня болит голова",
+    "transliteration": "U menya bolit golova",
+    "english": "I have a headache",
+    "formality": "neutral",
+    "cultural_comment": "Простое выражение боли. Врач может спросить: 'Когда началась боль?' (Kogda nachalas' bol'?)",
+    "context": ["медицина", "здоровье"]
+  },
+  {
+    "id": 7,
+    "category": "Общежитие",
+    "russian": "Как мне получить ключ от комнаты в общежитии?",
+    "transliteration": "Kak mne poluchit' klyuch ot komnaty v obshchezhitii?",
+    "english": "How do I get the key to my dorm room?",
+    "formality": "formal",
+    "cultural_comment": "Ключи выдаются в администрации общежития. Обычно нужно предъявить паспорт или другой ID документ. За потерю ключа может взиматься штраф.",
+    "context": ["общежитие", "админ", "первый_день"]
+  },
+  {
+    "id": 8,
+    "category": "Общежитие",
+    "russian": "В моей комнате неисправен свет",
+    "transliteration": "V moyey komnate neispravlen svet",
+    "english": "The light in my room is not working",
+    "formality": "neutral",
+    "cultural_comment": "Проблемы в общежитии решаются через администратора. Нужно заполнить форму заявки или позвонить в офис.",
+    "context": ["общежитие", "проблемы"]
+  },
+  {
+    "id": 9,
+    "category": "Общежитие",
+    "russian": "Какой час комендантского часа?",
+    "transliteration": "Kakoy chas komendasnskogo chasa?",
+    "english": "What is the curfew time?",
+    "formality": "formal",
+    "cultural_comment": "Комендантский час - это время, до которого нужно вернуться в общежитие. Обычно это 23:00 или 24:00, но может варьироваться. В выходные часто послабления.",
+    "context": ["общежитие", "правила"]
+  },
+  {
+    "id": 10,
+    "category": "Учебный процесс",
+    "russian": "Когда начинается мой первый класс?",
+    "transliteration": "Kogda nachinayetsya moy pervyy klass?",
+    "english": "When does my first class start?",
+    "formality": "formal",
+    "cultural_comment": "В России 'класс' обычно называют 'лекцией' (lekciya) или 'занятием' (zanyatiem). Расписание можно найти в личном кабинете или у куратора.",
+    "context": ["учёба", "расписание"]
+  },
+  {
+    "id": 11,
+    "category": "Учебный процесс",
+    "russian": "Где находится аудитория 315?",
+    "transliteration": "Gde nakhoditsya auditoriya 315?",
+    "english": "Where is classroom 315?",
+    "formality": "neutral",
+    "cultural_comment": "На каждом этаже зданий университета есть отмеченные номера аудиторий. Кампус может быть большим, поэтому рекомендуется прийти заранее.",
+    "context": ["учёба", "навигация"]
+  },
+  {
+    "id": 12,
+    "category": "Учебный процесс",
+    "russian": "Как подать работу профессору?",
+    "transliteration": "Kak podat' rabotu professoru?",
+    "english": "How do I submit my assignment to the professor?",
+    "formality": "formal",
+    "cultural_comment": "Обычно работы подают в электронном виде через платформу университета или лично в начале/конце лекции. Уточните у преподавателя.",
+    "context": ["учёба", "задания"]
+  },
+  {
+    "id": 13,
+    "category": "Коммуникация с преподавателями",
+    "russian": "Можно ли переписать контрольную работу?",
+    "transliteration": "Mozhno li perepisa' kontrolnuyu rabotu?",
+    "english": "Can I retake the test?",
+    "formality": "polite",
+    "cultural_comment": "В России учебный процесс строже, чем в некоторых странах. Переписание обычно возможно только с уважительной причиной (болезнь, документы).",
+    "context": ["учёба", "оценки"]
+  },
+  {
+    "id": 14,
+    "category": "Коммуникация с преподавателями",
+    "russian": "Я не понимаю эту тему. Могу ли я придти на консультацию?",
+    "transliteration": "Ya ne ponimayu etu temu. Mogu li ya priyti na konsul'taciyu?",
+    "english": "I don't understand this topic. Can I come for consultation?",
+    "formality": "polite",
+    "cultural_comment": "Профессора обычно предоставляют время для консультаций. Спросите расписание консультаций или отправьте письмо по электронной почте.",
+    "context": ["учёба", "помощь"]
+  },
+  {
+    "id": 15,
+    "category": "Коммуникация с преподавателями",
+    "russian": "Можно ли отправить вам письмо по электронной почте?",
+    "transliteration": "Mozhno li otpravit' vam pis'mo po elektronnoy pochte?",
+    "english": "Can I email you?",
+    "formality": "formal",
+    "cultural_comment": "Многие преподаватели предпочитают официальную электронную почту. В России это часто университетская почта. Убедитесь, что у вас правильный адрес.",
+    "context": ["коммуникация", "учёба"]
+  },
+  {
+    "id": 16,
+    "category": "Бытовые ситуации",
+    "russian": "Где я могу купить продукты?",
+    "transliteration": "Gde ya mogu kupit' produkty?",
+    "english": "Where can I buy groceries?",
+    "formality": "neutral",
+    "cultural_comment": "Рядом с кампусом KubGU есть несколько супермаркетов: Magnit, Pyaterochka, Lenta. Их цены доступны для студентов.",
+    "context": ["бытовое", "навигация"]
+  },
+  {
+    "id": 17,
+    "category": "Бытовые ситуации",
+    "russian": "Как использовать автобус?",
+    "transliteration": "Kak ispol'zovat' avtobus?",
+    "english": "How do I use the bus?",
+    "formality": "neutral",
+    "cultural_comment": "В Краснодаре есть система общественного транспорта. Студенты могут купить абонементную карту (student pass) значительно дешевле. Нужно отметить билет при входе.",
+    "context": ["транспорт", "навигация"]
+  },
+  {
+    "id": 18,
+    "category": "Бытовые ситуации",
+    "russian": "Сколько стоит билет на автобус?",
+    "transliteration": "Skolko stoit bilet na avtobus?",
+    "english": "How much is a bus ticket?",
+    "formality": "neutral",
+    "cultural_comment": "Обычный билет в Краснодаре стоит около 30 рублей (2026). Студенческий абонемент - около 400-500 рублей в месяц.",
+    "context": ["транспорт", "деньги"]
+  },
+  {
+    "id": 19,
+    "category": "Бытовые ситуации",
+    "russian": "Где находится банкомат?",
+    "transliteration": "Gde nakhoditsya bankomat?",
+    "english": "Where is an ATM?",
+    "formality": "neutral",
+    "cultural_comment": "Банкоматы есть везде в городе. В России большинство операций производится через Сбербанк или Лучше переводить деньги через интернет-банкинг.",
+    "context": ["деньги", "навигация"]
+  },
+  {
+    "id": 20,
+    "category": "Бытовые ситуации",
+    "russian": "Как открыть счёт в банке?",
+    "transliteration": "Kak otkryt' schjot v banke?",
+    "english": "How do I open a bank account?",
+    "formality": "formal",
+    "cultural_comment": "Иностранные студенты могут открыть счёт в Сбербанке или других банках. Нужны: паспорт, ВНЖ (вид на жительство) и подтверждение адреса проживания.",
+    "context": ["деньги", "админ"]
+  }
+]

@@ -1,0 +1,2522 @@
+[
+  {
+    "id": 1,
+    "category": "Regristración y migración",
+    "russian": "Мне нужно зарегистрироваться по месту пребывания",
+    "transliteration": "Mne nuzhno zaregistrirovat'sya po mestu prebyvanya",
+    "english": "I need to register my place of residence",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: migración, admin, primer_día",
+    "context": [
+      "migración",
+      "admin",
+      "primer_día"
+    ]
+  },
+  {
+    "id": 2,
+    "category": "Regristración y migración",
+    "russian": "Где находится ближайший МФЦ?",
+    "transliteration": "Gde nakhoditsya blizhayshiy MFC?",
+    "english": "Where is the nearest Multifunctional Center?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: migración, admin, primer_día",
+    "context": [
+      "migración",
+      "admin",
+      "primer_día"
+    ]
+  },
+  {
+    "id": 3,
+    "category": "Regristración y migración",
+    "russian": "Какие документы мне нужны для регистрации?",
+    "transliteration": "Kakie dokumenty mne nuzhny dlya registratsii?",
+    "english": "What documents do I need for registration?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: migración, admin, primer_día",
+    "context": [
+      "migración",
+      "admin",
+      "primer_día"
+    ]
+  },
+  {
+    "id": 4,
+    "category": "Regristración y migración",
+    "russian": "Сколько дней требуется для регистрации?",
+    "transliteration": "Skolko dney trebuyetsya dlya registratsii?",
+    "english": "How many days does registration take?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: migración, admin, primer_día",
+    "context": [
+      "migración",
+      "admin",
+      "primer_día"
+    ]
+  },
+  {
+    "id": 5,
+    "category": "Regristración y migración",
+    "russian": "Мне нужна помощь с миграционными документами",
+    "transliteration": "Mne nuzhna pomoshch' s migratsionnymi dokumentami",
+    "english": "I need help with migration documents",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: migración, admin, primer_día",
+    "context": [
+      "migración",
+      "admin",
+      "primer_día"
+    ]
+  },
+  {
+    "id": 6,
+    "category": "Regristración y migración",
+    "russian": "Как обновить регистрацию?",
+    "transliteration": "Kak obnovit' registraciyu?",
+    "english": "How do I update my registration?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: migración, admin, primer_día",
+    "context": [
+      "migración",
+      "admin",
+      "primer_día"
+    ]
+  },
+  {
+    "id": 7,
+    "category": "Regristración y migración",
+    "russian": "Мой пасспорт истекает. Что мне делать?",
+    "transliteration": "Moy pasport istekает. Chto mne delat'?",
+    "english": "My passport is expiring. What should I do?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: migración, admin, primer_día",
+    "context": [
+      "migración",
+      "admin",
+      "primer_día"
+    ]
+  },
+  {
+    "id": 8,
+    "category": "Regristración y migración",
+    "russian": "Нужна ли мне виза для посещения другой страны?",
+    "transliteration": "Nuzhna li mne viza dlya poseshcheniya drugoy strany?",
+    "english": "Do I need a visa to visit another country?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: migración, admin, primer_día",
+    "context": [
+      "migración",
+      "admin",
+      "primer_día"
+    ]
+  },
+  {
+    "id": 9,
+    "category": "Regristración y migración",
+    "russian": "Где я могу получить справку о регистрации?",
+    "transliteration": "Gde ya mogu poluchit' spravku o registratsii?",
+    "english": "Where can I get a registration certificate?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: migración, admin, primer_día",
+    "context": [
+      "migración",
+      "admin",
+      "primer_día"
+    ]
+  },
+  {
+    "id": 10,
+    "category": "Regristración y migración",
+    "russian": "Какой срок действия моей студенческой визы?",
+    "transliteration": "Kakoy srok deystviya moyey studentcheskoy vizy?",
+    "english": "What is the validity period of my student visa?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: migración, admin, primer_día",
+    "context": [
+      "migración",
+      "admin",
+      "primer_día"
+    ]
+  },
+  {
+    "id": 11,
+    "category": "Медицина",
+    "russian": "Мне нужна медицинская страховка",
+    "transliteration": "Mne nuzhna meditsinskaya strakhovka",
+    "english": "I need health insurance",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: медицина, здоровье, админ",
+    "context": [
+      "медицина",
+      "здоровье",
+      "админ"
+    ]
+  },
+  {
+    "id": 12,
+    "category": "Медицина",
+    "russian": "Где находится ближайшая поликлиника?",
+    "transliteration": "Gde nakhoditsya blizhayshaya poliklinika?",
+    "english": "Where is the nearest clinic?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: медицина, здоровье, админ",
+    "context": [
+      "медицина",
+      "здоровье",
+      "админ"
+    ]
+  },
+  {
+    "id": 13,
+    "category": "Медицина",
+    "russian": "У меня болит голова",
+    "transliteration": "U menya bolit golova",
+    "english": "I have a headache",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: медицина, здоровье, админ",
+    "context": [
+      "медицина",
+      "здоровье",
+      "админ"
+    ]
+  },
+  {
+    "id": 14,
+    "category": "Медицина",
+    "russian": "Мне нужно на прием к врачу",
+    "transliteration": "Mne nuzhno na priem k vrachu",
+    "english": "I need to see a doctor",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: медицина, здоровье, админ",
+    "context": [
+      "медицина",
+      "здоровье",
+      "админ"
+    ]
+  },
+  {
+    "id": 15,
+    "category": "Медицина",
+    "russian": "Какие прививки мне нужны?",
+    "transliteration": "Kakie privivki mne nuzhny?",
+    "english": "What vaccinations do I need?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: медицина, здоровье, админ",
+    "context": [
+      "медицина",
+      "здоровье",
+      "админ"
+    ]
+  },
+  {
+    "id": 16,
+    "category": "Медицина",
+    "russian": "Я болею. Нужно ли мне остаться в постели?",
+    "transliteration": "Ya bolеyu. Nuzhno li mne ostat'sya v posteli?",
+    "english": "I'm sick. Do I need to stay in bed?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: медицина, здоровье, админ",
+    "context": [
+      "медицина",
+      "здоровье",
+      "админ"
+    ]
+  },
+  {
+    "id": 17,
+    "category": "Медицина",
+    "russian": "Где найти аптеку?",
+    "transliteration": "Gde nayti apteku?",
+    "english": "Where can I find a pharmacy?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: медицина, здоровье, админ",
+    "context": [
+      "медицина",
+      "здоровье",
+      "админ"
+    ]
+  },
+  {
+    "id": 18,
+    "category": "Медицина",
+    "russian": "Когда работает клиника?",
+    "transliteration": "Kogda rabotaet klinika?",
+    "english": "When is the clinic open?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: медицина, здоровье, админ",
+    "context": [
+      "медицина",
+      "здоровье",
+      "админ"
+    ]
+  },
+  {
+    "id": 19,
+    "category": "Медицина",
+    "russian": "Мне нужна справка о здоровье для университета",
+    "transliteration": "Mne nuzhna spravka o zdorov'e dlya universiteta",
+    "english": "I need a health certificate for the university",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: медицина, здоровье, админ",
+    "context": [
+      "медицина",
+      "здоровье",
+      "админ"
+    ]
+  },
+  {
+    "id": 20,
+    "category": "Медицина",
+    "russian": "Как записаться на прием?",
+    "transliteration": "Kak zapsat'sya na priem?",
+    "english": "How do I make an appointment?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: медицина, здоровье, админ",
+    "context": [
+      "медицина",
+      "здоровье",
+      "админ"
+    ]
+  },
+  {
+    "id": 21,
+    "category": "Общежитие",
+    "russian": "Как получить ключ от комнаты в общежитии?",
+    "transliteration": "Kak poluchit' klyuch ot komnaty v obshchezhitii?",
+    "english": "How do I get the key to my dorm room?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: общежитие, жилье, правила",
+    "context": [
+      "общежитие",
+      "жилье",
+      "правила"
+    ]
+  },
+  {
+    "id": 22,
+    "category": "Общежитие",
+    "russian": "В моей комнате неисправен свет",
+    "transliteration": "V moyey komnate neispravlen svet",
+    "english": "The light in my room is not working",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: общежитие, жилье, правила",
+    "context": [
+      "общежитие",
+      "жилье",
+      "правила"
+    ]
+  },
+  {
+    "id": 23,
+    "category": "Общежитие",
+    "russian": "Какой час комендантского часа?",
+    "transliteration": "Kakoy chas komendasnskogo chasa?",
+    "english": "What is the curfew time?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: общежитие, жилье, правила",
+    "context": [
+      "общежитие",
+      "жилье",
+      "правила"
+    ]
+  },
+  {
+    "id": 24,
+    "category": "Общежитие",
+    "russian": "Могу ли я привести гостей в общежитие?",
+    "transliteration": "Mogu li ya privesti gostey v obshchezhitie?",
+    "english": "Can I bring guests to the dorm?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: общежитие, жилье, правила",
+    "context": [
+      "общежитие",
+      "жилье",
+      "правила"
+    ]
+  },
+  {
+    "id": 25,
+    "category": "Общежитие",
+    "russian": "Где находится стиральная машина?",
+    "transliteration": "Gde nakhoditsya stiralnaya mashina?",
+    "english": "Where is the washing machine?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: общежитие, жилье, правила",
+    "context": [
+      "общежитие",
+      "жилье",
+      "правила"
+    ]
+  },
+  {
+    "id": 26,
+    "category": "Общежитие",
+    "russian": "Какие правила в общежитии?",
+    "transliteration": "Kakie pravila v obshchezhitii?",
+    "english": "What are the dorm rules?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: общежитие, жилье, правила",
+    "context": [
+      "общежитие",
+      "жилье",
+      "правила"
+    ]
+  },
+  {
+    "id": 27,
+    "category": "Общежитие",
+    "russian": "Нужно ли платить за общежитие каждый месяц?",
+    "transliteration": "Nuzhno li platit' za obshchezhitie kazhdyy mesyac?",
+    "english": "Do I need to pay for the dorm every month?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: общежитие, жилье, правила",
+    "context": [
+      "общежитие",
+      "жилье",
+      "правила"
+    ]
+  },
+  {
+    "id": 28,
+    "category": "Общежитие",
+    "russian": "Как получить справку о проживании?",
+    "transliteration": "Kak poluchit' spravku o prozhivanii?",
+    "english": "How do I get a residence certificate?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: общежитие, жилье, правила",
+    "context": [
+      "общежитие",
+      "жилье",
+      "правила"
+    ]
+  },
+  {
+    "id": 29,
+    "category": "Общежитие",
+    "russian": "Вода в душе холодная. Что делать?",
+    "transliteration": "Voda v dushe kholodnaya. Chto delat'?",
+    "english": "The shower water is cold. What do I do?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: общежитие, жилье, правила",
+    "context": [
+      "общежитие",
+      "жилье",
+      "правила"
+    ]
+  },
+  {
+    "id": 30,
+    "category": "Общежитие",
+    "russian": "Когда выходной день в общежитии?",
+    "transliteration": "Kogda vykhodno dny v obshchezhitii?",
+    "english": "When are the off-duty days at the dorm?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: общежитие, жилье, правила",
+    "context": [
+      "общежитие",
+      "жилье",
+      "правила"
+    ]
+  },
+  {
+    "id": 31,
+    "category": "Учеба",
+    "russian": "Когда начинается мой первый класс?",
+    "transliteration": "Kogda nachinayetsya moy pervyy klass?",
+    "english": "When does my first class start?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: учеба, расписание, оценки",
+    "context": [
+      "учеба",
+      "расписание",
+      "оценки"
+    ]
+  },
+  {
+    "id": 32,
+    "category": "Учеба",
+    "russian": "Где находится аудитория 315?",
+    "transliteration": "Gde nakhoditsya auditoriya 315?",
+    "english": "Where is classroom 315?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: учеба, расписание, оценки",
+    "context": [
+      "учеба",
+      "расписание",
+      "оценки"
+    ]
+  },
+  {
+    "id": 33,
+    "category": "Учеба",
+    "russian": "Как подать работу профессору?",
+    "transliteration": "Kak podat' rabotu professoru?",
+    "english": "How do I submit my assignment to the professor?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: учеба, расписание, оценки",
+    "context": [
+      "учеба",
+      "расписание",
+      "оценки"
+    ]
+  },
+  {
+    "id": 34,
+    "category": "Учеба",
+    "russian": "Когда будут результаты экзамена?",
+    "transliteration": "Kogda budut rezul'taty ekzamena?",
+    "english": "When will the exam results be?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: учеба, расписание, оценки",
+    "context": [
+      "учеба",
+      "расписание",
+      "оценки"
+    ]
+  },
+  {
+    "id": 35,
+    "category": "Учеба",
+    "russian": "Могу ли я переписать тест?",
+    "transliteration": "Mogu li ya perepsat' test?",
+    "english": "Can I retake the test?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: учеба, расписание, оценки",
+    "context": [
+      "учеба",
+      "расписание",
+      "оценки"
+    ]
+  },
+  {
+    "id": 36,
+    "category": "Учеба",
+    "russian": "Где найти учебный план?",
+    "transliteration": "Gde nayti uchebnyy plan?",
+    "english": "Where can I find the curriculum?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: учеба, расписание, оценки",
+    "context": [
+      "учеба",
+      "расписание",
+      "оценки"
+    ]
+  },
+  {
+    "id": 37,
+    "category": "Учеба",
+    "russian": "Как доступ к библиотеке университета?",
+    "transliteration": "Kak dostup k biblioteke universiteta?",
+    "english": "How do I access the university library?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: учеба, расписание, оценки",
+    "context": [
+      "учеба",
+      "расписание",
+      "оценки"
+    ]
+  },
+  {
+    "id": 38,
+    "category": "Учеба",
+    "russian": "Какой минимальный балл для хорошей оценки?",
+    "transliteration": "Kakoy minimalnyy ball dlya khoroshey ocenki?",
+    "english": "What is the minimum score for a good grade?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: учеба, расписание, оценки",
+    "context": [
+      "учеба",
+      "расписание",
+      "оценки"
+    ]
+  },
+  {
+    "id": 39,
+    "category": "Учеба",
+    "russian": "Могу ли я пересдать работу?",
+    "transliteration": "Mogu li ya pereslat' rabotu?",
+    "english": "Can I retake an assignment?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: учеба, расписание, оценки",
+    "context": [
+      "учеба",
+      "расписание",
+      "оценки"
+    ]
+  },
+  {
+    "id": 40,
+    "category": "Учеба",
+    "russian": "Когда объявляют планы на следующий семестр?",
+    "transliteration": "Kogda ob'yavlyayut plany na sleduyushchiy semestr?",
+    "english": "When are next semester plans announced?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: учеба, расписание, оценки",
+    "context": [
+      "учеба",
+      "расписание",
+      "оценки"
+    ]
+  },
+  {
+    "id": 41,
+    "category": "Коммуникация",
+    "russian": "Я не понимаю эту тему",
+    "transliteration": "Ya ne ponimayu etu temu",
+    "english": "I don't understand this topic",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: коммуникация, учеба, помощь",
+    "context": [
+      "коммуникация",
+      "учеба",
+      "помощь"
+    ]
+  },
+  {
+    "id": 42,
+    "category": "Коммуникация",
+    "russian": "Могу ли я придти на консультацию?",
+    "transliteration": "Mogu li ya priyti na konsul'taciyu?",
+    "english": "Can I come for consultation?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: коммуникация, учеба, помощь",
+    "context": [
+      "коммуникация",
+      "учеба",
+      "помощь"
+    ]
+  },
+  {
+    "id": 43,
+    "category": "Коммуникация",
+    "russian": "Можно ли отправить вам письмо по электронной почте?",
+    "transliteration": "Mozhno li otpravit' vam pis'mo po elektronnoy pochte?",
+    "english": "Can I email you?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: коммуникация, учеба, помощь",
+    "context": [
+      "коммуникация",
+      "учеба",
+      "помощь"
+    ]
+  },
+  {
+    "id": 44,
+    "category": "Коммуникация",
+    "russian": "Говорите медленнее, пожалуйста",
+    "transliteration": "Govorite medlennee, pozhaluysta",
+    "english": "Please speak more slowly",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: коммуникация, учеба, помощь",
+    "context": [
+      "коммуникация",
+      "учеба",
+      "помощь"
+    ]
+  },
+  {
+    "id": 45,
+    "category": "Коммуникация",
+    "russian": "Могли бы вы повторить это?",
+    "transliteration": "Mogli by vy povtorit' eto?",
+    "english": "Could you repeat that?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: коммуникация, учеба, помощь",
+    "context": [
+      "коммуникация",
+      "учеба",
+      "помощь"
+    ]
+  },
+  {
+    "id": 46,
+    "category": "Коммуникация",
+    "russian": "Я не слышал вас хорошо",
+    "transliteration": "Ya ne slyashal vas khorosho",
+    "english": "I didn't hear you well",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: коммуникация, учеба, помощь",
+    "context": [
+      "коммуникация",
+      "учеба",
+      "помощь"
+    ]
+  },
+  {
+    "id": 47,
+    "category": "Коммуникация",
+    "russian": "Как я могу связаться с вами?",
+    "transliteration": "Kak ya mogu svyazat'sya s vami?",
+    "english": "How can I contact you?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: коммуникация, учеба, помощь",
+    "context": [
+      "коммуникация",
+      "учеба",
+      "помощь"
+    ]
+  },
+  {
+    "id": 48,
+    "category": "Коммуникация",
+    "russian": "Есть ли часы консультаций?",
+    "transliteration": "Est' li chasy konsul'taciy?",
+    "english": "Are there office hours?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: коммуникация, учеба, помощь",
+    "context": [
+      "коммуникация",
+      "учеба",
+      "помощь"
+    ]
+  },
+  {
+    "id": 49,
+    "category": "Коммуникация",
+    "russian": "Мне нужна научная литература для проекта",
+    "transliteration": "Mne nuzhna nauchnaya literatura dlya proekta",
+    "english": "I need scientific literature for my project",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: коммуникация, учеба, помощь",
+    "context": [
+      "коммуникация",
+      "учеба",
+      "помощь"
+    ]
+  },
+  {
+    "id": 50,
+    "category": "Коммуникация",
+    "russian": "Можно ли мне использовать этот источник?",
+    "transliteration": "Mozhno li mne ispol'zovat' etot istochnik?",
+    "english": "Can I use this source?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: коммуникация, учеба, помощь",
+    "context": [
+      "коммуникация",
+      "учеба",
+      "помощь"
+    ]
+  },
+  {
+    "id": 51,
+    "category": "Быт и навигация",
+    "russian": "Где я могу купить продукты?",
+    "transliteration": "Gde ya mogu kupit' produkty?",
+    "english": "Where can I buy groceries?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: бытовое, навигация, финансы",
+    "context": [
+      "бытовое",
+      "навигация",
+      "финансы"
+    ]
+  },
+  {
+    "id": 52,
+    "category": "Быт и навигация",
+    "russian": "Как использовать автобус?",
+    "transliteration": "Kak ispol'zovat' avtobus?",
+    "english": "How do I use the bus?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: бытовое, навигация, финансы",
+    "context": [
+      "бытовое",
+      "навигация",
+      "финансы"
+    ]
+  },
+  {
+    "id": 53,
+    "category": "Быт и навигация",
+    "russian": "Сколько стоит билет на автобус?",
+    "transliteration": "Skolko stoit bilet na avtobus?",
+    "english": "How much is a bus ticket?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: бытовое, навигация, финансы",
+    "context": [
+      "бытовое",
+      "навигация",
+      "финансы"
+    ]
+  },
+  {
+    "id": 54,
+    "category": "Быт и навигация",
+    "russian": "Где находится ближайший банкомат?",
+    "transliteration": "Gde nakhoditsya blizhayshiy bankomat?",
+    "english": "Where is an ATM?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: бытовое, навигация, финансы",
+    "context": [
+      "бытовое",
+      "навигация",
+      "финансы"
+    ]
+  },
+  {
+    "id": 55,
+    "category": "Быт и навигация",
+    "russian": "Как открыть счет в банке?",
+    "transliteration": "Kak otkryt' schjot v banke?",
+    "english": "How do I open a bank account?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: бытовое, навигация, финансы",
+    "context": [
+      "бытовое",
+      "навигация",
+      "финансы"
+    ]
+  },
+  {
+    "id": 56,
+    "category": "Быт и навигация",
+    "russian": "Какие кафе рядом с кампусом?",
+    "transliteration": "Kakie kafe ryadom s kampusom?",
+    "english": "What cafes are near campus?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: бытовое, навигация, финансы",
+    "context": [
+      "бытовое",
+      "навигация",
+      "финансы"
+    ]
+  },
+  {
+    "id": 57,
+    "category": "Быт и навигация",
+    "russian": "Как добраться до аэропорта?",
+    "transliteration": "Kak dobrat'sya do ajeroporta?",
+    "english": "How do I get to the airport?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: бытовое, навигация, финансы",
+    "context": [
+      "бытовое",
+      "навигация",
+      "финансы"
+    ]
+  },
+  {
+    "id": 58,
+    "category": "Быт и навигация",
+    "russian": "Где я могу купить одежду?",
+    "transliteration": "Gde ya mogu kupit' odezhdu?",
+    "english": "Where can I buy clothes?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: бытовое, навигация, финансы",
+    "context": [
+      "бытовое",
+      "навигация",
+      "финансы"
+    ]
+  },
+  {
+    "id": 59,
+    "category": "Быт и навигация",
+    "russian": "Какой номер полиции?",
+    "transliteration": "Kakoy nomer policii?",
+    "english": "What is the police number?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: бытовое, навигация, финансы",
+    "context": [
+      "бытовое",
+      "навигация",
+      "финансы"
+    ]
+  },
+  {
+    "id": 60,
+    "category": "Быт и навигация",
+    "russian": "Как включить интернет в общежитии?",
+    "transliteration": "Kak vklyuchit' internet v obshchezhitii?",
+    "english": "How do I turn on internet in the dorm?",
+    "formality": "neutral",
+    "cultural_comment": "Frase útil para contextos de: бытовое, навигация, финансы",
+    "context": [
+      "бытовое",
+      "навигация",
+      "финансы"
+    ]
+  },
+  {
+    "id": 61,
+    "category": "Regristración y migración",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 62,
+    "category": "Regristración y migración",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 63,
+    "category": "Regristración y migración",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 64,
+    "category": "Regristración y migración",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 65,
+    "category": "Regristración y migración",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 66,
+    "category": "Медицина",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 67,
+    "category": "Медицина",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 68,
+    "category": "Медицина",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 69,
+    "category": "Медицина",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 70,
+    "category": "Медицина",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 71,
+    "category": "Общежитие",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 72,
+    "category": "Общежитие",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 73,
+    "category": "Общежитие",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 74,
+    "category": "Общежитие",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 75,
+    "category": "Общежитие",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 76,
+    "category": "Учеба",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 77,
+    "category": "Учеба",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 78,
+    "category": "Учеба",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 79,
+    "category": "Учеба",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 80,
+    "category": "Учеба",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 81,
+    "category": "Коммуникация",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 82,
+    "category": "Коммуникация",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 83,
+    "category": "Коммуникация",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 84,
+    "category": "Коммуникация",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 85,
+    "category": "Коммуникация",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 86,
+    "category": "Быт и навигация",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 87,
+    "category": "Быт и навигация",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 88,
+    "category": "Быт и навигация",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 89,
+    "category": "Быт и навигация",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 90,
+    "category": "Быт и навигация",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 91,
+    "category": "Regristración y migración",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 92,
+    "category": "Regristración y migración",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 93,
+    "category": "Regristración y migración",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 94,
+    "category": "Regristración y migración",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 95,
+    "category": "Regristración y migración",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 96,
+    "category": "Медицина",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 97,
+    "category": "Медицина",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 98,
+    "category": "Медицина",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 99,
+    "category": "Медицина",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 100,
+    "category": "Медицина",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 101,
+    "category": "Общежитие",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 102,
+    "category": "Общежитие",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 103,
+    "category": "Общежитие",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 104,
+    "category": "Общежитие",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 105,
+    "category": "Общежитие",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 106,
+    "category": "Учеба",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 107,
+    "category": "Учеба",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 108,
+    "category": "Учеба",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 109,
+    "category": "Учеба",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 110,
+    "category": "Учеба",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 111,
+    "category": "Коммуникация",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 112,
+    "category": "Коммуникация",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 113,
+    "category": "Коммуникация",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 114,
+    "category": "Коммуникация",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 115,
+    "category": "Коммуникация",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 116,
+    "category": "Быт и навигация",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 117,
+    "category": "Быт и навигация",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 118,
+    "category": "Быт и навигация",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 119,
+    "category": "Быт и навигация",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 120,
+    "category": "Быт и навигация",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 121,
+    "category": "Regristración y migración",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 122,
+    "category": "Regristración y migración",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 123,
+    "category": "Regristración y migración",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 124,
+    "category": "Regristración y migración",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 125,
+    "category": "Regristración y migración",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 126,
+    "category": "Медицина",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 127,
+    "category": "Медицина",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 128,
+    "category": "Медицина",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 129,
+    "category": "Медицина",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 130,
+    "category": "Медицина",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 131,
+    "category": "Общежитие",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 132,
+    "category": "Общежитие",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 133,
+    "category": "Общежитие",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 134,
+    "category": "Общежитие",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 135,
+    "category": "Общежитие",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 136,
+    "category": "Учеба",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 137,
+    "category": "Учеба",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 138,
+    "category": "Учеба",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 139,
+    "category": "Учеба",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 140,
+    "category": "Учеба",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 141,
+    "category": "Коммуникация",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 142,
+    "category": "Коммуникация",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 143,
+    "category": "Коммуникация",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 144,
+    "category": "Коммуникация",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 145,
+    "category": "Коммуникация",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 146,
+    "category": "Быт и навигация",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 147,
+    "category": "Быт и навигация",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 148,
+    "category": "Быт и навигация",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 149,
+    "category": "Быт и навигация",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 150,
+    "category": "Быт и навигация",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 151,
+    "category": "Regristración y migración",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 152,
+    "category": "Regristración y migración",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 153,
+    "category": "Regristración y migración",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 154,
+    "category": "Regristración y migración",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 155,
+    "category": "Regristración y migración",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 156,
+    "category": "Медицина",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 157,
+    "category": "Медицина",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 158,
+    "category": "Медицина",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 159,
+    "category": "Медицина",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 160,
+    "category": "Медицина",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 161,
+    "category": "Общежитие",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 162,
+    "category": "Общежитие",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 163,
+    "category": "Общежитие",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 164,
+    "category": "Общежитие",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 165,
+    "category": "Общежитие",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 166,
+    "category": "Учеба",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 167,
+    "category": "Учеба",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 168,
+    "category": "Учеба",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 169,
+    "category": "Учеба",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 170,
+    "category": "Учеба",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 171,
+    "category": "Коммуникация",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 172,
+    "category": "Коммуникация",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 173,
+    "category": "Коммуникация",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 174,
+    "category": "Коммуникация",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 175,
+    "category": "Коммуникация",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 176,
+    "category": "Быт и навигация",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 177,
+    "category": "Быт и навигация",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 178,
+    "category": "Быт и навигация",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 179,
+    "category": "Быт и навигация",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 180,
+    "category": "Быт и навигация",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 181,
+    "category": "Regristración y migración",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 182,
+    "category": "Regristración y migración",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 183,
+    "category": "Regristración y migración",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 184,
+    "category": "Regristración y migración",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 185,
+    "category": "Regristración y migración",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 186,
+    "category": "Медицина",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 187,
+    "category": "Медицина",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 188,
+    "category": "Медицина",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 189,
+    "category": "Медицина",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 190,
+    "category": "Медицина",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 191,
+    "category": "Общежитие",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 192,
+    "category": "Общежитие",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 193,
+    "category": "Общежитие",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 194,
+    "category": "Общежитие",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 195,
+    "category": "Общежитие",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 196,
+    "category": "Учеба",
+    "russian": "Мне нужна помощь",
+    "transliteration": "Mne nuzhna pomoshch'",
+    "english": "I need help",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 197,
+    "category": "Учеба",
+    "russian": "Спасибо большое",
+    "transliteration": "Spasibo bol'shoe",
+    "english": "Thank you very much",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 198,
+    "category": "Учеба",
+    "russian": "Пожалуйста",
+    "transliteration": "Pozhaluysta",
+    "english": "Please",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 199,
+    "category": "Учеба",
+    "russian": "Извините",
+    "transliteration": "Izvinite",
+    "english": "Excuse me",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  },
+  {
+    "id": 200,
+    "category": "Учеба",
+    "russian": "Хорошего дня",
+    "transliteration": "Khorosego dnya",
+    "english": "Have a good day",
+    "formality": "polite",
+    "cultural_comment": "Expresión de cortesía útil en cualquier contexto",
+    "context": [
+      "general"
+    ]
+  }
+]

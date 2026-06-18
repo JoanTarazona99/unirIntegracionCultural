@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: kubgu_postgres
+    environment:
+      POSTGRES_USER: kubgu_user
+      POSTGRES_PASSWORD: secure_password
+      POSTGRES_DB: kubgu_assistant
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kubgu_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kubgu_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://kubgu_user:secure_password@postgres:5432/kubgu_assistant
+      API_DEBUG: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app/backend
+      - ./data:/app/data
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend (servidor simple)
+  frontend:
+    image: nginx:alpine
+    container_name: kubgu_frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: kubgu_network
