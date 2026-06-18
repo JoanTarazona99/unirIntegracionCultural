@@ -73,7 +73,8 @@ Desarrollar un asistente inteligente multicanal basado en inteligencia artificia
 | Frontend Web | Vue.js 3 (CDN) | Interfaz reactiva, sin build process |
 | Bot Móvil | Python-telegram-bot 20.3 | Integración nativa Telegram |
 | Validación | Pydantic 2.5.0 | Type-safe data handling |
-| Búsqueda | Vector Search (FAISS/NumPy) | Búsqueda semántica en documentos |
+| Búsqueda | Keyword Search + NumPy | Coincidencia de palabras clave con expansión de sinónimos |
+| Traducción | google_trans_new | Traducción multiidioma con fallback estático |
 | Base de Datos | PostgreSQL (opcional) | Escalabilidad futura |
 | Deployment | Docker | Containerización reproducible |
 
@@ -88,10 +89,10 @@ Desarrollar un asistente inteligente multicanal basado en inteligencia artificia
 ✅ Base de datos de frases indexada  
 
 ### 3.2 Phase 2: Intelligence (Completado)
-✅ Motor RAG integrado  
-✅ 4 fuentes de documentos oficiales  
-✅ Búsqueda semántica flexible  
-✅ Generación de respuestas con fuente  
+✅ Sistema de recuperación basado en palabras clave
+✅ 4 fuentes de documentos oficiales
+✅ Expansión de sinónimos español-ruso para mayor cobertura
+✅ Generación de respuestas mediante plantillas estructuradas  
 
 ### 3.3 Phase 3: Personalization (Completado)
 ✅ Perfiles de usuario multiusuario  
@@ -229,10 +230,11 @@ Desarrollar un asistente inteligente multicanal basado en inteligencia artificia
 ## 7. LOGROS DESTACADOS
 
 ### 7.1 Innovación Técnica
-- ✨ **RAG Flexible:** Búsqueda por palabras clave (no solo matches exactos)
+- ✨ **Sistema de Recuperación Eficiente:** Coincidencia de palabras clave con expansión de sinónimos y scoring de relevancia
 - ✨ **Personalización Dinámica:** Contextos adaptativos según perfil usuario
 - ✨ **Multicanal:** Misma lógica en Web, Telegram, API
 - ✨ **Escalable:** Arquitectura modular permite fácil expansión
+- ✨ **Traducción Multiidioma:** Soporte para 15 idiomas con fallback estático
 
 ### 7.2 Métricas de Calidad
 - 🎯 **100% Cobertura de Tests:** 29/29 tests pasados
@@ -308,7 +310,7 @@ library.documents['Nueva_Fuente'] = {
 - ✅ **Dependencias minimalistas:** Facilita deploy
 
 ### 9.2 Desafíos Superados
-- 🔧 **Incompatibilidad FAISS:** Se resolvió con búsqueda basada en numpy
+- 🔧 **Búsqueda eficiente sin ML:** Se implementó matching de palabras clave con expansión de sinónimos usando diccionarios estáticos y NumPy para scoring
 - 🔧 **UTF-8 en Windows:** Se implementó manejo específico de encoding
 - 🔧 **Paths relativos:** Se estandarizó con `Path(__file__).parent`
 - 🔧 **Async en Telegram:** Se usó `python-telegram-bot` 20.3
@@ -316,10 +318,12 @@ library.documents['Nueva_Fuente'] = {
 ### 9.3 Recomendaciones Futuras
 - 📈 Implementar base de datos persistente (PostgreSQL)
 - 📈 Agregar autenticación OAuth2 para usuarios reales
-- 📈 Expandir fuentes RAG con documentos de embajada/consulado
-- 📈 Implementar feedback loop para mejorar búsqueda
+- 📈 Expandir fuentes de documentos con material de embajada/consulado
+- 📈 Implementar modelos de embeddings neuronales (Sentence-BERT) para búsqueda semántica
+- 📈 Integrar LLM (GPT/Claude) para generación de respuestas más naturales
+- 📈 Implementar síntesis de voz (TTS) y reconocimiento de voz (STT) para interacción por audio
 - 📈 Crear dashboard de admin para gestión de usuarios
-- 📈 Adicionar soporte para más idiomas de salida
+- 📈 Implementar feedback loop para mejorar relevancia de resultados
 
 ---
 
