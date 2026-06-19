@@ -325,49 +325,69 @@ async def get_system_status():
 @app.get("/api/phrases", response_model=List[PhraseResponse])
 async def get_phrases(category: Optional[str] = None, limit: int = 10):
     """Obtener frases contextualizadas"""
-    filtered = phrases_db
-
-    if category:
-        filtered = [p for p in filtered if p.get("category") == category]
-
-    return filtered[:limit]
+    try:
+        filtered = phrases_db
+        if category:
+            filtered = [p for p in filtered if p.get("category") == category]
+        return filtered[:limit]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading phrases: {str(e)}")
 
 @app.get("/api/phrases/{phrase_id}")
 async def get_phrase(phrase_id: int):
     """Obtener una frase específica"""
-    for phrase in phrases_db:
-        if phrase.get("id") == phrase_id:
-            return phrase
-    raise HTTPException(status_code=404, detail="Frase no encontrada")
+    try:
+        for phrase in phrases_db:
+            if phrase.get("id") == phrase_id:
+                return phrase
+        raise HTTPException(status_code=404, detail="Frase no encontrada")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading phrase: {str(e)}")
 
 # Rutas de usuario
 @app.post("/api/users/profile")
 async def create_user_profile(profile: UserProfile):
     """Crear perfil de usuario personalizado"""
-    return {
-        "message": "Perfil creado exitosamente",
-        "profile": profile,
-        "personalization_factors": {
-            "country": profile.country,
-            "visa_type": profile.visa_type,
-            "language_support": "Soportado",
-            "recommended_phrases_count": 50
+    try:
+        return {
+            "message": "Perfil creado exitosamente",
+            "profile": profile,
+            "personalization_factors": {
+                "country": profile.country,
+                "visa_type": profile.visa_type,
+                "language_support": "Soportado",
+                "recommended_phrases_count": 50
+            }
         }
-    }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating profile: {str(e)}")
 
 # Rutas de búsqueda RAG
 @app.post("/api/search")
 async def search_documents(query: QueryRequest):
     """Búsqueda en documentos oficiales usando RAG mejorado con semantic search"""
-    result = rag_module.search_and_generate(
-        query.query,
-        context_type=f"lang_{query.language}"
-    )
-    return result
+    try:
+        result = rag_module.search_and_generate(
+            query.query,
+            context_type=f"lang_{query.language}"
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error in RAG search: {str(e)}")
 
 @app.get("/api/search/sources")
 async def get_rag_sources():
     """Obtener fuentes oficiales disponibles"""
+    try:
+        return {
+            "sources": rag_module.document_library.list_sources(),
+            "search_mode": rag_module.document_library.get_search_mode(),
+            "description": "Fuentes de documentos oficiales integradas"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting sources: {str(e)}")
     return {
         "sources": rag_module.document_library.list_sources(),
         "search_mode": rag_module.document_library.get_search_mode(),
@@ -471,11 +491,14 @@ async def chat(
 @app.get("/api/languages")
 async def get_languages():
     """Obtener lista de idiomas disponibles"""
-    return {
-        "supported_languages": translator.get_supported_languages(),
-        "default_language": "es",
-        "total_languages": len(translator.get_supported_languages())
-    }
+    try:
+        return {
+            "supported_languages": translator.get_supported_languages(),
+            "default_language": "es",
+            "total_languages": len(translator.get_supported_languages())
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting languages: {str(e)}")
 
 # Endpoint de traducción
 @app.post("/api/translate")
@@ -567,33 +590,41 @@ async def chat_stream(request: StreamRequest):
 @app.get("/api/chat/history/{session_id}")
 async def get_chat_history(session_id: str):
     """Get conversation history for a session"""
-    history = conversation_memory.get_history(session_id)
-    summary = conversation_memory.get_summary(session_id)
-
-    return {
-        "session_id": session_id,
-        "history": history,
-        "summary": summary
-    }
+    try:
+        history = conversation_memory.get_history(session_id)
+        summary = conversation_memory.get_summary(session_id)
+        return {
+            "session_id": session_id,
+            "history": history,
+            "summary": summary
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting history: {str(e)}")
 
 
 @app.delete("/api/chat/history/{session_id}")
 async def clear_chat_history(session_id: str):
     """Clear conversation history for a session"""
-    conversation_memory.clear_session(session_id)
-    return {
-        "status": "cleared",
-        "session_id": session_id
-    }
+    try:
+        conversation_memory.clear_session(session_id)
+        return {
+            "status": "cleared",
+            "session_id": session_id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error clearing history: {str(e)}")
 
 
 @app.get("/api/chat/sessions")
 async def list_chat_sessions():
     """List all active chat sessions"""
-    return {
-        "active_sessions": conversation_memory.get_session_count(),
-        "total_messages": conversation_memory.get_message_count()
-    }
+    try:
+        return {
+            "active_sessions": conversation_memory.get_session_count(),
+            "total_messages": conversation_memory.get_message_count()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error listing sessions: {str(e)}")
 
 # ==================== TTS/STT ENDPOINTS ====================
 
