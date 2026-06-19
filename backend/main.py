@@ -388,13 +388,6 @@ async def get_rag_sources():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting sources: {str(e)}")
-    return {
-        "sources": rag_module.document_library.list_sources(),
-        "search_mode": rag_module.document_library.get_search_mode(),
-        "description": "Fuentes de documentos oficiales integradas"
-    }
-
-# Rutas de chat
 @app.post("/api/chat")
 async def chat(
     request: QueryRequest,

@@ -1,212 +1,233 @@
 # Guía de Inicio - Asistente de Integración Cultural KubGU
 
-## 📋 Requisitos Previos
+## Requisitos Previos
 
-- Python 3.9+
-- pip / conda
-- Docker (opcional)
-- Token de Telegram Bot (opcional)
+- Python 3.11+
+- pip
+- (Opcional) Token de Telegram Bot
 
-## 🚀 Instalación Rápida
+---
 
-### Opción 1: Instalación local (Windows)
+## Instalación Rápida
 
-```bash
-cd c:\xampp\htdocs\proyectos\unir
-install.bat
-```
-
-### Opción 2: Instalación manual
+### Paso 1: Entorno virtual
 
 ```bash
-# Crear ambiente virtual
 python -m venv venv
-venv\Scripts\activate
+source venv/bin/activate  # Linux/Mac
+# o: venv\Scripts\activate  # Windows
+```
 
-# Instalar dependencias
+### Paso 2: Instalar dependencias core
+
+```bash
 pip install -r requirements.txt
-
-# Configurar variables de entorno
-copy .env.example .env
 ```
 
-## 🎯 Ejecutar Componentes
+Esto instala:
+- fastapi, uvicorn, pydantic (API)
+- numpy (procesamiento)
+- python-telegram-bot, aiohttp, requests (bot)
 
-### 1️⃣ Generar frases (200 ejemplos)
+### Paso 3: Configurar variables de entorno
 
 ```bash
-cd data/phrases
-python generate_phrases.py
+cp .env.example .env  # si existe
+# o crear .env con:
+echo "TELEGRAM_BOT_TOKEN=tu_token_aqui" > .env
+echo "API_PORT=8000" >> .env
 ```
 
-### 2️⃣ Iniciar Backend FastAPI
+---
+
+## Ejecutar el Backend
 
 ```bash
-cd backend
-uvicorn main:app --reload
+# Desde la raíz del proyecto
+python -m uvicorn backend.main:app --reload --port 8000
 ```
 
-Backend disponible en: `http://localhost:8000`
-Documentación: `http://localhost:8000/docs`
+El backend estará disponible en:
+- API: http://localhost:8000
+- Docs: http://localhost:8000/docs
+- Frontend: http://localhost:8000/frontend/
 
-### 3️⃣ Iniciar Interfaz Web
+---
+
+## Ejecutar el Telegram Bot
 
 ```bash
-# Navegar a:
-file:///c:/xampp/htdocs/proyectos/unir/frontend/index.html
+# En otra terminal
+python telegram_bot/bot.py
 ```
 
-O con un servidor HTTP:
-```bash
-python -m http.server 8080 --bind 127.0.0.1 --directory frontend
-# Acceder a: http://localhost:8080
-```
+---
 
-### 4️⃣ Iniciar Telegram Bot
+## Dependencias Opcionales
+
+### Para traducción automática
 
 ```bash
-# Primero configurar TELEGRAM_BOT_TOKEN en .env
-cd telegram_bot
-python bot.py
+pip install google-trans-new
 ```
 
-## 🐳 Opción Docker
+### Para búsqueda semántica
+
+```bash
+pip install sentence-transformers torch
+```
+
+Nota: Requiere PyTorch (~2GB). El sistema funciona con keyword search si no se instala.
+
+### Para text-to-speech
+
+```bash
+pip install gTTS
+```
+
+### Para LLM local (Ollama)
+
+```bash
+pip install ollama httpx
+
+# Instalar Ollama server
+# Descargar de: https://ollama.ai
+
+# Descargar modelo
+ollama pull llama3
+```
+
+---
+
+## Verificar que Funciona
+
+### Test 1: Health check
+
+```bash
+curl http://localhost:8000/health
+```
+
+Respuesta esperada:
+```json
+{
+  "status": "ok",
+  "message": "Asistente de Integración Cultural activo",
+  "features": {
+    "semantic_search": "keyword_fallback",
+    "tts": "available",
+    "stt": "unavailable"
+  }
+}
+```
+
+### Test 2: Búsqueda RAG
+
+```bash
+curl -X POST http://localhost:8000/api/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "registro migración", "user_id": "test", "language": "es"}'
+```
+
+### Test 3: Chat
+
+```bash
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"query": "¿Dónde está el MFC?", "user_id": "test", "language": "es"}'
+```
+
+---
+
+## Estructura de Archivos
+
+```
+project/
+├── backend/
+│   ├── main.py              # API FastAPI
+│   ├── enhanced_rag.py      # RAG con keyword/semantic
+│   ├── personalization.py   # Memoria de conversación
+│   ├── cache_module.py      # Cache LRU
+│   └── translator.py        # Traductor
+├── frontend/
+│   ├── index.html           # Interfaz Vue.js
+│   └── demo.html            # Dashboard
+├── telegram_bot/
+│   └── bot.py               # Bot Telegram
+├── data/
+│   └── phrases/             # Frases JSON
+├── requirements.txt         # Dependencias core
+└── .env                     # Configuración
+```
+
+---
+
+## Datos del Sistema
+
+**Los documentos RAG están hardcodeados** en `enhanced_rag.py`:
+- КубГУ - información universitaria
+- МВД РФ - migración y visas
+- МФЦ - servicios públicos
+- Госуслуги - portal electrónico
+- FAQ - preguntas frecuentes
+
+**No se cargan de archivos externos ni base de datos.**
+
+---
+
+## Comandos Telegram Bot
+
+| Comando | Descripción |
+|---------|-------------|
+| `/start` | Iniciar bot |
+| `/ask <pregunta>` | Consultar asistente |
+| `/status` | Estado del sistema |
+| `/lang <ru\|es\|en>` | Cambiar idioma |
+| `/phrases` | Ver frases útiles |
+| `/profile` | Ver perfil |
+| `/setup` | Configurar perfil |
+
+---
+
+## Solución de Problemas
+
+### "ModuleNotFoundError: No module named 'xxx'"
+
+Dependencias opcionales no instaladas. Solución:
+```bash
+pip install -r requirements.txt  # reinstalar core
+# o instalar la específica que falta
+```
+
+### "semantic_search": "keyword_fallback"
+
+Normal - indica que sentence-transformers no está instalado. El sistema usa búsqueda por palabras clave.
+
+### TTS no disponible
+
+```bash
+pip install gTTS
+```
+
+### Ollama no conecta
+
+1. Verificar que Ollama server está corriendo: `ollama serve`
+2. Verificar que hay un modelo: `ollama list`
+3. Si no hay modelo: `ollama pull llama3`
+
+---
+
+## Docker (Alternativa)
 
 ```bash
 docker-compose up -d
 ```
 
+Servicios:
 - Backend: http://localhost:8000
 - Frontend: http://localhost:3000
-- PostgreSQL: localhost:5432
-
-## 📚 Estructura de Archivos
-
-```
-unir/
-├── backend/
-│   ├── main.py                 # API FastAPI principal
-│   ├── phrase_manager.py       # Gestor de frases
-│   ├── rag_module.py           # Módulo RAG/búsqueda
-│   ├── audio_module.py         # TTS/STT
-│   └── personalization.py      # Personalización
-├── frontend/
-│   └── index.html              # Interfaz Vue.js
-├── telegram_bot/
-│   └── bot.py                  # Bot de Telegram
-├── data/
-│   ├── phrases/
-│   │   ├── base_phrases.json
-│   │   ├── complete_phrases.json     # 200 frases completas
-│   │   └── generate_phrases.py
-│   ├── documents/               # Documentos oficiales
-│   ├── vectors/                # Índices FAISS
-│   └── audio/                  # Archivos de audio TTS
-├── requirements.txt
-├── docker-compose.yml
-└── README.md
-```
-
-## 🧪 Pruebas
-
-### Test Backend
-
-```bash
-# Ver salud del API
-curl http://localhost:8000/health
-
-# Obtener frases
-curl http://localhost:8000/api/phrases?category=Regristración%20y%20migración
-
-# Crear perfil
-curl -X POST http://localhost:8000/api/users/profile \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": "user123",
-    "name": "Juan",
-    "country": "Vietnam",
-    "visa_type": "student",
-    "academic_level": "bachelor",
-    "housing_type": "dorm",
-    "russian_level": "A1"
-  }'
-```
-
-### Test Frontend
-
-1. Abre `frontend/index.html` en el navegador
-2. Rellena tu perfil (país, visa, nivel de ruso)
-3. Prueba buscar frases por categoría
-4. Envía mensajes al chat
-
-### Test Telegram Bot
-
-1. Crea un bot en @BotFather (Telegram)
-2. Copia el token a `.env`
-3. Ejecuta `python telegram_bot/bot.py`
-4. Busca tu bot en Telegram
-5. Usa `/start`, `/help`, `/setup`, etc.
-
-## 🔧 Configuración Avanzada
-
-### Cambiar modelo TTS
-
-En `audio_module.py`:
-```python
-# Cambiar de Coqui a pyttsx3 o viceversa
-self.engine = "pyttsx3"
-```
-
-### Conectar base de datos real
-
-En `.env`:
-```
-DATABASE_URL=postgresql://user:password@localhost:5432/kubgu
-```
-
-### Mejorar búsqueda RAG
-
-En `rag_module.py`, reemplazar embeddings ficticios con Sentence-BERT:
-```python
-from sentence_transformers import SentenceTransformer
-
-model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-query_embedding = model.encode(query)
-```
-
-## 📊 Componentes Implementados
-
-✅ **Estructura del proyecto** - Carpetas y archivos organizados
-✅ **Base de frases** - 20-200 frases contextualizadas
-✅ **Backend FastAPI** - API completo con rutas principales
-✅ **Gestor de frases** - Búsqueda por categoría, contexto
-✅ **Módulo RAG** - Integración FAISS y búsqueda de documentos
-✅ **TTS/STT** - Síntesis y reconocimiento de voz
-✅ **Personalización** - Perfil específico por usuario
-✅ **Frontend Vue.js** - Interfaz interactiva
-✅ **Telegram Bot** - Bot funcional con comandos
-✅ **Docker** - Despliegue containerizado
-✅ **Documentación** - Guías de instalación y uso
-
-## 🎓 Próximos Pasos
-
-1. **Expandir frases** - Generar 200 verdaleras
-2. **Conectar LLM** - Integrar modelo de generación real
-3. **Mejorar RAG** - Agregar más documentos oficiales
-4. **Base de datos** - Conectar PostgreSQL real
-5. **Testing** - Pruebas con estudiantes reales
-6. **Deploy** - Publicar en servidor público
-
-## 📞 Soporte
-
-Para dudas o problemas:
-- Revisa `README.md`
-- Consulta las issues del proyecto
-- Contacta al equipo de desarrollo
 
 ---
 
-**Proyecto:** Asistente Inteligente de Integración Cultural
-**Universidad:** Kúban State University (KubGU)
-**Estudiante:** Tárásona Fernández Jóan Carlos
-**Período:** 16.02.2026 - 02.03.2026
+**Proyecto:** Asistente de Integración Cultural KubGU  
+**Universidad:** Kubán State University  
+**Año:** 2026

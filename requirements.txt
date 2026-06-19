@@ -1,36 +1,34 @@
-# FastAPI and API server
+# FastAPI and API server (REQUIRED)
 fastapi==0.104.1
 uvicorn==0.24.0
 pydantic==2.5.0
 python-dotenv==1.0.0
 
-# Data processing
+# Data processing (REQUIRED for keyword search)
 numpy==1.24.3
-pandas==2.1.3
 
-# Database
-psycopg2-binary==2.9.9
-sqlalchemy==2.0.23
-
-# Telegram bot
+# Telegram bot (REQUIRED for bot)
 python-telegram-bot==20.3
 aiohttp==3.9.1
 
-# HTTP and networking
+# HTTP client (REQUIRED for bot backend calls)
 requests==2.31.0
 
-# Translation
+# Translation (OPTIONAL - graceful fallback if not installed)
 google-trans-new==1.1.9
 
-# Semantic search (optional - falls back to keyword if not installed)
-sentence-transformers==2.2.2
-torch==2.0.1+cpu
---extra-index-url https://download.pytorch.org/whl/cpu
+# ==================== OPTIONAL DEPENDENCIES ====================
+# Install these for enhanced features. The app works without them.
 
-# TTS/STT (optional - text-to-speech and speech-to-text)
-gTTS==2.3.2
-SpeechRecognition==3.10.0
+# Semantic search (OPTIONAL - falls back to keyword search)
+# pip install sentence-transformers torch
 
-# LLM integration (optional - local LLM via Ollama)
-ollama==0.1.8
-httpx==0.25.0
+# TTS/STT (OPTIONAL - text-to-speech and speech-to-text)
+# pip install gTTS SpeechRecognition
+
+# LLM integration (OPTIONAL - local LLM via Ollama)
+# pip install ollama httpx
+# Requires: ollama server running locally with a model pulled
+
+# Database (OPTIONAL - for persistent storage)
+# pip install psycopg2-binary sqlalchemy pandas

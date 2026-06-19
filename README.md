@@ -1,195 +1,182 @@
-# 🎓 Asistente Inteligente de Integración Cultural - KubGU
+# Asistente de Integración Cultural - KubGU
 
-**Sistema de IA para soporte a estudiantes extranjeros en la Universidad Estatal de Kubán**
+Sistema de soporte para estudiantes extranjeros en la Universidad Estatal de Kubán
 
 ---
 
-## ⚡ Inicio Rápido
+## Inicio Rápido
 
 ```bash
-# 1. Instalar dependencias
+# 1. Clonar y entrar al directorio
+cd /path/to/project
+
+# 2. Crear entorno virtual (recomendado)
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# o: venv\Scripts\activate  # Windows
+
+# 3. Instalar dependencias core
 pip install -r requirements.txt
 
-# 2. Iniciar backend
-python backend/main.py
+# 4. Iniciar backend
+python -m uvicorn backend.main:app --reload --port 8000
 
-# 3. Abrir en navegador
+# 5. Abrir en navegador
 http://localhost:8000/frontend/
 ```
 
 ---
 
-## 🌐 Interfaces Disponibles
+## Interfaces Disponibles
 
 | Interfaz | URL | Descripción |
 |----------|-----|-------------|
-| **Web Principal** | http://localhost:8000/frontend/ | Chat, búsqueda, perfil |
-| **Dashboard** | http://localhost:8000/frontend/demo.html | Métricas y estado |
-| **API Docs** | http://localhost:8000/docs | Swagger UI interactiva |
-| **Health Check** | http://localhost:8000/health | Estado del servidor |
+| Web Principal | http://localhost:8000/frontend/ | Chat, búsqueda, perfil |
+| Dashboard | http://localhost:8000/frontend/demo.html | Métricas y estado |
+| API Docs | http://localhost:8000/docs | Swagger UI interactiva |
+| Health Check | http://localhost:8000/health | Estado del servidor |
 
 ---
 
-## 🚀 Características
+## Características
 
-- ✅ **200 frases rusas** contextualizadas para estudiantes
-- ✅ **RAG inteligente** con búsqueda en 4 fuentes oficiales
-- ✅ **Personalización** por país, tipo de visa, nivel de ruso
-- ✅ **Chat multicanal:** Web + Telegram Bot
-- ✅ **100% operacional** (29/29 tests end-to-end PASS)
+- **Búsqueda RAG** con keyword fallback (no requiere ML)
+- **200+ frases rusas** contextualizadas para estudiantes
+- **Personalización** por país, tipo de visa, nivel de ruso
+- **Chat multicanal:** Web + Telegram Bot
+- **Traducción multiidioma** (opcional)
+- **TTS/STT** (opcional)
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
-proyectos/unir/
+project/
 ├── backend/
-│   ├── main.py              ← API FastAPI (7 endpoints)
-│   ├── enhanced_rag.py      ← Módulo RAG 
-│   ├── personalization.py   ← Motor de personalización
-│   └── phrase_manager.py    ← Gestor de frases
+│   ├── main.py              ← API FastAPI
+│   ├── enhanced_rag.py      ← Módulo RAG (keyword + semantic opcional)
+│   ├── personalization.py   ← Memoria de conversación
+│   ├── cache_module.py      ← Cache LRU con TTL
+│   ├── translator.py        ← Traductor multiidioma
+│   └── llm_module.py        ← Integración Ollama (opcional)
 ├── frontend/
-│   ├── index.html           ← Web principal
-│   └── demo.html            ← Dashboard demo
+│   ├── index.html           ← Web principal (Vue.js)
+│   └── demo.html            ← Dashboard
 ├── telegram_bot/
-│   ├── bot.py               ← Bot real
-│   └── bot_demo.py          ← Bot simulado
+│   └── bot.py               ← Bot de Telegram
 ├── data/
-│   ├── phrases/
-│   │   └── complete_phrases.json    (200 frases)
-│   └── rag_database.json    (Documentos oficiales)
-│
+│   └── phrases/
+│       └── base_phrases.json
 ├── requirements.txt
-├── .env                     (Configuración)
-├── docker-compose.yml       (Deployment)
-└── Documentación
-    ├── README.md     ← Estás aquí
-    ├── QUICKSTART.md        (Guía paso a paso)
-    └── INFORME_FINAL.md     (Reporte técnico)
+└── .env
 ```
 
 ---
 
-## 🔧 Tecnologías
+## Datos
 
-- **Backend:** FastAPI 0.104.1
-- **Frontend:** Vue.js 3 (CDN)
-- **Bot:** python-telegram-bot 20.3
-- **Validación:** Pydantic 2.5.0
-- **Server:** Uvicorn
-- **Deployment:** Docker
-
----
-
-## 📖 Documentación
-
-- **[QUICKSTART.md](QUICKSTART.md)** - Guía de inicio paso a paso
-- **[INFORME_FINAL.md](INFORME_FINAL.md)** - Documento técnico completo con arquitectura y resultados
+**Los documentos RAG son estáticos**, codificados en `enhanced_rag.py`:
+- КубГУ (universidad)
+- МВД РФ (migración)
+- МФЦ (servicios públicos)
+- Госуслуги (portal electrónico)
+- FAQ (preguntas frecuentes)
 
 ---
 
-## ✅ Estado del Sistema
+## Dependencias
 
+### Core (requeridas)
 ```
-Backend API:        ✅ Operacional (Puerto 8000)
-Frontend Web:       ✅ Accesible
-Dashboard:          ✅ Disponible
-Bot Telegram:       ✅ Conectado
-Tests E2E:          ✅ 29/29 PASS (100%)
-Documentación:      ✅ Completa
+fastapi, uvicorn, pydantic, python-dotenv
+numpy, python-telegram-bot, aiohttp, requests
 ```
 
----
+### Opcionales (instalar según necesidad)
 
-## 🎯 Cómo Usar
-
-### 1. Ver Dashboard (Rápido)
-```
-http://localhost:8000/frontend/demo.html
-```
-
-### 2. Usar Chat Web
-```
-http://localhost:8000/frontend/
-- Crear perfil (país, visa, nivel ruso)
-- Hacer preguntas
-- Ver respuestas personalizadas
-```
-
-### 3. Explorar API
-```
-http://localhost:8000/docs
-- Documentación Swagger
-- Probar endpoints interactivamente
-```
-
-### 4. Bot Telegram (Real)
 ```bash
-# Ya está corriendo en background
-# Busca el bot con el token en .env
-# Usa comandos: /start, /setup, /search, /phrases
+# Para traducción automática
+pip install google-trans-new
+
+# Para búsqueda semántica (mejor calidad)
+pip install sentence-transformers torch
+
+# Para text-to-speech
+pip install gTTS
+
+# Para speech-to-text
+pip install SpeechRecognition
+
+# Para LLM local (Ollama)
+pip install ollama httpx
+# Requiere: ollama server corriendo con modelo descargado
 ```
 
 ---
 
-## 📊 Métricas del Proyecto
-
-| Métrica | Valor |
-|---------|-------|
-| Funcionalidades | 100% completadas |
-| Tests E2E | 29/29 PASS |
-| Frases | 200+ contextualizadas |
-| Fuentes RAG | 4 (КубГУ, МВД, МФЦ, Госуслуги) |
-| Endpoints API | 7 |
-| Errores críticos | 0 |
-
----
-
-## 🔌 API Endpoints
+## API Endpoints
 
 ```
 GET  /health                    Estado del servidor
-GET  /api/phrases              Listado de 200 frases
-POST /api/search               Búsqueda RAG
-POST /api/chat                 Chat personalizado
-POST /api/users/profile        Gestión de perfil
-GET  /api/info                 Información del sistema
-GET  /api/search/sources       Fuentes RAG disponibles
+GET  /api/status                 Estado de todos los módulos
+GET  /api/phrases               Listado de frases
+POST /api/search                Búsqueda RAG
+POST /api/chat                  Chat personalizado
+POST /api/tts                   Text-to-speech (requiere gTTS)
+GET  /api/languages             Idiomas disponibles
 ```
 
 ---
 
-## 📞 Configuración
+## Configuración
 
-El archivo `.env` contiene:
+Archivo `.env`:
 
-```
-TELEGRAM_BOT_TOKEN=<token_aqui>
+```env
+TELEGRAM_BOT_TOKEN=tu_token_aqui
 API_PORT=8000
-API_DEBUG=True
+BACKEND_URL=http://localhost:8000
 ```
 
 ---
 
-## 🚀 Deployment
+## Deployment
 
 ### Con Docker
+
 ```bash
 docker-compose up
 ```
 
 ### Manual
+
 ```bash
-python backend/main.py
+pip install -r requirements.txt
+python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
 
 ---
 
-## 📝 Licencia
+## Telegram Bot
 
-Proyecto académico - Universidad UNIR | 2026
+```bash
+# Configurar token en .env
+export TELEGRAM_BOT_TOKEN="tu_token"
+
+# Iniciar bot
+python telegram_bot/bot.py
+```
+
+Comandos disponibles:
+- `/start` - Iniciar
+- `/ask <pregunta>` - Consultar al asistente
+- `/status` - Estado del sistema
+- `/lang <ru|es|en>` - Cambiar idioma
+- `/phrases` - Ver frases útiles
 
 ---
 
-**Estado:** ✅ Listo para Producción | **Versión:** 1.0 | **Última actualización:** Marzo 2026
+## Licencia
+
+Proyecto académico - Universidad UNIR | 2026
