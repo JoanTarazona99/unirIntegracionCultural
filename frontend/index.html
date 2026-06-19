@@ -200,6 +200,20 @@
             gap: 8px;
         }
 
+        .chat-language-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+        }
+
+        .chat-language-selector select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -482,19 +496,19 @@
     <div id="app">
         <header class="header">
             <div class="header-content">
-                <h1>🌍 Asistente KubGU</h1>
+                <h1>🌍 {{ t('appTitle') }}</h1>
                 <div class="header-controls">
                     <div class="lang-selector">
-                        <label>🌐 Idioma:</label>
-                        <select v-model="selectedLanguage" @change="updateLanguage">
-                            <option v-for="(name, code) in availableLanguages" :key="code" :value="code">
+                        <label>{{ t('uiLanguage') }}:</label>
+                        <select v-model="uiLanguage" @change="saveUILanguage">
+                            <option v-for="(name, code) in uiLanguages" :key="code" :value="code">
                                 {{ name }}
                             </option>
                         </select>
                     </div>
                     <div class="status-badge">
                         <span :class="['status-dot', {offline: !systemOnline}]"></span>
-                        <span>{{ systemOnline ? 'En línea' : 'Sin conexión' }}</span>
+                        <span>{{ systemOnline ? t('statusOnline') : t('statusOffline') }}</span>
                     </div>
                 </div>
             </div>
@@ -503,43 +517,43 @@
         <div class="container">
             <!-- Profile Section -->
             <section class="profile-section">
-                <h2>👤 Mi Perfil</h2>
+                <h2>👤 {{ t('profileTitle') }}</h2>
                 <div class="profile-grid">
                     <div class="form-group">
-                        <label>Nombre</label>
-                        <input v-model="profile.name" type="text" placeholder="Tu nombre">
+                        <label>{{ t('profileName') }}</label>
+                        <input v-model="profile.name" type="text" :placeholder="t('profileNamePlaceholder')">
                     </div>
                     <div class="form-group">
-                        <label>País</label>
+                        <label>{{ t('profileCountry') }}</label>
                         <select v-model="profile.country">
-                            <option value="">Seleccionar...</option>
+                            <option value="">{{ t('selectPlaceholder') }}</option>
                             <option>Vietnam</option>
                             <option>China</option>
                             <option>Kazakhstan</option>
                             <option>Armenia</option>
-                            <option>Siria</option>
-                            <option>Egipto</option>
-                            <option>Marruecos</option>
+                            <option>Syria</option>
+                            <option>Egypt</option>
+                            <option>Morocco</option>
                             <option>Nigeria</option>
-                            <option>Otro</option>
+                            <option>{{ t('other') }}</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Tipo de Visa</label>
+                        <label>{{ t('profileVisaType') }}</label>
                         <select v-model="profile.visa_type">
-                            <option value="student">Estudiante</option>
-                            <option value="study_visit">Visita de estudio</option>
-                            <option value="exchange">Intercambio</option>
+                            <option value="student">{{ t('visaStudent') }}</option>
+                            <option value="study_visit">{{ t('visaStudyVisit') }}</option>
+                            <option value="exchange">{{ t('visaExchange') }}</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Nivel de Ruso</label>
+                        <label>{{ t('profileRussianLevel') }}</label>
                         <select v-model="profile.russian_level">
-                            <option>A1 - Principiante</option>
-                            <option>A2 - Elemental</option>
-                            <option>B1 - Intermedio</option>
-                            <option>B2 - Avanzado</option>
-                            <option>C1 - Profesional</option>
+                            <option>A1 - {{ t('levelBeginner') }}</option>
+                            <option>A2 - {{ t('levelElementary') }}</option>
+                            <option>B1 - {{ t('levelIntermediate') }}</option>
+                            <option>B2 - {{ t('levelAdvanced') }}</option>
+                            <option>C1 - {{ t('levelProfessional') }}</option>
                         </select>
                     </div>
                 </div>
@@ -548,10 +562,15 @@
             <!-- Chat Section -->
             <section class="chat-section">
                 <div class="chat-header">
-                    <h2>💬 Chat con el Asistente</h2>
-                    <button @click="clearChat" style="padding: 6px 12px; font-size: 0.75rem; background: #f1f5f9; border: none; border-radius: 6px; cursor: pointer;">
-                        Limpiar
-                    </button>
+                    <h2>💬 {{ t('chatTitle') }}</h2>
+                    <div class="chat-language-selector">
+                        <label>{{ t('responseLanguage') }}:</label>
+                        <select v-model="chatLanguage" @change="saveChatLanguage">
+                            <option v-for="(name, code) in chatLanguages" :key="code" :value="code">
+                                {{ name }}
+                            </option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="chat-messages" ref="chatMessages">
@@ -559,13 +578,13 @@
                     <div v-if="chatMessages.length === 0" class="message bot">
                         <div class="message-avatar">🤖</div>
                         <div class="message-content">
-                            <p>¡Hola! Soy tu asistente de integración cultural para KubGU.</p>
-                            <p>Puedo ayudarte con:</p>
-                            <p>• Trámites de registro y visas</p>
-                            <p>• Información sobre el dormitorio</p>
-                            <p>• Consejos culturales y prácticas</p>
-                            <p>• Frases útiles en ruso</p>
-                            <p>¿En qué puedo ayudarte?</p>
+                            <p>{{ t('welcomeMessage') }}</p>
+                            <p>{{ t('welcomeCanHelp') }}</p>
+                            <p>• {{ t('welcomeItem1') }}</p>
+                            <p>• {{ t('welcomeItem2') }}</p>
+                            <p>• {{ t('welcomeItem3') }}</p>
+                            <p>• {{ t('welcomeItem4') }}</p>
+                            <p>{{ t('welcomeHowHelp') }}</p>
                         </div>
                     </div>
 
@@ -575,13 +594,19 @@
                         <div class="message-content">
                             <p v-html="formatMessage(msg.text)"></p>
                             <div v-if="msg.sources && msg.sources.length" class="message-sources">
-                                📚 Fuentes:
+                                📚 {{ t('sources') }}:
                                 <div v-for="source in msg.sources" :key="source">{{ source }}</div>
                             </div>
-                            <div v-if="msg.audio" style="margin-top: 10px;">
-                                <audio :src="msg.audio" controls style="width: 200px;"></audio>
-                            </div>
                         </div>
+                        <!-- Audio button for bot messages - uses message's detected language -->
+                        <button
+                            v-if="msg.type === 'bot' && msg.text"
+                            @click="speakMessage(msg.text, msg.detectedLanguage || 'ru')"
+                            class="btn-voice"
+                            :title="t('listenToResponse')"
+                        >
+                            🔊
+                        </button>
                     </div>
 
                     <!-- Typing indicator -->
@@ -600,36 +625,27 @@
                 <div class="chat-input">
                     <input
                         v-model="chatInput"
-                        placeholder="Escribe tu pregunta..."
+                        :placeholder="t('chatPlaceholder')"
                         @keyup.enter="sendMessage"
                         :disabled="isTyping"
                     >
-                    <button
-                        v-if="lastBotMessage"
-                        @click="speakMessage(lastBotMessage)"
-                        class="btn-voice"
-                        :class="{recording: isRecording}"
-                        title="Escuchar respuesta"
-                    >
-                        🔊
-                    </button>
                     <button @click="sendMessage" class="btn-primary" :disabled="isTyping || !chatInput.trim()">
-                        Enviar
+                        {{ t('send') }}
                     </button>
                 </div>
             </section>
 
             <!-- Phrases Section -->
             <section class="phrases-section">
-                <h2>🗣️ Frases Útiles en Ruso</h2>
+                <h2>🗣️ {{ t('phrasesTitle') }}</h2>
                 <div class="phrases-grid">
                     <div v-for="phrase in phrases" :key="phrase.id" class="phrase-card" @click="selectPhrase(phrase)">
                         <div class="phrase-russian">{{ phrase.russian }}</div>
                         <div class="phrase-translit">{{ phrase.transliteration }}</div>
-                        <div class="phrase-translation">{{ phrase.english }}</div>
+                        <div class="phrase-translation">{{ phraseTranslation(phrase) }}</div>
                         <div class="phrase-actions">
-                            <button @click.stop="speakText(phrase.russian, 'ru')">🔊 Escuchar</button>
-                            <button @click.stop="copyToClipboard(phrase.russian)">📋 Copiar</button>
+                            <button @click.stop="speakText(phrase.russian, 'ru')">{{ t('listen') }}</button>
+                            <button @click.stop="copyToClipboard(phrase.russian)">{{ t('copy') }}</button>
                         </div>
                     </div>
                 </div>
@@ -637,28 +653,199 @@
         </div>
 
         <footer class="footer">
-            <p>Asistente de Integración Cultural - Universidad Estatal de Kubán v0.5.0</p>
+            <p>{{ t('footerText') }}</p>
         </footer>
     </div>
 
     <script>
         const { createApp } = Vue;
 
+        // i18n dictionary - UI translations
+        const i18n = {
+            es: {
+                appTitle: 'Asistente KubGU',
+                uiLanguage: 'Idioma UI',
+                statusOnline: 'En línea',
+                statusOffline: 'Sin conexión',
+                profileTitle: 'Mi Perfil',
+                profileName: 'Nombre',
+                profileNamePlaceholder: 'Tu nombre',
+                profileCountry: 'País',
+                selectPlaceholder: 'Seleccionar...',
+                other: 'Otro',
+                profileVisaType: 'Tipo de Visa',
+                visaStudent: 'Estudiante',
+                visaStudyVisit: 'Visita de estudio',
+                visaExchange: 'Intercambio',
+                profileRussianLevel: 'Nivel de Ruso',
+                levelBeginner: 'Principiante',
+                levelElementary: 'Elemental',
+                levelIntermediate: 'Intermedio',
+                levelAdvanced: 'Avanzado',
+                levelProfessional: 'Profesional',
+                chatTitle: 'Chat con el Asistente',
+                responseLanguage: 'Idioma de respuesta',
+                welcomeMessage: '¡Hola! Soy tu asistente de integración cultural para KubGU.',
+                welcomeCanHelp: 'Puedo ayudarte con:',
+                welcomeItem1: 'Trámites de registro y visas',
+                welcomeItem2: 'Información sobre el dormitorio',
+                welcomeItem3: 'Consejos culturales y prácticas',
+                welcomeItem4: 'Frases útiles en ruso',
+                welcomeHowHelp: '¿En qué puedo ayudarte?',
+                sources: 'Fuentes',
+                listenToResponse: 'Escuchar respuesta',
+                chatPlaceholder: 'Escribe tu pregunta...',
+                send: 'Enviar',
+                phrasesTitle: 'Frases Útiles en Ruso',
+                listen: '🔊 Escuchar',
+                copy: '📋 Copiar',
+                footerText: 'Asistente de Integración Cultural - Universidad Estatal de Kubán v0.5.0',
+                copied: 'Copiado al portapapeles',
+                clearChat: 'Limpiar',
+                detectedLang: 'Detectado'
+            },
+            en: {
+                appTitle: 'KubGU Assistant',
+                uiLanguage: 'UI Language',
+                statusOnline: 'Online',
+                statusOffline: 'Offline',
+                profileTitle: 'My Profile',
+                profileName: 'Name',
+                profileNamePlaceholder: 'Your name',
+                profileCountry: 'Country',
+                selectPlaceholder: 'Select...',
+                other: 'Other',
+                profileVisaType: 'Visa Type',
+                visaStudent: 'Student',
+                visaStudyVisit: 'Study Visit',
+                visaExchange: 'Exchange',
+                profileRussianLevel: 'Russian Level',
+                levelBeginner: 'Beginner',
+                levelElementary: 'Elementary',
+                levelIntermediate: 'Intermediate',
+                levelAdvanced: 'Advanced',
+                levelProfessional: 'Professional',
+                chatTitle: 'Chat with Assistant',
+                responseLanguage: 'Response language',
+                welcomeMessage: "Hello! I'm your cultural integration assistant for KubGU.",
+                welcomeCanHelp: 'I can help you with:',
+                welcomeItem1: 'Registration and visa procedures',
+                welcomeItem2: 'Dormitory information',
+                welcomeItem3: 'Cultural tips and practices',
+                welcomeItem4: 'Useful Russian phrases',
+                welcomeHowHelp: 'How can I help you?',
+                sources: 'Sources',
+                listenToResponse: 'Listen to response',
+                chatPlaceholder: 'Type your question...',
+                send: 'Send',
+                phrasesTitle: 'Useful Russian Phrases',
+                listen: '🔊 Listen',
+                copy: '📋 Copy',
+                footerText: 'Cultural Integration Assistant - Kubán State University v0.5.0',
+                copied: 'Copied to clipboard',
+                clearChat: 'Clear',
+                detectedLang: 'Detected'
+            },
+            ru: {
+                appTitle: 'Ассистент КубГУ',
+                uiLanguage: 'Язык интерфейса',
+                statusOnline: 'В сети',
+                statusOffline: 'Не в сети',
+                profileTitle: 'Мой профиль',
+                profileName: 'Имя',
+                profileNamePlaceholder: 'Ваше имя',
+                profileCountry: 'Страна',
+                selectPlaceholder: 'Выбрать...',
+                other: 'Другое',
+                profileVisaType: 'Тип визы',
+                visaStudent: 'Студент',
+                visaStudyVisit: 'Учебный визит',
+                visaExchange: 'Обмен',
+                profileRussianLevel: 'Уровень русского',
+                levelBeginner: 'Начинающий',
+                levelElementary: 'Элементарный',
+                levelIntermediate: 'Средний',
+                levelAdvanced: 'Продвинутый',
+                levelProfessional: 'Профессиональный',
+                chatTitle: 'Чат с ассистентом',
+                responseLanguage: 'Язык ответа',
+                welcomeMessage: 'Привет! Я ваш ассистент по культурной интеграции в КубГУ.',
+                welcomeCanHelp: 'Я могу помочь с:',
+                welcomeItem1: 'Регистрация и визовые процедуры',
+                welcomeItem2: 'Информация об общежитии',
+                welcomeItem3: 'Культурные советы',
+                welcomeItem4: 'Полезные русские фразы',
+                welcomeHowHelp: 'Чем могу помочь?',
+                sources: 'Источники',
+                listenToResponse: 'Прослушать ответ',
+                chatPlaceholder: 'Введите ваш вопрос...',
+                send: 'Отправить',
+                phrasesTitle: 'Полезные русские фразы',
+                listen: '🔊 Слушать',
+                copy: '📋 Копировать',
+                footerText: 'Ассистент культурной интеграции - Кубанский госуниверситет v0.5.0',
+                copied: 'Скопировано',
+                clearChat: 'Очистить',
+                detectedLang: 'Обнаружен'
+            },
+            fr: {
+                appTitle: 'Assistant KubGU',
+                uiLanguage: 'Langue UI',
+                statusOnline: 'En ligne',
+                statusOffline: 'Hors ligne',
+                profileTitle: 'Mon Profil',
+                profileName: 'Nom',
+                profileNamePlaceholder: 'Votre nom',
+                profileCountry: 'Pays',
+                selectPlaceholder: 'Sélectionner...',
+                other: 'Autre',
+                profileVisaType: 'Type de Visa',
+                visaStudent: 'Étudiant',
+                visaStudyVisit: 'Visite d\'étude',
+                visaExchange: 'Échange',
+                profileRussianLevel: 'Niveau de Russe',
+                levelBeginner: 'Débutant',
+                levelElementary: 'Élémentaire',
+                levelIntermediate: 'Intermédiaire',
+                levelAdvanced: 'Avancé',
+                levelProfessional: 'Professionnel',
+                chatTitle: 'Chat avec l\'Assistant',
+                responseLanguage: 'Langue de réponse',
+                welcomeMessage: 'Bonjour! Je suis votre assistant d\'intégration culturelle pour KubGU.',
+                welcomeCanHelp: 'Je peux vous aider avec:',
+                welcomeItem1: 'Procédures d\'enregistrement et visa',
+                welcomeItem2: 'Informations sur le dortoir',
+                welcomeItem3: 'Conseils culturels',
+                welcomeItem4: 'Phrases russes utiles',
+                welcomeHowHelp: 'Comment puis-je vous aider?',
+                sources: 'Sources',
+                listenToResponse: 'Écouter la réponse',
+                chatPlaceholder: 'Tapez votre question...',
+                send: 'Envoyer',
+                phrasesTitle: 'Phrases Russes Utiles',
+                listen: '🔊 Écouter',
+                copy: '📋 Copier',
+                footerText: 'Assistant d\'Intégration Culturelle - Université d\'État de Kubán v0.5.0',
+                copied: 'Copié',
+                clearChat: 'Effacer',
+                detectedLang: 'Détecté'
+            }
+        };
+
         createApp({
             data() {
                 return {
+                    // UI Language (for page labels/buttons)
+                    uiLanguage: 'es',
+                    uiLanguages: { es: 'Español', en: 'English', ru: 'Русский', fr: 'Français' },
+
+                    // Chat Language (for assistant responses)
+                    chatLanguage: 'es',
+                    chatLanguages: { es: 'Español', en: 'English', ru: 'Русский', fr: 'Français' },
+
                     // System state
                     systemOnline: true,
                     sessionId: this.generateSessionId(),
-                    selectedLanguage: 'es',
-                    availableLanguages: {
-                        'es': 'Español',
-                        'en': 'English',
-                        'ru': 'Русский',
-                        'fr': 'Français',
-                        'de': 'Deutsch',
-                        'pt': 'Português'
-                    },
 
                     // Profile
                     profile: {
@@ -672,8 +859,6 @@
                     chatInput: '',
                     chatMessages: [],
                     isTyping: false,
-                    isRecording: false,
-                    lastBotMessage: null,
 
                     // Phrases
                     phrases: [
@@ -681,61 +866,95 @@
                             id: 1,
                             russian: "Мне нужна помощь",
                             transliteration: "Mne nuzhna pomoshch'",
-                            english: "Necesito ayuda"
+                            english: "I need help",
+                            spanish: "Necesito ayuda",
+                            french: "J'ai besoin d'aide"
                         },
                         {
                             id: 2,
                             russian: "Где находится МФЦ?",
                             transliteration: "Gde nakhoditsya MFC?",
-                            english: "¿Dónde está el MFC?"
+                            english: "Where is the MFC?",
+                            spanish: "¿Dónde está el MFC?",
+                            french: "Où est le MFC?"
                         },
                         {
                             id: 3,
                             russian: "Говорите медленнее, пожалуйста",
                             transliteration: "Govorite medlennee, pozhaluysta",
-                            english: "Hable más lento, por favor"
+                            english: "Speak more slowly, please",
+                            spanish: "Hable más lento, por favor",
+                            french: "Parlez plus lentement, s'il vous plaît"
                         },
                         {
                             id: 4,
                             russian: "Я не понимаю",
                             transliteration: "Ya ne ponimayu",
-                            english: "No entiendo"
+                            english: "I don't understand",
+                            spanish: "No entiendo",
+                            french: "Je ne comprends pas"
                         },
                         {
                             id: 5,
                             russian: "Сколько это стоит?",
                             transliteration: "Skol'ko eto stoit?",
-                            english: "¿Cuánto cuesta esto?"
+                            english: "How much does this cost?",
+                            spanish: "¿Cuánto cuesta esto?",
+                            french: "Combien ça coûte?"
                         },
                         {
                             id: 6,
                             russian: "Спасибо большое",
                             transliteration: "Spasibo bol'shoye",
-                            english: "Muchas gracias"
+                            english: "Thank you very much",
+                            spanish: "Muchas gracias",
+                            french: "Merci beaucoup"
                         },
                         {
                             id: 7,
                             russian: "Извините",
                             transliteration: "Izvinite",
-                            english: "Disculpe / Lo siento"
+                            english: "Excuse me / I'm sorry",
+                            spanish: "Disculpe / Lo siento",
+                            french: "Excusez-moi / Pardon"
                         },
                         {
                             id: 8,
                             russian: "Можно мне форму?",
                             transliteration: "Mozhno mne formu?",
-                            english: "¿Puedo tener un formulario?"
+                            english: "Can I have a form?",
+                            spanish: "¿Puedo tener un formulario?",
+                            french: "Puis-je avoir un formulaire?"
                         }
-                    ]
+                    ],
+
+                    // Audio cache
+                    audioCache: {}
                 };
             },
             mounted() {
+                // Load saved languages
+                this.uiLanguage = localStorage.getItem('kubgu_ui_language') || 'es';
+                this.chatLanguage = localStorage.getItem('kubgu_chat_language') || 'es';
                 this.checkSystemStatus();
-                // Periodically check status
                 setInterval(() => this.checkSystemStatus(), 30000);
             },
             methods: {
+                // i18n translation function
+                t(key) {
+                    return i18n[this.uiLanguage]?.[key] || i18n['es'][key] || key;
+                },
+
                 generateSessionId() {
                     return 'session_' + Math.random().toString(36).substring(2, 15);
+                },
+
+                saveUILanguage() {
+                    localStorage.setItem('kubgu_ui_language', this.uiLanguage);
+                },
+
+                saveChatLanguage() {
+                    localStorage.setItem('kubgu_chat_language', this.chatLanguage);
                 },
 
                 async checkSystemStatus() {
@@ -752,9 +971,34 @@
                     }
                 },
 
-                updateLanguage() {
-                    // Save language preference
-                    localStorage.setItem('kubgu_language', this.selectedLanguage);
+                // Detect language from response text
+                detectLanguage(text) {
+                    // Simple detection based on Cyrillic characters
+                    const cyrillicCount = (text.match(/[а-яА-ЯёЁ]/g) || []).length;
+                    const totalChars = text.replace(/\s/g, '').length;
+
+                    if (totalChars === 0) return this.chatLanguage;
+
+                    const cyrillicRatio = cyrillicCount / totalChars;
+
+                    if (cyrillicRatio > 0.3) return 'ru';  // Mostly Russian
+                    if (cyrillicRatio > 0.05) return 'ru'; // Some Russian
+
+                    // Check for common Spanish words
+                    const spanishWords = ['información', 'consulte', 'para', 'puede', 'donde', 'como'];
+                    const englishWords = ['information', 'consult', 'for', 'can', 'where', 'how'];
+                    const frenchWords = ['information', 'consulter', 'pour', 'peut', 'où', 'comment'];
+
+                    const textLower = text.toLowerCase();
+
+                    const spanishMatches = spanishWords.filter(w => textLower.includes(w)).length;
+                    const englishMatches = englishWords.filter(w => textLower.includes(w)).length;
+                    const frenchMatches = frenchWords.filter(w => textLower.includes(w)).length;
+
+                    if (spanishMatches > englishMatches && spanishMatches > frenchMatches) return 'es';
+                    if (frenchMatches > englishMatches && frenchMatches > spanishMatches) return 'fr';
+
+                    return 'en';
                 },
 
                 async sendMessage() {
@@ -767,7 +1011,8 @@
                     this.chatMessages.push({
                         id: Date.now(),
                         type: 'user',
-                        text: userMessage
+                        text: userMessage,
+                        detectedLanguage: this.chatLanguage
                     });
 
                     // Show typing indicator
@@ -782,7 +1027,7 @@
                             body: JSON.stringify({
                                 query: userMessage,
                                 user_id: this.sessionId,
-                                language: this.selectedLanguage,
+                                language: this.chatLanguage,
                                 session_id: this.sessionId
                             })
                         });
@@ -795,14 +1040,17 @@
 
                         // Remove typing indicator and add bot response
                         this.isTyping = false;
+
+                        // Detect the language of the response text
+                        const detectedLang = this.detectLanguage(data.answer);
+
                         this.chatMessages.push({
                             id: Date.now() + 1,
                             type: 'bot',
-                            text: data.answer || 'No tengo respuesta para eso.',
-                            sources: data.context || []
+                            text: data.answer || this.t('noResponse'),
+                            sources: data.context || [],
+                            detectedLanguage: detectedLang  // Store detected language
                         });
-
-                        this.lastBotMessage = data.answer;
 
                         // Scroll to bottom
                         this.$nextTick(() => {
@@ -817,13 +1065,24 @@
                         this.chatMessages.push({
                             id: Date.now() + 1,
                             type: 'bot',
-                            text: `❌ Error: ${error.message}. Verifica que el backend esté activo.`
+                            text: `❌ Error: ${error.message}. Verifica que el backend esté activo.`,
+                            detectedLanguage: 'es'
                         });
                     }
                 },
 
-                async speakText(text, lang = 'ru') {
+                // Speak text in specified language (not UI language)
+                async speakText(text, language) {
                     try {
+                        // Check cache first using text+language hash
+                        const cacheKey = this.hashText(text, language);
+                        if (this.audioCache[cacheKey]) {
+                            // Use cached audio
+                            const audio = new Audio(this.audioCache[cacheKey]);
+                            audio.play();
+                            return;
+                        }
+
                         const response = await fetch('/api/tts', {
                             method: 'POST',
                             headers: {
@@ -831,20 +1090,23 @@
                             },
                             body: JSON.stringify({
                                 text: text,
-                                language: lang
+                                language: language  // Use the text's language, not UI language
                             })
                         });
 
                         if (!response.ok) {
                             if (response.status === 503) {
-                                alert('Servicio TTS no disponible');
+                                alert(this.t('ttsUnavailable'));
                             }
                             return;
                         }
 
-                        // Get audio blob and play
+                        // Get audio blob and cache it
                         const audioBlob = await response.blob();
                         const audioUrl = URL.createObjectURL(audioBlob);
+
+                        // Cache for future use
+                        this.audioCache[cacheKey] = audioUrl;
 
                         const audio = new Audio(audioUrl);
                         audio.play();
@@ -854,31 +1116,52 @@
                     }
                 },
 
-                speakMessage(text) {
+                // Speak message using its detected language
+                speakMessage(text, detectedLanguage) {
                     if (text) {
-                        this.speakText(text, this.selectedLanguage === 'ru' ? 'ru' : 'es');
+                        this.speakText(text, detectedLanguage);
                     }
                 },
 
+                hashText(text, language) {
+                    // Simple hash for cache key
+                    let hash = 0;
+                    const str = text + language;
+                    for (let i = 0; i < str.length; i++) {
+                        const char = str.charCodeAt(i);
+                        hash = ((hash << 5) - hash) + char;
+                        hash = hash & hash;
+                    }
+                    return hash.toString(36);
+                },
+
+                phraseTranslation(phrase) {
+                    const langMap = {
+                        'es': 'spanish',
+                        'en': 'english',
+                        'ru': 'russian', // Return English translation for Russian UI
+                        'fr': 'french'
+                    };
+                    const field = langMap[this.uiLanguage] || 'english';
+                    return phrase[field] || phrase.english;
+                },
+
                 selectPhrase(phrase) {
-                    this.chatInput = `¿Cómo se dice "${phrase.english}" en ruso?`;
+                    this.chatInput = `${this.t('phraseClickHint')}: "${phrase.english}"`;
                 },
 
                 copyToClipboard(text) {
                     navigator.clipboard.writeText(text).then(() => {
-                        // Could show a toast notification
-                        alert('Copiado al portapapeles');
+                        alert(this.t('copied'));
                     });
                 },
 
                 formatMessage(text) {
-                    // Basic formatting: convert newlines to <br>
                     return text.replace(/\n/g, '<br>');
                 },
 
                 clearChat() {
                     this.chatMessages = [];
-                    this.lastBotMessage = null;
                     this.sessionId = this.generateSessionId();
                 }
             }

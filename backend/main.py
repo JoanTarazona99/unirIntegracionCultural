@@ -621,10 +621,22 @@ async def list_chat_sessions():
 
 # ==================== TTS/STT ENDPOINTS ====================
 
+# TTS Cache directory
+tts_cache_dir = Path(__file__).parent.parent / "data" / "tts_cache"
+tts_cache_dir.mkdir(parents=True, exist_ok=True)
+
+
+def get_tts_cache_path(text: str, language: str) -> Path:
+    """Generate cache file path from text + language hash"""
+    import hashlib
+    text_hash = hashlib.md5(f"{text}:{language}".encode()).hexdigest()
+    return tts_cache_dir / f"tts_{text_hash}_{language}.mp3"
+
+
 @app.post("/api/tts")
 async def text_to_speech(request: TTSRequest):
     """
-    Convert text to speech audio
+    Convert text to speech audio with caching
 
     Supports languages:
     - 'ru' (Russian)
@@ -635,6 +647,7 @@ async def text_to_speech(request: TTSRequest):
     - etc.
 
     Returns: MP3 audio stream
+    Caches generated audio for faster repeated requests
     """
     if not TTS_AVAILABLE:
         raise HTTPException(
@@ -643,6 +656,19 @@ async def text_to_speech(request: TTSRequest):
         )
 
     try:
+        # Check cache first
+        cache_path = get_tts_cache_path(request.text, request.language)
+        if cache_path.exists():
+            # Return cached file - much faster
+            return FileResponse(
+                cache_path,
+                media_type="audio/mpeg",
+                headers={
+                    "X-Cache": "HIT",
+                    "Content-Disposition": f"attachment; filename=speech_{request.language}.mp3"
+                }
+            )
+
         # Map language codes to gTTS format
         lang_map = {
             'ru': 'ru',      # Russian
@@ -664,18 +690,16 @@ async def text_to_speech(request: TTSRequest):
         # Create TTS object
         tts = gTTS(text=request.text, lang=gtts_lang, slow=False)
 
-        # Save to bytes buffer
-        mp3_buffer = io.BytesIO()
-        tts.write_to_fp(mp3_buffer)
-        mp3_buffer.seek(0)
+        # Save to cache file
+        tts.save(str(cache_path))
 
-        # Return as streaming response
-        return StreamingResponse(
-            mp3_buffer,
+        # Return cached file
+        return FileResponse(
+            cache_path,
             media_type="audio/mpeg",
             headers={
-                "Content-Disposition": f"attachment; filename=speech_{request.language}.mp3",
-                "Content-Length": str(mp3_buffer.getbuffer().nbytes)
+                "X-Cache": "MISS",
+                "Content-Disposition": f"attachment; filename=speech_{request.language}.mp3"
             }
         )
 
@@ -689,7 +713,7 @@ async def text_to_speech(request: TTSRequest):
 @app.post("/api/tts/file")
 async def text_to_speech_file(request: TTSRequest):
     """
-    Convert text to speech and save as file
+    Convert text to speech and save as file (with caching)
 
     Returns: File path and audio URL
     """
@@ -700,27 +724,49 @@ async def text_to_speech_file(request: TTSRequest):
         )
 
     try:
-        import hashlib
+        # Check cache first
+        cache_path = get_tts_cache_path(request.text, request.language)
+
+        if cache_path.exists():
+            # Return cached file info
+            return {
+                "status": "success",
+                "text": request.text,
+                "language": request.language,
+                "audio_url": f"/api/audio/cache/{cache_path.name}",
+                "file_path": str(cache_path),
+                "cached": True
+            }
+
+        # Map language codes
         lang_map = {
             'ru': 'ru',
             'es': 'es',
             'en': 'en',
+            'fr': 'fr',
+            'de': 'de',
         }
 
         gtts_lang = lang_map.get(request.language, request.language)
 
-        # Generate unique filename based on text hash
-        text_hash = hashlib.md5(request.text.encode()).hexdigest()[:12]
-        filename = f"tts_{text_hash}_{request.language}.mp3"
-        filepath = audio_dir / filename
-
-        # Create TTS and save
+        # Create TTS and save to cache
         tts = gTTS(text=request.text, lang=gtts_lang, slow=False)
-        tts.save(str(filepath))
+        tts.save(str(cache_path))
 
         return {
             "status": "success",
             "text": request.text,
+            "language": request.language,
+            "audio_url": f"/api/audio/cache/{cache_path.name}",
+            "file_path": str(cache_path),
+            "cached": False
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"TTS error: {str(e)}"
+        )
             "language": request.language,
             "audio_url": f"/api/audio/{filename}",
             "file_path": str(filepath)
@@ -801,6 +847,24 @@ async def get_audio_file(filename: str):
     filepath = audio_dir / filename
     if filepath.exists():
         return FileResponse(
+            filepath,
+            media_type="audio/mpeg",
+            filename=filename
+        )
+    raise HTTPException(status_code=404, detail="Audio file not found")
+
+
+@app.get("/api/audio/cache/{filename}")
+async def get_cached_audio_file(filename: str):
+    """Serve cached TTS audio files"""
+    filepath = tts_cache_dir / filename
+    if filepath.exists():
+        return FileResponse(
+            filepath,
+            media_type="audio/mpeg",
+            filename=filename
+        )
+    raise HTTPException(status_code=404, detail="Cached audio file not found")
             filepath,
             media_type="audio/mpeg",
             filename=filename
