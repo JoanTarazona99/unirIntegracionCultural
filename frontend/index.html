@@ -3,1383 +3,883 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistente de Integración Cultural - KubGU</title>
+    <title>Asistente KubGU - Integración Cultural</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg-light: #f8fafc;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-light);
             min-height: 100vh;
-            padding: 20px;
+            color: var(--text-dark);
         }
-        
-        #app {
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+            color: white;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
             max-width: 1200px;
             margin: 0 auto;
-        }
-        
-        .header {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        
-        .header p {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .card h2 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 500;
-        }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: inherit;
-        }
-        
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: transform 0.2s ease;
-        }
-        
-        button:hover {
-            transform: scale(1.05);
-        }
-        
-        button:active {
-            transform: scale(0.95);
-        }
-        
-        .phrase-item {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .phrase-russian {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .phrase-transliteration {
-            font-size: 12px;
-            color: #999;
-            font-style: italic;
-            margin-bottom: 5px;
-        }
-        
-        .phrase-english {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 8px;
-        }
-        
-        .phrase-meta {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        
-        .badge {
-            background: #e3f2fd;
-            color: #667eea;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
         }
-        
-        .chat-container {
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .lang-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lang-selector label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .lang-selector select {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .lang-selector select:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: var(--error);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Profile Card */
+        .profile-section {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .profile-section h2 {
+            font-size: 1.125rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Chat Section */
+        .chat-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             height: 500px;
-            margin-bottom: 30px;
         }
-        
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-light);
+        }
+
+        .chat-header h2 {
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .chat-messages {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
-            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
-        
+
         .message {
-            margin-bottom: 15px;
             display: flex;
             gap: 10px;
+            max-width: 85%;
         }
-        
+
         .message.user {
-            justify-content: flex-end;
+            align-self: flex-end;
+            flex-direction: row-reverse;
         }
-        
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .message.bot .message-avatar {
+            background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+        }
+
+        .message.user .message-avatar {
+            background: var(--text-light);
+        }
+
         .message-content {
-            background: #f0f0f0;
-            padding: 12px 15px;
-            border-radius: 15px;
-            max-width: 70%;
-            word-wrap: break-word;
+            background: var(--bg-light);
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 0.9375rem;
+            line-height: 1.5;
         }
-        
+
         .message.user .message-content {
-            background: #667eea;
+            background: var(--primary);
             color: white;
         }
-        
+
+        .message-content p {
+            margin-bottom: 8px;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Sources */
+        .message-sources {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            font-size: 0.8125rem;
+            color: var(--text-light);
+        }
+
+        .message.user .message-sources {
+            border-top-color: rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 12px;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-light);
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Chat Input */
         .chat-input {
             padding: 15px;
+            border-top: 1px solid var(--border);
             display: flex;
             gap: 10px;
+            background: white;
         }
-        
+
         .chat-input input {
             flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            font-size: 0.9375rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        
+
+        .chat-input input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
         .chat-input button {
-            padding: 10px 20px;
-            min-width: 80px;
-        }
-        
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #eee;
-        }
-        
-        .tab-button {
-            background: none;
+            padding: 12px 20px;
             border: none;
-            padding: 10px 20px;
-            cursor: pointer;
+            border-radius: 24px;
+            font-size: 0.9375rem;
             font-weight: 600;
-            color: #999;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s ease;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        
-        .tab-button.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
         }
-        
-        .alert {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            color: #856404;
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
         }
-        
-        .success {
-            background: #d4edda;
-            border-color: #28a745;
-            color: #155724;
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
-        
-        .grid-phrases {
+
+        .btn-voice {
+            background: var(--success);
+            color: white;
+            padding: 12px;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-voice:hover {
+            background: #059669;
+        }
+
+        .btn-voice.recording {
+            background: var(--error);
+            animation: pulse 1s infinite;
+        }
+
+        /* Phrases Section */
+        .phrases-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .phrases-section h2 {
+            font-size: 1.125rem;
+            margin-bottom: 15px;
+        }
+
+        .phrases-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .phrase-card {
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .phrase-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .phrase-russian {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .phrase-translit {
+            font-size: 0.8125rem;
+            color: var(--text-light);
+            font-style: italic;
+            margin-bottom: 4px;
+        }
+
+        .phrase-translation {
+            font-size: 0.875rem;
+            color: var(--text-dark);
+        }
+
+        .phrase-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .phrase-actions button {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .phrase-actions button:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light);
+            font-size: 0.8125rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .header-controls {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chat-input {
+                flex-wrap: wrap;
+            }
+
+            .chat-input input {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div id="app">
-        <div class="header">
-            <h1>🌍 Asistente de Integración Cultural</h1>
-            <p>Soporte inteligente para estudiantes extranjeros en KubGU</p>
-        </div>
-        
+        <header class="header">
+            <div class="header-content">
+                <h1>🌍 Asistente KubGU</h1>
+                <div class="header-controls">
+                    <div class="lang-selector">
+                        <label>🌐 Idioma:</label>
+                        <select v-model="selectedLanguage" @change="updateLanguage">
+                            <option v-for="(name, code) in availableLanguages" :key="code" :value="code">
+                                {{ name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="status-badge">
+                        <span :class="['status-dot', {offline: !systemOnline}]"></span>
+                        <span>{{ systemOnline ? 'En línea' : 'Sin conexión' }}</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
         <div class="container">
-            <!-- Sección de Perfil -->
-            <div class="card">
+            <!-- Profile Section -->
+            <section class="profile-section">
                 <h2>👤 Mi Perfil</h2>
-                <div class="form-group">
-                    <label>Nombre:</label>
-                    <input v-model="profile.name" type="text" placeholder="Tu nombre">
+                <div class="profile-grid">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input v-model="profile.name" type="text" placeholder="Tu nombre">
+                    </div>
+                    <div class="form-group">
+                        <label>País</label>
+                        <select v-model="profile.country">
+                            <option value="">Seleccionar...</option>
+                            <option>Vietnam</option>
+                            <option>China</option>
+                            <option>Kazakhstan</option>
+                            <option>Armenia</option>
+                            <option>Siria</option>
+                            <option>Egipto</option>
+                            <option>Marruecos</option>
+                            <option>Nigeria</option>
+                            <option>Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Visa</label>
+                        <select v-model="profile.visa_type">
+                            <option value="student">Estudiante</option>
+                            <option value="study_visit">Visita de estudio</option>
+                            <option value="exchange">Intercambio</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nivel de Ruso</label>
+                        <select v-model="profile.russian_level">
+                            <option>A1 - Principiante</option>
+                            <option>A2 - Elemental</option>
+                            <option>B1 - Intermedio</option>
+                            <option>B2 - Avanzado</option>
+                            <option>C1 - Profesional</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>País:</label>
-                    <select v-model="profile.country">
-                        <option>Afganistán</option>
-                        <option>Albania</option>
-                        <option>Alemania</option>
-                        <option>Andorra</option>
-                        <option>Angola</option>
-                        <option>Anguila</option>
-                        <option>Antártida</option>
-                        <option>Antigua y Barbuda</option>
-                        <option>Arabia Saudita</option>
-                        <option>Argelia</option>
-                        <option>Argentina</option>
-                        <option>Armenia</option>
-                        <option>Aruba</option>
-                        <option>Australia</option>
-                        <option>Austria</option>
-                        <option>Azerbaiyán</option>
-                        <option>Bahamas</option>
-                        <option>Bangladés</option>
-                        <option>Barbados</option>
-                        <option>Baréin</option>
-                        <option>Bélgica</option>
-                        <option>Belice</option>
-                        <option>Benín</option>
-                        <option>Bermuda</option>
-                        <option>Bielorrusia</option>
-                        <option>Birmania</option>
-                        <option>Bismarck</option>
-                        <option>Bolivia</option>
-                        <option>Bosnia y Herzegovina</option>
-                        <option>Botsuana</option>
-                        <option>Brasil</option>
-                        <option>Brunéi</option>
-                        <option>Bulgaria</option>
-                        <option>Burkina Faso</option>
-                        <option>Burundi</option>
-                        <option>Bután</option>
-                        <option>Cabo Verde</option>
-                        <option>Camboya</option>
-                        <option>Camerún</option>
-                        <option>Canadá</option>
-                        <option>Canal de Panamá</option>
-                        <option>Catar</option>
-                        <option>Chad</option>
-                        <option>Checoslovaquia</option>
-                        <option>Checa, República</option>
-                        <option>Chile</option>
-                        <option>China</option>
-                        <option>Chipre</option>
-                        <option>Ciudad del Vaticano</option>
-                        <option>Cocos (Keeling), Islas</option>
-                        <option>Colombia</option>
-                        <option>Comoras</option>
-                        <option>Congo</option>
-                        <option>Congo, República Democrática del</option>
-                        <option>Coral del Mar</option>
-                        <option>Corea del Norte</option>
-                        <option>Corea del Sur</option>
-                        <option>Coriza</option>
-                        <option>Corona</option>
-                        <option>Córcega</option>
-                        <option>Correo Vaticano</option>
-                        <option>Corso</option>
-                        <option>Costa Rica</option>
-                        <option>Costa de Marfil</option>
-                        <option>Croacia</option>
-                        <option>Cuba</option>
-                        <option>Curazao</option>
-                        <option>Dinamarca</option>
-                        <option>Dominica</option>
-                        <option>Ecadore</option>
-                        <option>Ecuador</option>
-                        <option>Egeo del Norte</option>
-                        <option>Egipto</option>
-                        <option>Eje Cafetero</option>
-                        <option>Ejes de Coordinación</option>
-                        <option>El Salvador</option>
-                        <option>Elefante Blanco</option>
-                        <option>Eliots, Islas</option>
-                        <option>Emiratos Árabes Unidos</option>
-                        <option>Enclave de Ifni</option>
-                        <option>Encuestas</option>
-                        <option>Enclaves Británicos</option>
-                        <option>Enquiquetas</option>
-                        <option>Entidades Políticas</option>
-                        <option>Equality</option>
-                        <option>Equinoccial</option>
-                        <option>Eritrea</option>
-                        <option>Escandinavias</option>
-                        <option>Escandinavia</option>
-                        <option>Escocia</option>
-                        <option>Eslovaco, República</option>
-                        <option>Eslovenia</option>
-                        <option>España</option>
-                        <option>Espías</option>
-                        <option>Esporas</option>
-                        <option>Esquimo</option>
-                        <option>Estados Unidos</option>
-                        <option>Estambul</option>
-                        <option>Estantes</option>
-                        <option>Estancia</option>
-                        <option>Estancias Asiáticas</option>
-                        <option>Estancias en el Pacífico</option>
-                        <option>Estancio</option>
-                        <option>Estaniquia</option>
-                        <option>Estanislao</option>
-                        <option>Estanislaos</option>
-                        <option>Estanizas</option>
-                        <option>Estanización</option>
-                        <option>Estanizador</option>
-                        <option>Estanizadora</option>
-                        <option>Estanizadora Mecánica</option>
-                        <option>Estanizadora Moderna</option>
-                        <option>Estatorio</option>
-                        <option>Estatua de la Libertad</option>
-                        <option>Estatuas de Yapa</option>
-                        <option>Estructuralismo</option>
-                        <option>Estructuralista</option>
-                        <option>Estructura</option>
-                        <option>Estructurada</option>
-                        <option>Estructural</option>
-                        <option>Estructurales</option>
-                        <option>Estructurales de América Latina</option>
-                        <option>Estructurales Latinoamericanas</option>
-                        <option>Estructurales del Caribe</option>
-                        <option>Estructurales del Pacífico</option>
-                        <option>Estructurales Mundiales</option>
-                        <option>Estructuralismo Avanzado</option>
-                        <option>Estructuralismo del Caribe</option>
-                        <option>Estructuralismo Latinoamericano</option>
-                        <option>Estructuralismo Moderno</option>
-                        <option>Estructuralismo Postcomunista</option>
-                        <option>Estructura de Clases</option>
-                        <option>Estructura de Control</option>
-                        <option>Estructura de Determinación</option>
-                        <option>Estructura de Estabilidad</option>
-                        <option>Estructura de Gobernanza</option>
-                        <option>Estructura de Poder</option>
-                        <option>Estructura de Soporte</option>
-                        <option>Estonia</option>
-                        <option>Estoniano</option>
-                        <option>Estoy Aquí</option>
-                        <option>États-Unis</option>
-                        <option>Estrecho de Bering</option>
-                        <option>Estrecho de Magallanes</option>
-                        <option>Estrellas y Franjas</option>
-                        <option>Estremadura</option>
-                        <option>Estrés</option>
-                        <option>Estría</option>
-                        <option>Estribo</option>
-                        <option>Estribor</option>
-                        <option>Estrical</option>
-                        <option>Estricnina</option>
-                        <option>Estricte</option>
-                        <option>Estricto</option>
-                        <option>Estridor</option>
-                        <option>Estridencia</option>
-                        <option>Estridente</option>
-                        <option>Estridentemente</option>
-                        <option>Estridilla</option>
-                        <option>Estridio</option>
-                        <option>Estridita</option>
-                        <option>Estrídula</option>
-                        <option>Estrídulo</option>
-                        <option>Estriduloso</option>
-                        <option>Estriento</option>
-                        <option>Estrígil</option>
-                        <option>Estrigosa</option>
-                        <option>Estrigoso</option>
-                        <option>Estría</option>
-                        <option>Estrilidad</option>
-                        <option>Estrilio</option>
-                        <option>Estrilla</option>
-                        <option>Estrilla de Palva</option>
-                        <option>Estrilla de Palva Fina</option>
-                        <option>Estrilla de Palva Gruesa</option>
-                        <option>Estrilla de Palva Media</option>
-                        <option>Estrilla Fina</option>
-                        <option>Estrilla Gruesa</option>
-                        <option>Estrilla Media</option>
-                        <option>Estrilla Ordinaria</option>
-                        <option>Estrilla Super Fina</option>
-                        <option>Estrillada</option>
-                        <option>Estrillado</option>
-                        <option>Estrillador</option>
-                        <option>Estrilladora</option>
-                        <option>Estrilladora Moderna</option>
-                        <option>Estrillador de Palva</option>
-                        <option>Estrillador Manual</option>
-                        <option>Estrillador Mecánico</option>
-                        <option>Estrillador Motorizado</option>
-                        <option>Estrilladora Automática</option>
-                        <option>Estrilladora de Palva</option>
-                        <option>Estrilladora Manual</option>
-                        <option>Estrilladora Mecánica</option>
-                        <option>Estrilladora Motorizada</option>
-                        <option>Estrilladora Semi Automática</option>
-                        <option>Estrilladora Super Automática</option>
-                        <option>Estrilladora Ultra Automática</option>
-                        <option>Estrillaje</option>
-                        <option>Estrillamiento</option>
-                        <option>Estrillar</option>
-                        <option>Estrillazgo</option>
-                        <option>Estrillería</option>
-                        <option>Estrillería de Palva</option>
-                        <option>Estrillería Fina</option>
-                        <option>Estrillería Gruesa</option>
-                        <option>Estrillería Media</option>
-                        <option>Estrillería Ordinaria</option>
-                        <option>Estrillería Super Fina</option>
-                        <option>Estrilleta</option>
-                        <option>Estrillín</option>
-                        <option>Estrillina</option>
-                        <option>Estrillín de Palva</option>
-                        <option>Estrillín Fino</option>
-                        <option>Estrillín Grueso</option>
-                        <option>Estrillín Medio</option>
-                        <option>Estrillín Ordinario</option>
-                        <option>Estrillín Super Fino</option>
-                        <option>Estrillina de Palva</option>
-                        <option>Estrillina Fina</option>
-                        <option>Estrillina Gruesa</option>
-                        <option>Estrillina Media</option>
-                        <option>Estrillina Ordinaria</option>
-                        <option>Estrillina Super Fina</option>
-                        <option>Estonia</option>
-                        <option>Estiopia</option>
-                        <option>Etiopía</option>
-                        <option>Fiji</option>
-                        <option>Filipinas</option>
-                        <option>Finlandia</option>
-                        <option>Francia</option>
-                        <option>Gales</option>
-                        <option>Galicia</option>
-                        <option>Gambia</option>
-                        <option>Gaza</option>
-                        <option>Georgia</option>
-                        <option>Ghana</option>
-                        <option>Gibraltar</option>
-                        <option>Grecia</option>
-                        <option>Groenlandia</option>
-                        <option>Guadeloupe</option>
-                        <option>Guam</option>
-                        <option>Guanajuato</option>
-                        <option>Guantánamo</option>
-                        <option>Guarda Oriental</option>
-                        <option>Guardiana</option>
-                        <option>Guardarropa</option>
-                        <option>Guarnición</option>
-                        <option>Guarnición Fronteriza</option>
-                        <option>Guarnición Militar</option>
-                        <option>Guarnición Naval</option>
-                        <option>Guarnición Vaticana</option>
-                        <option>Guarniciones del Ejército</option>
-                        <option>Guarnidor</option>
-                        <option>Guarnidora</option>
-                        <option>Guarnidura</option>
-                        <option>Guarnil</option>
-                        <option>Guarnición de Adorno</option>
-                        <option>Guarnición de Defensa</option>
-                        <option>Guarnición de Frontera</option>
-                        <option>Guarnición de Guarda</option>
-                        <option>Guarnición de Mando</option>
-                        <option>Guarnición de Patrulla</option>
-                        <option>Guarnición de Retaguardia</option>
-                        <option>Guarnición de Reserva</option>
-                        <option>Guarnición de Retén</option>
-                        <option>Guarnición de Retén Avanzado</option>
-                        <option>Guarnición de Retén de Avance</option>
-                        <option>Guarnición de Retén de Defensa</option>
-                        <option>Guarnición de Retén de Frontera</option>
-                        <option>Guarnición de Retén de Guarda</option>
-                        <option>Guarnición de Retén de Mando</option>
-                        <option>Guarnición de Retén de Patrulla</option>
-                        <option>Guarnición de Retén de Reserva</option>
-                        <option>Guarnición de Retén de Retaguardia</option>
-                        <option>Guarnición de Retén Dinámico</option>
-                        <option>Guarnición de Retén Estático</option>
-                        <option>Guarnición de Retén Fijo</option>
-                        <option>Guarnición de Retén Itinerante</option>
-                        <option>Guarnición de Retén Móvil</option>
-                        <option>Guarnición de Retén Permanente</option>
-                        <option>Guarnición de Retén Semipermanente</option>
-                        <option>Guarnición de Retén Temporal</option>
-                        <option>Guarnición de Retén Transitorio</option>
-                        <option>Guarnición de Tradición</option>
-                        <option>Guarnición de Vigilancia</option>
-                        <option>Guarnición Defensiva</option>
-                        <option>Guarnición Estratégica</option>
-                        <option>Guarnición Externa</option>
-                        <option>Guarnición Fronteriza Aérea</option>
-                        <option>Guarnición Fronteriza Marítima</option>
-                        <option>Guarnición Fronteriza Terrestre</option>
-                        <option>Guarnición Fronteriza Tripartita</option>
-                        <option>Guarnición Fronteriza Trilateral</option>
-                        <option>Guarnición Funcional</option>
-                        <option>Guarnición Geográfica</option>
-                        <option>Guarnición Humana</option>
-                        <option>Guarnición Interna</option>
-                        <option>Guarnición Inmóvil</option>
-                        <option>Guarnición Insigne</option>
-                        <option>Guarnición Institucional</option>
-                        <option>Guarnición Integrada</option>
-                        <option>Guarnición Interagencial</option>
-                        <option>Guarnición Interamericana</option>
-                        <option>Guarnición Intercomunal</option>
-                        <option>Guarnición Interdepartamental</option>
-                        <option>Guarnición Interdistrital</option>
-                        <option>Guarnición Interestatal</option>
-                        <option>Guarnición Interinstitucional</option>
-                        <option>Guarnición Interministerial</option>
-                        <option>Guarnición Internacional</option>
-                        <option>Guarnición Internacionalizada</option>
-                        <option>Guarnición Internaval</option>
-                        <option>Guarnición Interprovincial</option>
-                        <option>Guarnición Interregional</option>
-                        <option>Guatemala</option>
-                        <option>Guayana Francesa</option>
-                        <option>Guyana</option>
-                        <option>Guinea</option>
-                        <option>Guinea Ecuatorial</option>
-                        <option>Guinea-Bisáu</option>
-                        <option>Guisa Pirata</option>
-                        <option>Guitarra</option>
-                        <option>Guitarra Acústica</option>
-                        <option>Guitarra Clásica</option>
-                        <option>Guitarra Eléctrica</option>
-                        <option>Guitarra Flamenca</option>
-                        <option>Guitarra Morena</option>
-                        <option>Guitarra Portuguesa</option>
-                        <option>Guitarra Solista</option>
-                        <option>Guitarra Tenor</option>
-                        <option>Guitarrazo</option>
-                        <option>Guitarrera</option>
-                        <option>Guitarrera de Málaga</option>
-                        <option>Guitarrera de Valencia</option>
-                        <option>Guitarrera Mozo</option>
-                        <option>Guitarrera Señora</option>
-                        <option>Guitarra Rítmica</option>
-                        <option>Guitarra Romántica</option>
-                        <option>Guitarra Sinfónica</option>
-                        <option>Guitarra Solista Avanzada</option>
-                        <option>Guitarra Solista Principiante</option>
-                        <option>Guitarra Tenor Avanzada</option>
-                        <option>Guitarra Tenor Intermedia</option>
-                        <option>Guitarra Tenor Principiante</option>
-                        <option>Guitarría</option>
-                        <option>Guitarra Acústica Avanzada</option>
-                        <option>Guitarra Acústica Intermedia</option>
-                        <option>Guitarra Acústica Principiante</option>
-                        <option>Guitarra Clásica Avanzada</option>
-                        <option>Guitarra Clásica Intermedia</option>
-                        <option>Guitarra Clásica Principiante</option>
-                        <option>Guitarra Eléctrica Avanzada</option>
-                        <option>Guitarra Eléctrica Intermedia</option>
-                        <option>Guitarra Eléctrica Principiante</option>
-                        <option>Guitarra Flamenca Avanzada</option>
-                        <option>Guitarra Flamenca Intermedia</option>
-                        <option>Guitarra Flamenca Principiante</option>
-                        <option>Guitarra Portuguesa Avanzada</option>
-                        <option>Guitarra Portuguesa Intermedia</option>
-                        <option>Guitarra Portuguesa Principiante</option>
-                        <option>Haití</option>
-                        <option>Holanda</option>
-                        <option>Honduras</option>
-                        <option>Hong Kong</option>
-                        <option>Hungría</option>
-                        <option>India</option>
-                        <option>Indonesia</option>
-                        <option>Irak</option>
-                        <option>Irán</option>
-                        <option>Irlanda</option>
-                        <option>Irlanda del Norte</option>
-                        <option>Isla Baffin</option>
-                        <option>Isla de Man</option>
-                        <option>Isla Mauricio</option>
-                        <option>Isla Norfolk</option>
-                        <option>Islandia</option>
-                        <option>Islas Åland</option>
-                        <option>Islas Ángeles</option>
-                        <option>Islas Anguila</option>
-                        <option>Islas Antillas</option>
-                        <option>Islas Antillas Holandesas</option>
-                        <option>Islas Antillas Mayores</option>
-                        <option>Islas Antillas Menores</option>
-                        <option>Islas Archipiélago</option>
-                        <option>Islas Arenales</option>
-                        <option>Islas Atlánticas</option>
-                        <option>Islas Aurora</option>
-                        <option>Islas Baleares</option>
-                        <option>Islas Bálticas</option>
-                        <option>Islas Banda</option>
-                        <option>Islas Banda Neira</option>
-                        <option>Islas Banda Oriental</option>
-                        <option>Islas Banda Occidental</option>
-                        <option>Islas Bancos</option>
-                        <option>Islas Barbados</option>
-                        <option>Islas Barlovento</option>
-                        <option>Islas Bárnicas</option>
-                        <option>Islas Barra Honda</option>
-                        <option>Islas Barrera de Coral</option>
-                        <option>Islas Bergantín</option>
-                        <option>Islas Berlengas</option>
-                        <option>Islas Bermudas</option>
-                        <option>Islas Bernadinas</option>
-                        <option>Islas Berrios</option>
-                        <option>Islas Bertoni</option>
-                        <option>Islas Biaff</option>
-                        <option>Islas Biarritz</option>
-                        <option>Islas Biota</option>
-                        <option>Islas Biozas</option>
-                        <option>Islas Bisbee</option>
-                        <option>Islas Bismarck</option>
-                        <option>Islas Bismarck</option>
-                        <option>Islas Bitar</option>
-                        <option>Islas Bituro</option>
-                        <option>Islas Bituros</option>
-                        <option>Islas Blancas</option>
-                        <option>Islas Blancas de Antariño</option>
-                        <option>Islas Blancas de Antilla</option>
-                        <option>Islas Blancas de Canarias</option>
-                        <option>Islas Blancas de Caribe</option>
-                        <option>Islas Blancas de Castilla</option>
-                        <option>Islas Blancas de Cataluña</option>
-                        <option>Islas Blancas de Córdoba</option>
-                        <option>Islas Blancas de Creta</option>
-                        <option>Islas Blancas de Dinamarca</option>
-                        <option>Islas Blancas de España</option>
-                        <option>Islas Blancas de Finlandia</option>
-                        <option>Islas Blancas de Francia</option>
-                        <option>Islas Blancas de Galcia</option>
-                        <option>Islas Blancas de Galicia</option>
-                        <option>Islas Blancas de Gambier</option>
-                        <option>Islas Blancas de Garífunas</option>
-                        <option>Islas Blancas de Golandrinas</option>
-                        <option>Islas Blancas de Golfo</option>
-                        <option>Islas Blancas de Gran Bretaña</option>
-                        <option>Islas Blancas de Grecia</option>
-                        <option>Islas Blancas de Groenlandia</option>
-                        <option>Islas Blancas de Guayana</option>
-                        <option>Islas Blancas de Guarnación</option>
-                        <option>Islas Blancas de Guarniciones</option>
-                        <option>Islas Blancas de Guerra</option>
-                        <option>Islas Blancas de Guerrero</option>
-                        <option>Islas Blancas de Guinea</option>
-                        <option>Islas Blancas de Guinea Ecuatorial</option>
-                        <option>Islas Blancas de Guinea-Bisáu</option>
-                        <option>Islas Blancas de Guitarra</option>
-                        <option>Islas Blancas de Guitarlina</option>
-                        <option>Islas Blancas de Guitza</option>
-                        <option>Islas Blancas de Guiza</option>
-                        <option>Islas Cantábricas</option>
-                        <option>Islas Canarias</option>
-                        <option>Islas Cícladas</option>
-                        <option>Islas Cocos</option>
-                        <option>Islas Cook</option>
-                        <option>Islas Cumbres Submarinas</option>
-                        <option>Islas de Barlovento</option>
-                        <option>Islas de Sotavento</option>
-                        <option>Islas de Turquía y Caicos</option>
-                        <option>Islas del Canal</option>
-                        <option>Islas del Silencio</option>
-                        <option>Islas Espóradas</option>
-                        <option>Islas Estaban</option>
-                        <option>Islas Esteban</option>
-                        <option>Islas Filipinas del Sur</option>
-                        <option>Islas Filipinas del Norte</option>
-                        <option>Islas Filipinas Centrales</option>
-                        <option>Islas Fiji</option>
-                        <option>Islas Filipinas</option>
-                        <option>Islas Finlandesas</option>
-                        <option>Islas Fior</option>
-                        <option>Islas Fiordos</option>
-                        <option>Islas Flamenca</option>
-                        <option>Islas Florecidas</option>
-                        <option>Islas Flores</option>
-                        <option>Islas Fort</option>
-                        <option>Islas Fortis</option>
-                        <option>Islas Formosa</option>
-                        <option>Islas Formosanas</option>
-                        <option>Islas Fortalezas</option>
-                        <option>Islas Fracas</option>
-                        <option>Islas Francia Antártica</option>
-                        <option>Islas Francia Ecuatorial</option>
-                        <option>Islas Francia Occidental</option>
-                        <option>Islas Francia Oriental</option>
-                        <option>Islas Francia Polar</option>
-                        <option>Islas Francesas del Pacífico</option>
-                        <option>Islas Francesas del Atlántico</option>
-                        <option>Islas Francesas del Caribe</option>
-                        <option>Islas Francesas del Índico</option>
-                        <option>Islas Francesas Occidentales</option>
-                        <option>Islas Francesas Orientales</option>
-                        <option>Islas Francesas Australes</option>
-                        <option>Islas Francesas Boreales</option>
-                        <option>Islas Francesas Centrales</option>
-                        <option>Islas Francesas Polares</option>
-                        <option>Islas Francesas Tropicales</option>
-                        <option>Islas Francesas Subtropicales</option>
-                        <option>Islas Francesas Templadas</option>
-                        <option>Islas Francesas Polares</option>
-                        <option>Islas Francesas Árticas</option>
-                        <option>Islas Francesas Antárticas</option>
-                        <option>Islas Francesas Subantárticas</option>
-                        <option>Islas Francesas Ecuatoriales</option>
-                        <option>Islas Francesas Periécuatoriales</option>
-                        <option>Islas Francesas Tropicales Húmedas</option>
-                        <option>Islas Francesas Tropicales Secas</option>
-                        <option>Islas Francesas Tropicales Semiáridas</option>
-                        <option>Islas Francesas Subtropicales Húmedas</option>
-                        <option>Islas Francesas Subtropicales Secas</option>
-                        <option>Islas Francesas Subtropicales Semiáridas</option>
-                        <option>Islas Francesas Templadas Húmedas</option>
-                        <option>Islas Francesas Templadas Secas</option>
-                        <option>Islas Francesas Templadas Semiáridas</option>
-                        <option>Islas Francesas Continentales Oceánicas</option>
-                        <option>Islas Francesas Continentales Costeras</option>
-                        <option>Islas Galápagos</option>
-                        <option>Islas Galicia</option>
-                        <option>Islas Gálico</option>
-                        <option>Islas Galilaea</option>
-                        <option>Islas Galinea</option>
-                        <option>Islas Galineta</option>
-                        <option>Islas Galoches</option>
-                        <option>Islas Gambier</option>
-                        <option>Islas Garde</option>
-                        <option>Islas Gardenia</option>
-                        <option>Islas Gardenias</option>
-                        <option>Islas Gardinela</option>
-                        <option>Islas Gardinelas</option>
-                        <option>Islas Gárdenas</option>
-                        <option>Islas Gardenia</option>
-                        <option>Islas Gardenas</option>
-                        <option>Islas Gardenia</option>
-                        <option>Islas Gardenas</option>
-                        <option>Islas Gardenias</option>
-                        <option>Islas Gárdenias</option>
-                        <option>Islas Gardenia</option>
-                        <option>Islas Gardenia Tropical</option>
-                        <option>Islas Gardenia Subtropical</option>
-                        <option>Islas Gardenia Templada</option>
-                        <option>Islas Gardenia Polar</option>
-                        <option>Islas Gardenia Ártica</option>
-                        <option>Islas Gardenia Antártica</option>
-                        <option>Islas Gárdenas</option>
-                        <option>Islas Gardenita</option>
-                        <option>Islas Gardenita del Sur</option>
-                        <option>Islas Gardenita del Norte</option>
-                        <option>Islas Gardenita Central</option>
-                        <option>Islas Gardenita Oriental</option>
-                        <option>Islas Gardenita Occidental</option>
-                        <option>Islas Gariba</option>
-                        <option>Islas Gárida</option>
-                        <option>Islas Gariba</option>
-                        <option>Islas Gáriba</option>
-                        <option>Islas Garida</option>
-                        <option>Islas Gárida</option>
-                        <option>Islas Garinea</option>
-                        <option>Islas Garinnea</option>
-                        <option>Islas Garinea Alta</option>
-                        <option>Islas Garinea Baja</option>
-                        <option>Islas Garofano</option>
-                        <option>Islas Garófola</option>
-                        <option>Islas Garofola</option>
-                        <option>Islas Garófola Oriental</option>
-                        <option>Islas Garófola Occidental</option>
-                        <option>Islas Garofola Septentrional</option>
-                        <option>Islas Garofola Meridional</option>
-                        <option>Islas Garofola Central</option>
-                        <option>Islas Gárofolas</option>
-                        <option>Islas Garofolo</option>
-                        <option>Islas Garofolo Menor</option>
-                        <option>Islas Garofolo Mayor</option>
-                        <option>Islas Garófolo Medio</option>
-                        <option>Islas Garofoli</option>
-                        <option>Islas Garofoli del Sur</option>
-                        <option>Islas Garofoli del Norte</option>
-                        <option>Islas Garofoli del Centro</option>
-                        <option>Islas Garofoli Septentrionales</option>
-                        <option>Islas Garofoli Meridionales</option>
-                        <option>Islas Garofoli Centrales</option>
-                        <option>Islas Garofoli Orientales</option>
-                        <option>Islas Garofoli Occidentales</option>
-                        <option>Islas Garofoli Main</option>
-                        <option>Islas Garofoli Minor</option>
-                        <option>Islas Garofoli Principal</option>
-                        <option>Islas Garofoli Secundarias</option>
-                        <option>Islas Garofoli Terciarias</option>
-                        <option>Islas Garofoli Cuaternarias</option>
-                        <option>Islas Garofoli Quiernarias</option>
-                        <option>Islas Garota</option>
-                        <option>Islas Garotas</option>
-                        <option>Islas Garotazo</option>
-                        <option>Islas Garote</option>
-                        <option>Islas Garotes</option>
-                        <option>Islas Garotero</option>
-                        <option>Islas Garotería</option>
-                        <option>Islas Garotía</option>
-                        <option>Islas Garotial</option>
-                        <option>Islas Garotilla</option>
-                        <option>Islas Garotillo</option>
-                        <option>Islas Garotina</option>
-                        <option>Islas Garotina del Sur</option>
-                        <option>Islas Garotina del Norte</option>
-                        <option>Islas Garotina Central</option>
-                        <option>Islas Garotina Oriental</option>
-                        <option>Islas Garotina Occidental</option>
-                        <option>Islas Garotinales</option>
-                        <option>Islas Garotinenses</option>
-                        <option>Islas Garotinidad</option>
-                        <option>Islas Garotinididad</option>
-                        <option>Islas Garotinidad</option>
-                        <option>Islas Garotinar</option>
-                        <option>Islas Garotinado</option>
-                        <option>Islas Garotinador</option>
-                        <option>Islas Garote del Oriente</option>
-                        <option>Islas Garote del Occidente</option>
-                        <option>Islas Garote Septentrional</option>
-                        <option>Islas Garote Meridional</option>
-                        <option>Islas Garote Ecuatorial</option>
-                        <option>Islas Garote Atántica</option>
-                        <option>Islas Garote del Pacífico</option>
-                        <option>Islas Garote del Índico</option>
-                        <option>Islas Garote Ártica</option>
-                        <option>Islas Garote Antártica</option>
-                        <option>Islas Garota Tropical</option>
-                        <option>Islas Garota Subtropical</option>
-                        <option>Islas Garota Templada</option>
-                        <option>Islas Garota Fría</option>
-                        <option>Islas Garota Polar</option>
-                        <option>Islas Garota Ártica</option>
-                        <option>Islas Garota Antártica</option>
-                        <option>Islas Garota Subantártica</option>
-                        <option>Islas Gárrafa del Sur</option>
-                        <option>Islas Gárrafa del Norte</option>
-                        <option>Guatemala</option>
-                        <option>Guayana</option>
-                        <option>Guinea</option>
-                        <option>Guinea Ecuatorial</option>
-                        <option>Guinea-Bisáu</option>
-                        <option>Guinea Francesa</option>
-                        <option>Guernsey</option>
-                        <option>Guernsey Francés</option>
-                        <option>Guernsey Inglés</option>
-                        <option>Guernsey Italiano</option>
-                        <option>Guernsey Alemán</option>
-                        <option>Guernsey Español</option>
-                        <option>Guernsey Portugués</option>
-                        <option>Guernsey Holandés</option>
-                        <option>Guernsey Belga</option>
-                        <option>Guernsey Suizo</option>
-                        <option>Guernsey Sueco</option>
-                        <option>Guernsey Noruego</option>
-                        <option>Guernsey Danés</option>
-                        <option>Guernsey Finlandés</option>
-                        <option>Guernsey Islandés</option>
-                        <option>Guernsey Polaco</option>
-                        <option>Guernsey Checo</option>
-                        <option>Guernsey Eslovaco</option>
-                        <option>Guernsey Húngaro</option>
-                        <option>Guernsey Rumano</option>
-                        <option>Guernsey Búlgaro</option>
-                        <option>Guernsey Serbio</option>
-                        <option>Guernsey Croata</option>
-                        <option>Guernsey Esloveno</option>
-                        <option>Guernsey Bosnio</option>
-                        <option>Guernsey Macedonio</option>
-                        <option>Guernsey Griego</option>
-                        <option>Guernsey Turco</option>
-                        <option>Guernsey Árabe</option>
-                        <option>Guernsey Hebreo</option>
-                        <option>Guernsey Persa</option>
-                        <option>Guernsey Hindú</option>
-                        <option>Guernsey Urdu</option>
-                        <option>Guernsey Bengalí</option>
-                        <option>Guernsey Panyabí</option>
-                        <option>Guernsey Tailandés</option>
-                        <option>Guernsey Laosiano</option>
-                        <option>Guernsey Camboyano</option>
-                        <option>Guernsey Vietnamita</option>
-                        <option>Guernsey Chino</option>
-                        <option>Guernsey Coreano</option>
-                        <option>Guernsey Japonés</option>
-                        <option>Guernsey Mongol</option>
-                        <option>Guernsey Tibetano</option>
-                        <option>Guernsey Ruso</option>
-                        <option>Guernsey Ucraniano</option>
-                        <option>Guernsey Bielorruso</option>
-                        <option>Guernsey Moldavo</option>
-                        <option>Guernsey Kazajo</option>
-                        <option>Guernsey Uzbeko</option>
-                        <option>Guernsey Turcomano</option>
-                        <option>Guernsey Kirguiso</option>
-                        <option>Guernsey Tayiko</option>
-                        <option>Guernsey Afgano</option>
-                        <option>Guernsey Pakistaní</option>
-                        <option>Guernsey Bangladesí</option>
-                        <option>Guernsey Nepalí</option>
-                        <option>Guernsey Butanés</option>
-                        <option>Guernsey Ceilandés</option>
-                        <option>Guernsey Birmano</option>
-                        <option>Guernsey Tailandés</option>
-                        <option>Guernsey Malayo</option>
-                        <option>Guernsey Singapurense</option>
-                        <option>Guernsey Indonesio</option>
-                        <option>Guernsey Filipinense</option>
-                        <option>Guernsey Tailandés</option>
-                        <option>Guernsey Camboyano</option>
-                        <option>Guernsey Vietnamita</option>
-                        <option>Guernsey de Laos</option>
-                        <option>Guernsey Myanmarense</option>
-                        <option>Guernsey Malasio</option>
-                        <option>Guernsey Bruneiense</option>
-                        <option>Guernsey Timor Oriental</option>
-                        <option>Guernsey Australiano</option>
-                        <option>Guernsey Neozelandés</option>
-                        <option>Guernsey Fiyiano</option>
-                        <option>Guernsey Samoano</option>
-                        <option>Guernsey Tongano</option>
-                        <option>Guernsey Kiribatiano</option>
-                        <option>Guernsey Palauan</option>
-                        <option>Guernsey Micronesiano</option>
-                        <option>Guernsey Marshallense</option>
-                        <option>Guernsey Nauruan</option>
-                        <option>Guernsey Tuvaluan</option>
-                        <option>Guernsey Maldiviano</option>
-                        <option>Guernsey Mauriciano</option>
-                        <option>Guernsey Seichel</option>
-                        <option>Guernsey Comorense</option>
-                        <option>Guernsey Botsuana</option>
-                        <option>Guernsey Gabonés</option>
-                        <option>Guernsey Congoleño</option>
-                        <option>Guernsey Angoleño</option>
-                        <option>Guernsey Namibiano</option>
-                        <option>Guernsey Sudafricano</option>
-                        <option>Guernsey Zimbabuense</option>
-                        <option>Guernsey Zambiano</option>
-                        <option>Guernsey Malawiano</option>
-                        <option>Guernsey Mozambiqueño</option>
-                        <option>Guernsey Malgache</option>
-                        <option>Guernsey Isleño</option>
-                        <option>Guernsey Africano</option>
-                        <option>Guernsey Americano</option>
-                        <option>Guernsey Asiático</option>
-                        <option>Guernsey Europeo</option>
-                        <option>Guernsey Oceaniano</option>
-                        <option>Haití</option>
-                        <option>Holanda</option>
-                        <option>Honduras</option>
-                        <option>Hong Kong</option>
-                        <option>Hungría</option>
-                        <option>India</option>
-                        <option>Indonesia</option>
-                        <option>Irak</option>
-                        <option>Irán</option>
-                        <option>Irlanda</option>
-                        <option>Islandia</option>
-                        <option>Israel</option>
-                        <option>Italia</option>
-                        <option>Jamaica</option>
-                        <option>Japón</option>
-                        <option>Jibuti</option>
-                        <option>Jordania</option>
-                        <option>Kazajistán</option>
-                        <option>Pakistán</option>
-                        <option>Palestina</option>
-                        <option>Panamá</option>
-                        <option>Papúa Nueva Guinea</option>
-                        <option>Paraguay</option>
-                        <option>Perú</option>
-                        <option>Polinesia Francesa</option>
-                        <option>Polonia</option>
-                        <option>Portugal</option>
-                        <option>Puerto Rico</option>
-                        <option>Qatar</option>
-                        <option>Reino Unido</option>
-                        <option>República Central Africana</option>
-                        <option>República Checa</option>
-                        <option>República del Congo</option>
-                        <option>República Democrática del Congo</option>
-                        <option>República Dominicana</option>
-                        <option>República de Guinea Ecuatorial</option>
-                        <option>Reunión</option>
-                        <option>Ruanda</option>
-                        <option>Rumania</option>
-                        <option>Rusia</option>
-                        <option>Sahara Occidental</option>
-                        <option>Samoa</option>
-                        <option>Samoa Americana</option>
-                        <option>San Cristóbal y Nieves</option>
-                        <option>San Marino</option>
-                        <option>San Vicente y las Granadinas</option>
-                        <option>Santa Elena</option>
-                        <option>Santa Lucía</option>
-                        <option>Santo Tomé y Príncipe</option>
-                        <option>Senegal</option>
-                        <option>Serbia</option>
-                        <option>Seychelles</option>
-                        <option>Sierra Leona</option>
-                        <option>Singapur</option>
-                        <option>Siria</option>
-                        <option>Siria</option>
-                        <option>Somalia</option>
-                        <option>Sri Lanka</option>
-                        <option>Suazilandia</option>
-                        <option>Sudáfrica</option>
-                        <option>Sudán</option>
-                        <option>Suecia</option>
-                        <option>Suiza</option>
-                        <option>Surinam</option>
-                        <option>Tailandia</option>
-                        <option>Taiwán</option>
-                        <option>Tanzania</option>
-                        <option>Tayikistán</option>
-                        <option>Territorio Británico del Océano Índico</option>
-                        <option>Territorios Británicos de Ultramar</option>
-                        <option>Territorios Franceses de Ultramar</option>
-                        <option>Territorios Neerlandeses de Ultramar</option>
-                        <option>Territorios Españoles de Ultramar</option>
-                        <option>Territorios Portugueses de Ultramar</option>
-                        <option>Territorios de Estados Unidos en el Pacífico</option>
-                        <option>Timor Oriental</option>
-                        <option>Togo</option>
-                        <option>Tokelau</option>
-                        <option>Tonga</option>
-                        <option>Trinidad and Tobago</option>
-                        <option>Túnez</option>
-                        <option>Turkmenistán</option>
-                        <option>Turquía</option>
-                        <option>Tuvalu</option>
-                        <option>Ucrania</option>
-                        <option>Uganda</option>
-                        <option>Unión Aduanera de Rusia, Bielorrusia y Kazajistán</option>
-                        <option>Unión de Naciones Sudamericanas</option>
-                        <option>Unión de Sri Lanka y Maldivas</option>
-                        <option>Unión del Magreb Árabe</option>
-                        <option>Unión Económica y Monetaria del Oeste Africano</option>
-                        <option>Unión Europea</option>
-                        <option>Unión Latinoamericana</option>
-                        <option>Unión Soviética</option>
-                        <option>Unión Sudamericana</option>
-                        <option>Uruguay</option>
-                        <option>Uzbekistán</option>
-                        <option>Vanuatu</option>
-                        <option>Vaticano</option>
-                        <option>Vega</option>
-                        <option>Velada</option>
-                        <option>Velocidad</option>
-                        <option>Velluda</option>
-                        <option>Velluda de Flores</option>
-                        <option>Velludo</option>
-                        <option>Velludo de Flores</option>
-                        <option>Velludo de Flores del Sur</option>
-                        <option>Velludo de Flores del Norte</option>
-                        <option>Velludo de Flores Central</option>
-                        <option>Velludo de Flores Oriental</option>
-                        <option>Velludo de Flores Occidental</option>
-                        <option>Velludo de Flores Tropical</option>
-                        <option>Velludo de Flores Subtropical</option>
-                        <option>Velludo de Flores Templado</option>
-                        <option>Velludo de Flores Frío</option>
-                        <option>Velludo de Flores Polar</option>
-                        <option>Velludo de Flores Ártico</option>
-                        <option>Velludo de Flores Antártico</option>
-                        <option>Velludo de Flores Subantártico</option>
-                        <option>Venezuela</option>
-                        <option>Vietnam</option>
-                        <option>Wallis y Futuna</option>
-                        <option>Yemen</option>
-                        <option>Yibuti</option>
-                        <option>Yugoslavia</option>
-                        <option>Zambia</option>
-                        <option>Zimbabue</option>
-                    </select>
+            </section>
+
+            <!-- Chat Section -->
+            <section class="chat-section">
+                <div class="chat-header">
+                    <h2>💬 Chat con el Asistente</h2>
+                    <button @click="clearChat" style="padding: 6px 12px; font-size: 0.75rem; background: #f1f5f9; border: none; border-radius: 6px; cursor: pointer;">
+                        Limpiar
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label>Tipo de Visa:</label>
-                    <select v-model="profile.visa_type">
-                        <option>student</option>
-                        <option>study_visit</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Nivel de Ruso:</label>
-                    <select v-model="profile.russian_level">
-                        <option>A1</option>
-                        <option>A2</option>
-                        <option>B1</option>
-                        <option>B2</option>
-                        <option>C1</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>🌐 Idioma de Respuesta:</label>
-                    <select v-model="selectedLanguage">
-                        <option v-for="(name, code) in availableLanguages" :key="code" :value="code">
-                            {{ name }}
-                        </option>
-                    </select>
-                </div>
-                <button @click="saveProfile">Guardar Perfil</button>
-            </div>
-            
-            <!-- Sección de Búsqueda -->
-            <div class="card">
-                <h2>🔍 Buscar Información</h2>
-                <div class="form-group">
-                    <label>¿Qué necesitas saber?</label>
-                    <textarea v-model="searchQuery" placeholder="Ej: ¿Dónde está el МФЦ? ¿Cómo abro una cuenta bancaria?"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Categoría:</label>
-                    <select v-model="selectedCategory">
-                        <option>Todas</option>
-                        <option>Reglamentes</option>
-                        <option>MFC</option>
-                        <option>KubSU</option>
-                    </select>
-                </div>
-                <button @click="searchDocuments">Buscar</button>
-            </div>
-        </div>
-        
-        <!-- Chat -->
-        <div class="card">
-            <h2>💬 Chat con el Asistente</h2>
-            <div class="chat-container">
-                <div class="chat-messages">
+
+                <div class="chat-messages" ref="chatMessages">
+                    <!-- Welcome message -->
+                    <div v-if="chatMessages.length === 0" class="message bot">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            <p>¡Hola! Soy tu asistente de integración cultural para KubGU.</p>
+                            <p>Puedo ayudarte con:</p>
+                            <p>• Trámites de registro y visas</p>
+                            <p>• Información sobre el dormitorio</p>
+                            <p>• Consejos culturales y prácticas</p>
+                            <p>• Frases útiles en ruso</p>
+                            <p>¿En qué puedo ayudarte?</p>
+                        </div>
+                    </div>
+
+                    <!-- Messages -->
                     <div v-for="msg in chatMessages" :key="msg.id" :class="['message', msg.type]">
-                        <div class="message-content">{{ msg.text }}</div>
+                        <div class="message-avatar">{{ msg.type === 'user' ? '👤' : '🤖' }}</div>
+                        <div class="message-content">
+                            <p v-html="formatMessage(msg.text)"></p>
+                            <div v-if="msg.sources && msg.sources.length" class="message-sources">
+                                📚 Fuentes:
+                                <div v-for="source in msg.sources" :key="source">{{ source }}</div>
+                            </div>
+                            <div v-if="msg.audio" style="margin-top: 10px;">
+                                <audio :src="msg.audio" controls style="width: 200px;"></audio>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Typing indicator -->
+                    <div v-if="isTyping" class="message bot">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            <div class="typing-indicator">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
                 <div class="chat-input">
-                    <input v-model="chatInput" placeholder="Escribe tu pregunta..." @keyup.enter="sendMessage">
-                    <button @click="sendMessage">Enviar</button>
+                    <input
+                        v-model="chatInput"
+                        placeholder="Escribe tu pregunta..."
+                        @keyup.enter="sendMessage"
+                        :disabled="isTyping"
+                    >
+                    <button
+                        v-if="lastBotMessage"
+                        @click="speakMessage(lastBotMessage)"
+                        class="btn-voice"
+                        :class="{recording: isRecording}"
+                        title="Escuchar respuesta"
+                    >
+                        🔊
+                    </button>
+                    <button @click="sendMessage" class="btn-primary" :disabled="isTyping || !chatInput.trim()">
+                        Enviar
+                    </button>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Frases Útiles -->
-        <div class="card">
-            <h2>🗣️ Frases Útiles</h2>
-            <div class="tabs">
-                <button @click="phrasesTab = 'all'" :class="['tab-button', {active: phrasesTab === 'all'}]">Todas</button>
-                <button @click="phrasesTab = 'recent'" :class="['tab-button', {active: phrasesTab === 'recent'}]">Recientes</button>
-                <button @click="phrasesTab = 'favorites'" :class="['tab-button', {active: phrasesTab === 'favorites'}]">Favoritas</button>
-            </div>
-            
-            <div class="grid-phrases">
-                <div v-for="phrase in filteredPhrases" :key="phrase.id" class="phrase-item">
-                    <div class="phrase-russian">{{ phrase.russian }}</div>
-                    <div class="phrase-transliteration">{{ phrase.transliteration }}</div>
-                    <div class="phrase-english">{{ phrase.english }}</div>
-                    <div class="phrase-meta">
-                        <span class="badge">{{ phrase.category }}</span>
-                        <button @click="toggleFavorite(phrase.id)" style="padding: 3px 8px; font-size: 12px;">
-                            {{ favoritePhrase(phrase.id) ? '❤️' : '🤍' }}
-                        </button>
+            </section>
+
+            <!-- Phrases Section -->
+            <section class="phrases-section">
+                <h2>🗣️ Frases Útiles en Ruso</h2>
+                <div class="phrases-grid">
+                    <div v-for="phrase in phrases" :key="phrase.id" class="phrase-card" @click="selectPhrase(phrase)">
+                        <div class="phrase-russian">{{ phrase.russian }}</div>
+                        <div class="phrase-translit">{{ phrase.transliteration }}</div>
+                        <div class="phrase-translation">{{ phrase.english }}</div>
+                        <div class="phrase-actions">
+                            <button @click.stop="speakText(phrase.russian, 'ru')">🔊 Escuchar</button>
+                            <button @click.stop="copyToClipboard(phrase.russian)">📋 Copiar</button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
         </div>
+
+        <footer class="footer">
+            <p>Asistente de Integración Cultural - Universidad Estatal de Kubán v0.5.0</p>
+        </footer>
     </div>
-    
+
     <script>
         const { createApp } = Vue;
-        
+
         createApp({
             data() {
                 return {
-                    profile: {
-                        name: '',
-                        country: 'Vietnam',
-                        visa_type: 'student',
-                        russian_level: 'A1'
-                    },
-                    searchQuery: '',
-                    selectedCategory: 'Todas',
-                    selectedLanguage: 'es',  // Idioma seleccionado
+                    // System state
+                    systemOnline: true,
+                    sessionId: this.generateSessionId(),
+                    selectedLanguage: 'es',
                     availableLanguages: {
                         'es': 'Español',
                         'en': 'English',
+                        'ru': 'Русский',
                         'fr': 'Français',
                         'de': 'Deutsch',
-                        'pt': 'Português',
-                        'ru': 'Русский',
-                        'zh': '中文',
-                        'ja': '日本語'
+                        'pt': 'Português'
                     },
-                    chatMessages: [
-                        { id: 1, type: 'bot', text: '¡Hola! Soy tu asistente de integración cultural. ¿Cómo puedo ayudarte?' }
-                    ],
+
+                    // Profile
+                    profile: {
+                        name: '',
+                        country: '',
+                        visa_type: 'student',
+                        russian_level: 'A1'
+                    },
+
+                    // Chat
                     chatInput: '',
-                    phrasesTab: 'all',
-                    favorites: new Set(),
+                    chatMessages: [],
+                    isTyping: false,
+                    isRecording: false,
+                    lastBotMessage: null,
+
+                    // Phrases
                     phrases: [
                         {
                             id: 1,
                             russian: "Мне нужна помощь",
                             transliteration: "Mne nuzhna pomoshch'",
-                            english: "I need help",
-                            category: "General"
+                            english: "Necesito ayuda"
                         },
                         {
                             id: 2,
                             russian: "Где находится МФЦ?",
                             transliteration: "Gde nakhoditsya MFC?",
-                            english: "Where is the MFC?",
-                            category: "Documentos"
+                            english: "¿Dónde está el MFC?"
                         },
                         {
                             id: 3,
-                            russian: "Говорите медленнее",
-                            transliteration: "Govorite medlennee",
-                            english: "Speak more slowly",
-                            category: "General"
+                            russian: "Говорите медленнее, пожалуйста",
+                            transliteration: "Govorite medlennee, pozhaluysta",
+                            english: "Hable más lento, por favor"
                         },
                         {
                             id: 4,
-                            russian: "Спасибо",
-                            transliteration: "Spasibo",
-                            english: "Thank you",
-                            category: "Cortesía"
+                            russian: "Я не понимаю",
+                            transliteration: "Ya ne ponimayu",
+                            english: "No entiendo"
+                        },
+                        {
+                            id: 5,
+                            russian: "Сколько это стоит?",
+                            transliteration: "Skol'ko eto stoit?",
+                            english: "¿Cuánto cuesta esto?"
+                        },
+                        {
+                            id: 6,
+                            russian: "Спасибо большое",
+                            transliteration: "Spasibo bol'shoye",
+                            english: "Muchas gracias"
+                        },
+                        {
+                            id: 7,
+                            russian: "Извините",
+                            transliteration: "Izvinite",
+                            english: "Disculpe / Lo siento"
+                        },
+                        {
+                            id: 8,
+                            russian: "Можно мне форму?",
+                            transliteration: "Mozhno mne formu?",
+                            english: "¿Puedo tener un formulario?"
                         }
                     ]
                 };
             },
-            computed: {
-                filteredPhrases() {
-                    if (this.phrasesTab === 'favorites') {
-                        return this.phrases.filter(p => this.favorites.has(p.id));
-                    }
-                    return this.phrases;
-                }
+            mounted() {
+                this.checkSystemStatus();
+                // Periodically check status
+                setInterval(() => this.checkSystemStatus(), 30000);
             },
             methods: {
-                saveProfile() {
-                    alert('Perfil guardado: ' + JSON.stringify(this.profile));
+                generateSessionId() {
+                    return 'session_' + Math.random().toString(36).substring(2, 15);
                 },
-                searchDocuments() {
-                    this.addMessage('bot', 'Buscando: ' + this.searchQuery + '\n[Búsqueda RAG en construcción]');
-                },
-                async sendMessage() {
-                    if (this.chatInput.trim()) {
-                        const userMessage = this.chatInput;
-                        this.addMessage('user', userMessage);
-                        this.chatInput = '';
-                        
-                        try {
-                            // Llamar a la API de chat con idioma seleccionado
-                            const response = await fetch('/api/chat', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    query: userMessage,
-                                    user_id: this.profile.user_id || 'default_user',
-                                    language: this.selectedLanguage
-                                })
-                            });
-                            
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            
+
+                async checkSystemStatus() {
+                    try {
+                        const response = await fetch('/api/status');
+                        if (response.ok) {
                             const data = await response.json();
-                            
-                            // Mostrar respuesta del RAG
-                            let botResponse = data.answer || 'No se pudo procesar la solicitud';
-                            
-                            // Agregar contexto si está disponible
-                            if (data.context && data.context.length > 0) {
-                                botResponse += '\n\n📚 Fuentes:\n';
-                                data.context.forEach(ctx => {
-                                    botResponse += '• ' + ctx + '\n';
-                                });
-                            }
-                            
-                            this.addMessage('bot', botResponse);
-                        } catch (error) {
-                            console.error('Error:', error);
-                            this.addMessage('bot', '❌ Error al conectar con el servidor: ' + error.message);
+                            this.systemOnline = data.status === 'operational';
+                        } else {
+                            this.systemOnline = false;
                         }
+                    } catch (error) {
+                        this.systemOnline = false;
                     }
                 },
-                addMessage(type, text) {
+
+                updateLanguage() {
+                    // Save language preference
+                    localStorage.setItem('kubgu_language', this.selectedLanguage);
+                },
+
+                async sendMessage() {
+                    if (!this.chatInput.trim() || this.isTyping) return;
+
+                    const userMessage = this.chatInput.trim();
+                    this.chatInput = '';
+
+                    // Add user message to chat
                     this.chatMessages.push({
-                        id: this.chatMessages.length + 1,
-                        type: type,
-                        text: text
+                        id: Date.now(),
+                        type: 'user',
+                        text: userMessage
+                    });
+
+                    // Show typing indicator
+                    this.isTyping = true;
+
+                    try {
+                        const response = await fetch('/api/chat', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                query: userMessage,
+                                user_id: this.sessionId,
+                                language: this.selectedLanguage,
+                                session_id: this.sessionId
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+
+                        const data = await response.json();
+
+                        // Remove typing indicator and add bot response
+                        this.isTyping = false;
+                        this.chatMessages.push({
+                            id: Date.now() + 1,
+                            type: 'bot',
+                            text: data.answer || 'No tengo respuesta para eso.',
+                            sources: data.context || []
+                        });
+
+                        this.lastBotMessage = data.answer;
+
+                        // Scroll to bottom
+                        this.$nextTick(() => {
+                            const container = this.$refs.chatMessages;
+                            if (container) {
+                                container.scrollTop = container.scrollHeight;
+                            }
+                        });
+
+                    } catch (error) {
+                        this.isTyping = false;
+                        this.chatMessages.push({
+                            id: Date.now() + 1,
+                            type: 'bot',
+                            text: `❌ Error: ${error.message}. Verifica que el backend esté activo.`
+                        });
+                    }
+                },
+
+                async speakText(text, lang = 'ru') {
+                    try {
+                        const response = await fetch('/api/tts', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                text: text,
+                                language: lang
+                            })
+                        });
+
+                        if (!response.ok) {
+                            if (response.status === 503) {
+                                alert('Servicio TTS no disponible');
+                            }
+                            return;
+                        }
+
+                        // Get audio blob and play
+                        const audioBlob = await response.blob();
+                        const audioUrl = URL.createObjectURL(audioBlob);
+
+                        const audio = new Audio(audioUrl);
+                        audio.play();
+
+                    } catch (error) {
+                        console.error('TTS error:', error);
+                    }
+                },
+
+                speakMessage(text) {
+                    if (text) {
+                        this.speakText(text, this.selectedLanguage === 'ru' ? 'ru' : 'es');
+                    }
+                },
+
+                selectPhrase(phrase) {
+                    this.chatInput = `¿Cómo se dice "${phrase.english}" en ruso?`;
+                },
+
+                copyToClipboard(text) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        // Could show a toast notification
+                        alert('Copiado al portapapeles');
                     });
                 },
-                toggleFavorite(id) {
-                    if (this.favorites.has(id)) {
-                        this.favorites.delete(id);
-                    } else {
-                        this.favorites.add(id);
-                    }
+
+                formatMessage(text) {
+                    // Basic formatting: convert newlines to <br>
+                    return text.replace(/\n/g, '<br>');
                 },
-                favoritePhrase(id) {
-                    return this.favorites.has(id);
+
+                clearChat() {
+                    this.chatMessages = [];
+                    this.lastBotMessage = null;
+                    this.sessionId = this.generateSessionId();
                 }
             }
         }).mount('#app');

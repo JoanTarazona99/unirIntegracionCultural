@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
@@ -8,15 +8,18 @@ import json
 import os
 import io
 import uuid
+import time
 from pathlib import Path
+from datetime import datetime, timedelta
 from enhanced_rag import EnhancedRAGModule
 from translator import create_translator
 from personalization import get_conversation_memory, ConversationMemory
+from cache_module import get_rag_cache, LRUCache, cache_rag_query, get_cached_rag_query
 
 app = FastAPI(
     title="Asistente de Integración Cultural - KubGU",
     description="Backend para soporte inteligente a estudiantes extranjeros",
-    version="0.4.0"
+    version="0.5.0"
 )
 
 # Inicializar módulo RAG mejorado e traductor multiidioma
@@ -25,6 +28,9 @@ translator = create_translator()
 
 # Initialize conversation memory
 conversation_memory = get_conversation_memory(max_history=10)
+
+# Initialize cache
+cache = get_rag_cache(max_entries=500, default_ttl=3600)  # 500 entries, 1 hour TTL
 
 # Check TTS/STT availability
 TTS_AVAILABLE = False
@@ -43,12 +49,111 @@ try:
 except ImportError:
     print("[STT] SpeechRecognition not available - STT endpoint will return error")
 
+# ==================== RATE LIMITER ====================
+
+class RateLimiter:
+    """Simple in-memory rate limiter: max requests per IP per minute"""
+
+    def __init__(self, max_requests: int = 30, window_seconds: int = 60):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self._requests: Dict[str, List[float]] = {}  # IP -> [timestamps]
+
+    def is_allowed(self, ip: str) -> bool:
+        """Check if IP is allowed to make request"""
+        now = time.time()
+
+        # Get or create request list for IP
+        if ip not in self._requests:
+            self._requests[ip] = []
+
+        # Remove old requests outside window
+        self._requests[ip] = [
+            ts for ts in self._requests[ip]
+            if now - ts < self.window_seconds
+        ]
+
+        # Check if under limit
+        if len(self._requests[ip]) < self.max_requests:
+            self._requests[ip].append(now)
+            return True
+
+        return False
+
+    def get_remaining(self, ip: str) -> int:
+        """Get remaining requests for IP"""
+        if ip not in self._requests:
+            return self.max_requests
+
+        now = time.time()
+        valid_requests = [
+            ts for ts in self._requests[ip]
+            if now - ts < self.window_seconds
+        ]
+        return max(0, self.max_requests - len(valid_requests))
+
+    def cleanup_old(self):
+        """Clean up old entries (call periodically)"""
+        now = time.time()
+        for ip in list(self._requests.keys()):
+            self._requests[ip] = [
+                ts for ts in self._requests[ip]
+                if now - ts < self.window_seconds
+            ]
+            if not self._requests[ip]:
+                del self._requests[ip]
+
+
+rate_limiter = RateLimiter(max_requests=30, window_seconds=60)
+
+
+def get_client_ip(request: Request) -> str:
+    """Extract client IP from request"""
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+async def check_rate_limit(request: Request):
+    """Dependency to check rate limit"""
+    ip = get_client_ip(request)
+    if not rate_limiter.is_allowed(ip):
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Max {rate_limiter.max_requests} requests per minute."
+        )
+    return ip
+
+
+# ==================== CORS ====================
+
+# Allowed origins (configure as needed)
+ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://localhost:3000",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:3000",
+    "https://kubsu.ru",
+    "https://t.me",  # Telegram web app
+]
+
+# Also allow any localhost for development
+import re
+def is_allowed_origin(origin: str) -> bool:
+    if origin in ALLOWED_ORIGINS:
+        return True
+    # Allow any localhost/127.0.0.1 for development
+    if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+        return True
+    return False
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS + ["*"],  # Allow all for now, filter in routes
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -147,6 +252,75 @@ async def health_check():
         }
     }
 
+
+# ==================== STATUS ENDPOINT ====================
+
+@app.get("/api/status")
+async def get_system_status():
+    """
+    Get comprehensive system status
+
+    Returns status of all modules: RAG, LLM, TTS, STT, Cache
+    """
+    # RAG status
+    semantic_available = hasattr(rag_module.document_library, '_use_semantic') and rag_module.document_library._use_semantic
+    rag_status = {
+        "available": True,
+        "mode": rag_module.document_library.get_search_mode() if hasattr(rag_module.document_library, 'get_search_mode') else "keyword",
+        "sources": len(rag_module.document_library.documents) if hasattr(rag_module, 'document_library') else 0
+    }
+
+    # LLM status
+    llm_available = rag_module.is_llm_enabled() if hasattr(rag_module, 'is_llm_enabled') else False
+    llm_status = {
+        "available": llm_available,
+        "model": rag_module.llm.model if llm_available and hasattr(rag_module, 'llm') and rag_module.llm else None,
+        "provider": "ollama" if llm_available else None
+    }
+
+    # TTS status
+    tts_status = {
+        "available": TTS_AVAILABLE,
+        "provider": "gTTS" if TTS_AVAILABLE else None,
+        "languages": ["ru", "es", "en", "fr", "de", "pt", "it", "zh", "ja", "ko", "ar", "vi"] if TTS_AVAILABLE else []
+    }
+
+    # STT status
+    stt_status = {
+        "available": STT_AVAILABLE,
+        "provider": "Google Speech Recognition" if STT_AVAILABLE else None,
+        "languages": ["ru-RU", "es-ES", "en-US", "fr-FR", "de-DE", "it-IT", "pt-BR", "zh-CN", "ja-JP", "ko-KR"] if STT_AVAILABLE else []
+    }
+
+    # Cache status
+    cache_stats = cache.get_stats()
+    cache_status = {
+        "available": True,
+        "entries": cache_stats["entries"],
+        "hits": cache_stats["hits"],
+        "misses": cache_stats["misses"],
+        "hit_rate": cache_stats["hit_rate_percent"]
+    }
+
+    # Conversation memory status
+    conversation_status = {
+        "available": True,
+        "sessions": conversation_memory.get_session_count(),
+        "max_history": 10
+    }
+
+    return {
+        "version": "0.5.0",
+        "status": "operational",
+        "timestamp": datetime.now().isoformat(),
+        "rag": rag_status,
+        "llm": llm_status,
+        "tts": tts_status,
+        "stt": stt_status,
+        "cache": cache_status,
+        "conversation": conversation_status
+    }
+
 # Rutas de frases
 @app.get("/api/phrases", response_model=List[PhraseResponse])
 async def get_phrases(category: Optional[str] = None, limit: int = 10):
@@ -202,8 +376,12 @@ async def get_rag_sources():
 
 # Rutas de chat
 @app.post("/api/chat")
-async def chat(request: QueryRequest):
-    """Chat principal con soporte multiidioma y RAG"""
+async def chat(
+    request: QueryRequest,
+    http_request: Request,
+    _: str = Depends(check_rate_limit)
+):
+    """Chat principal con soporte multiidioma, RAG y cache"""
     try:
         # Generate or use existing session
         session_id = request.session_id or str(uuid.uuid4())
@@ -211,7 +389,14 @@ async def chat(request: QueryRequest):
         # Idioma de respuesta (default: español)
         target_lang = request.language if request.language != "ru" else "es"
 
-        # Buscar en el RAG (siempre en español primero)
+        # Try cache first
+        cached_result = get_cached_rag_query(request.query, target_lang)
+        if cached_result:
+            # Return cached response
+            cached_result['cached'] = True
+            return cached_result
+
+        # Buscar en el RAG
         rag_result = rag_module.search_and_generate(
             request.query,
             context_type=f"chat_{target_lang}",
@@ -264,6 +449,11 @@ async def chat(request: QueryRequest):
             available_languages=list(translator.get_supported_languages().keys()),
             search_mode=rag_result.get('search_mode', 'keyword')
         )
+
+        # Cache the response
+        response_dict = response.model_dump()
+        cache_rag_query(request.query, target_lang, response_dict)
+
         return response
     except Exception as e:
         return ChatResponse(
@@ -618,7 +808,7 @@ async def get_project_info():
     return {
         "name": "Asistente Inteligente de Integración Cultural",
         "institution": "Kubán State University (KubGU)",
-        "version": "0.4.0",
+        "version": "0.5.0",
         "features": [
             "Semantic search with sentence-transformers",
             "LLM integration with Ollama (llama3, qwen2, mistral)",
