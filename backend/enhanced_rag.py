@@ -24,6 +24,26 @@ try:
 except ImportError:
     print("[RAG] LLM module not available - Using template responses")
 
+# Try to import translator for content translation
+TRANSLATOR_AVAILABLE = False
+try:
+    from translator import MultiLanguageTranslator
+    _translator_instance = None
+
+    def get_translator():
+        global _translator_instance
+        if _translator_instance is None:
+            _translator_instance = MultiLanguageTranslator()
+        return _translator_instance
+
+    TRANSLATOR_AVAILABLE = True
+    print("[RAG] Translator available - Content translation enabled")
+except ImportError:
+    print("[RAG] Translator not available - Content will remain in original language")
+
+    def get_translator():
+        return None
+
 # Try to import sentence-transformers for semantic search
 SEMANTIC_SEARCH_AVAILABLE = False
 try:
@@ -732,6 +752,15 @@ class EnhancedRAGModule:
         content = best_match.get('content', '')
         source = best_match.get('source', 'KubGU')
         source_url = best_match.get('source_url', 'https://kubsu.ru')
+
+        # Translate content if language is not Russian and translator is available
+        if language != 'ru' and TRANSLATOR_AVAILABLE:
+            translator = get_translator()
+            if translator and translator.has_translator:
+                try:
+                    content = translator.translate_text(content, language)
+                except Exception as e:
+                    print(f"[RAG] Translation failed: {e}, using original content")
 
         templates = {
             'ru': f"""📌 ОФИЦИАЛЬНАЯ ИНФОРМАЦИЯ: {query}

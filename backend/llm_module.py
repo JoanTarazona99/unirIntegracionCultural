@@ -208,6 +208,16 @@ class LLMModule:
             # Build context from documents
             context_text = self._build_context(context_docs)
 
+            # Translate context if not Russian
+            if language != 'ru' and context_text:
+                try:
+                    from translator import MultiLanguageTranslator
+                    translator = MultiLanguageTranslator()
+                    if translator.has_translator:
+                        context_text = translator.translate_text(context_text, language)
+                except Exception as e:
+                    print(f"[LLM] Context translation failed: {e}")
+
             # Language instruction
             lang_instruction = {
                 'ru': 'Отвечай на русском языке.',
@@ -228,7 +238,21 @@ class LLMModule:
                 messages.extend(history)
 
             # Add current query with context
-            user_message = f"Вопрос: {query}\n\nКонтекст документов:\n{context_text}" if context_text else query
+            query_label = {
+                'ru': 'Вопрос',
+                'es': 'Pregunta',
+                'en': 'Question',
+                'fr': 'Question'
+            }.get(language, 'Question')
+
+            context_label = {
+                'ru': 'Контекст документов',
+                'es': 'Contexto de documentos',
+                'en': 'Document context',
+                'fr': 'Contexte des documents'
+            }.get(language, 'Document context')
+
+            user_message = f"{query_label}: {query}\n\n{context_label}:\n{context_text}" if context_text else query
             messages.append({"role": "user", "content": user_message})
 
             # Call Ollama
@@ -262,43 +286,66 @@ class LLMModule:
             return self._no_context_response(query, language)
 
         best_match = context_docs[0]
+        content = best_match.get('content', '')
+        source = best_match.get('source', 'KubGU')
+        source_url = best_match.get('source_url', 'https://kubsu.ru')
+
+        # Translate content if language is not Russian and translator is available
+        if language != 'ru' and content:
+            try:
+                from translator import MultiLanguageTranslator
+                translator = MultiLanguageTranslator()
+                if translator.has_translator:
+                    content = translator.translate_text(content, language)
+            except Exception as e:
+                print(f"[LLM] Translation failed: {e}, using original content")
 
         # Language-specific templates
         if language == 'ru' or not language:
             return f"""📌 ОФИЦИАЛЬНАЯ ИНФОРМАЦИЯ: {query}
 
-📄 Источник: {best_match.get('source', 'КубГУ')}
+📄 Источник: {source}
 
-{best_match.get('content', 'Информация недоступна.')}
+{content}
 
-🔗 Подробнее: {best_match.get('source_url', 'https://kubsu.ru')}"""
+🔗 Подробнее: {source_url}"""
 
         elif language == 'es':
             return f"""📌 INFORMACIÓN OFICIAL: {query}
 
-📄 Fuente: {best_match.get('source', 'KubGU')}
+📄 Fuente: {source}
 
-{best_match.get('content', 'Información no disponible.')}
+{content}
 
-🔗 Más información: {best_match.get('source_url', 'https://kubsu.ru')}"""
+🔗 Más información: {source_url}"""
+
+        elif language == 'fr':
+            return f"""📌 INFORMATION OFFICIELLE: {query}
+
+📄 Source: {source}
+
+{content}
+
+🔗 Plus d'infos: {source_url}"""
 
         else:  # English
             return f"""📌 OFFICIAL INFORMATION: {query}
 
-📄 Source: {best_match.get('source', 'KubGU')}
+📄 Source: {source}
 
-{best_match.get('content', 'Information not available.')}
+{content}
 
-🔗 More info: {best_match.get('source_url', 'https://kubsu.ru')}"""
+🔗 More info: {source_url}"""
 
     def _no_context_response(self, query: str, language: str) -> str:
         """Response when no context found"""
-        if language == 'ru':
-            return f"К сожалению, я не нашел информацию по запросу '{query}'. Обратитесь в администрацию КубГУ: +7-861-XXX-XXXX или посетите https://kubsu.ru"
-        elif language == 'es':
-            return f"No encontré información sobre '{query}'. Contacte a la administración de KubGU: +7-861-XXX-XXXX o visite https://kubsu.ru"
-        else:
-            return f"Sorry, I couldn't find information about '{query}'. Contact KubGU administration: +7-861-XXX-XXXX or visit https://kubsu.ru"
+        responses = {
+            'ru': f"К сожалению, я не нашел информацию по запросу '{query}'. Обратитесь в администрацию КубГУ: +7-861-XXX-XXXX или посетите https://kubsu.ru",
+            'es': f"No encontré información sobre '{query}'. Contacte a la administración de KubGU: +7-861-XXX-XXXX o visite https://kubsu.ru",
+            'en': f"Sorry, I couldn't find information about '{query}'. Contact KubGU administration: +7-861-XXX-XXXX or visit https://kubsu.ru",
+            'fr': f"Désolé, je n'ai pas trouvé d'informations sur '{query}'. Contactez l'administration de KubGU: +7-861-XXX-XXXX ou visitez https://kubsu.ru"
+        }
+        return responses.get(language, responses['en'])
 
     def _build_context(self, context_docs: List[Dict]) -> str:
         """Build context string from documents"""
