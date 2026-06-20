@@ -1044,13 +1044,18 @@
                         // Detect the language of the response text
                         const detectedLang = this.detectLanguage(data.answer);
 
-                        this.chatMessages.push({
+                        const botMessage = {
                             id: Date.now() + 1,
                             type: 'bot',
                             text: data.answer || this.t('noResponse'),
                             sources: data.context || [],
                             detectedLanguage: detectedLang  // Store detected language
-                        });
+                        };
+
+                        this.chatMessages.push(botMessage);
+
+                        // Pre-fetch TTS audio immediately for instant playback later
+                        this.prefetchTTS(botMessage.text, detectedLang);
 
                         // Scroll to bottom
                         this.$nextTick(() => {
@@ -1120,6 +1125,30 @@
                 speakMessage(text, detectedLanguage) {
                     if (text) {
                         this.speakText(text, detectedLanguage);
+                    }
+                },
+
+                // Pre-fetch TTS audio in background for instant playback
+                async prefetchTTS(text, language) {
+                    const cacheKey = this.hashText(text, language);
+
+                    // Skip if already cached
+                    if (this.audioCache[cacheKey]) return;
+
+                    try {
+                        const response = await fetch('/api/tts', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text, language })
+                        });
+
+                        if (response.ok) {
+                            const audioBlob = await response.blob();
+                            const audioUrl = URL.createObjectURL(audioBlob);
+                            this.audioCache[cacheKey] = audioUrl;
+                        }
+                    } catch (e) {
+                        // Silently fail - will try again on click
                     }
                 },
 

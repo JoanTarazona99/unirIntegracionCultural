@@ -718,41 +718,53 @@ class EnhancedRAGModule:
         results: List[Dict],
         language: str
     ) -> str:
-        """Generate template-based response"""
+        """Generate template-based response in the requested language"""
         if not results:
-            if language == 'ru':
-                return f"К сожалению, я не нашел информацию по запросу '{query}'. Обратитесь в администрацию КубГУ: +7-861-XXX-XXXX или посетите https://kubsu.ru"
-            elif language == 'es':
-                return f"No encontré información sobre '{query}'. Contacte a la administración de KubGU: +7-861-XXX-XXXX o visite https://kubsu.ru"
-            else:
-                return f"Sorry, I couldn't find information about '{query}'. Contact KubGU administration: +7-861-XXX-XXXX or visit https://kubsu.ru"
+            not_found_messages = {
+                'ru': f"К сожалению, я не нашел информацию по запросу '{query}'. Обратитесь в администрацию КубГУ: +7-861-XXX-XXXX или посетите https://kubsu.ru",
+                'es': f"No encontré información sobre '{query}'. Contacte a la administración de KubGU: +7-861-XXX-XXXX o visite https://kubsu.ru",
+                'en': f"Sorry, I couldn't find information about '{query}'. Contact KubGU administration: +7-861-XXX-XXXX or visit https://kubsu.ru",
+                'fr': f"Désolé, je n'ai pas trouvé d'informations sur '{query}'. Contactez l'administration de KubGU: +7-861-XXX-XXXX ou visitez https://kubsu.ru"
+            }
+            return not_found_messages.get(language, not_found_messages['en'])
 
         best_match = results[0]
+        content = best_match.get('content', '')
+        source = best_match.get('source', 'KubGU')
+        source_url = best_match.get('source_url', 'https://kubsu.ru')
 
-        if language == 'ru':
-            return f"""📌 ОФИЦИАЛЬНАЯ ИНФОРМАЦИЯ: {query}
+        templates = {
+            'ru': f"""📌 ОФИЦИАЛЬНАЯ ИНФОРМАЦИЯ: {query}
 
-📄 Источник: {best_match.get('source', 'КубГУ')}
+📄 Источник: {source}
 
-{best_match.get('content', '')}
+{content}
 
-🔗 Подробнее: {best_match.get('source_url', 'https://kubsu.ru')}"""
-        elif language == 'es':
-            return f"""📌 INFORMACIÓN OFICIAL: {query}
+🔗 Подробнее: {source_url}""",
+            'es': f"""📌 INFORMACIÓN OFICIAL: {query}
 
-📄 Fuente: {best_match.get('source', 'KubGU')}
+📄 Fuente: {source}
 
-{best_match.get('content', '')}
+{content}
 
-🔗 Más información: {best_match.get('source_url', 'https://kubsu.ru')}"""
-        else:
-            return f"""📌 OFFICIAL INFORMATION: {query}
+🔗 Más información: {source_url}""",
+            'en': f"""📌 OFFICIAL INFORMATION: {query}
 
-📄 Source: {best_match.get('source', 'KubGU')}
+📄 Source: {source}
 
-{best_match.get('content', '')}
+{content}
 
-🔗 More info: {best_match.get('source_url', 'https://kubsu.ru')}"""
+🔗 More info: {source_url}""",
+            'fr': f"""📌 INFORMATION OFFICIELLE: {query}
+
+📄 Source: {source}
+
+{content}
+
+🔗 Plus d'infos: {source_url}"""
+        }
+
+        return templates.get(language, templates['en'])
 
     def generate_stream(
         self,

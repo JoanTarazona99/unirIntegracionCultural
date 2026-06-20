@@ -399,8 +399,8 @@ async def chat(
         # Generate or use existing session
         session_id = request.session_id or str(uuid.uuid4())
 
-        # Idioma de respuesta (default: español)
-        target_lang = request.language if request.language != "ru" else "es"
+        # Idioma de respuesta = el seleccionado por usuario
+        target_lang = request.language
 
         # Try cache first
         cached_result = get_cached_rag_query(request.query, target_lang)
@@ -409,22 +409,19 @@ async def chat(
             cached_result['cached'] = True
             return cached_result
 
-        # Buscar en el RAG
+        # Buscar en el RAG - usar el idioma seleccionado directamente
         rag_result = rag_module.search_and_generate(
             request.query,
             context_type=f"chat_{target_lang}",
-            language='ru' if target_lang == 'es' else target_lang,
+            language=target_lang,  # Usar el idioma seleccionado
             session_id=session_id
         )
 
-        # Respuesta original en español
-        answer_original = rag_result['response']
+        # Respuesta - usar directamente la del RAG en el idioma correcto
+        answer_translated = rag_result['response']
 
-        # Traducir si el idioma no es español
-        if target_lang != 'es':
-            answer_translated = translator.translate_text(answer_original, target_lang)
-        else:
-            answer_translated = answer_original
+        # Para referencia, guardar respuesta base
+        answer_original = rag_result['response']
 
         # Add to conversation memory
         conversation_memory.add_message(session_id, 'user', request.query)
