@@ -767,16 +767,6 @@ async def text_to_speech_file(request: TTSRequest):
             status_code=500,
             detail=f"TTS error: {str(e)}"
         )
-            "language": request.language,
-            "audio_url": f"/api/audio/{filename}",
-            "file_path": str(filepath)
-        }
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"TTS error: {str(e)}"
-        )
 
 
 @app.post("/api/stt")
@@ -865,11 +855,6 @@ async def get_cached_audio_file(filename: str):
             filename=filename
         )
     raise HTTPException(status_code=404, detail="Cached audio file not found")
-            filepath,
-            media_type="audio/mpeg",
-            filename=filename
-        )
-    raise HTTPException(status_code=404, detail="Audio file not found")
 
 
 @app.get("/api/audio-available")
