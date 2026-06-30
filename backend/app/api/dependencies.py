@@ -121,3 +121,25 @@ def get_phrase_service():
     from app.services.phrase_service import PhraseService
     phrases_db = get_phrases_db()
     return PhraseService(phrases_db)
+
+
+# ============ SERVICES (Sprint 2) ============
+
+def get_conversation_service():
+    """Get conversation service instance.
+    
+    Service wraps ConversationMemory for cleaner, testable interface.
+    """
+    from app.services.conversation_service import ConversationService
+    conversation_memory = get_conversation_memory()
+    return ConversationService(conversation_memory)
+
+
+def get_cache_service():
+    """Get cache service instance.
+    
+    Service wraps LRUCache for cleaner, testable interface.
+    """
+    from app.services.cache_service import CacheService
+    cache = get_cache()
+    return CacheService(cache)

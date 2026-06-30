@@ -12,10 +12,11 @@ from app.api.dependencies import (
     get_rag_service,
     get_translator,
     get_conversation_memory,
+    get_conversation_service,
     get_cache,
     check_rate_limit,
 )
-from app.domain.exceptions import RAGError
+from app.domain.exceptions import RAGError, ValidationError, AppError
 from fastapi.responses import StreamingResponse
 
 router = APIRouter()
@@ -199,43 +200,47 @@ async def chat_stream(request: StreamRequest):
 
 
 @router.get("/api/chat/history/{session_id}")
-async def get_chat_history(session_id: str):
-    """Get conversation history for a session."""
+async def get_chat_history(session_id: str, conversation_service = Depends(get_conversation_service)):
+    """Get conversation history for a session using ConversationService."""
     try:
-        conversation_memory = get_conversation_memory()
-        history = conversation_memory.get_history(session_id)
-        summary = conversation_memory.get_summary(session_id)
+        history = conversation_service.get_history(session_id)
+        summary = conversation_service.get_session_summary(session_id)
         return {
             "session_id": session_id,
             "history": history,
             "summary": summary
         }
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except AppError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting history: {str(e)}")
 
 
 @router.delete("/api/chat/history/{session_id}")
-async def clear_chat_history(session_id: str):
-    """Clear conversation history for a session."""
+async def clear_chat_history(session_id: str, conversation_service = Depends(get_conversation_service)):
+    """Clear conversation history for a session using ConversationService."""
     try:
-        conversation_memory = get_conversation_memory()
-        conversation_memory.clear_session(session_id)
-        return {
-            "status": "cleared",
-            "session_id": session_id
-        }
+        result = conversation_service.clear_session(session_id)
+        return result
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except AppError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error clearing history: {str(e)}")
 
 
 @router.get("/api/chat/sessions")
-async def list_chat_sessions():
-    """List all active chat sessions."""
+async def list_chat_sessions(conversation_service = Depends(get_conversation_service)):
+    """List all active chat sessions with status."""
     try:
-        conversation_memory = get_conversation_memory()
+        status = conversation_service.get_status()
         return {
-            "active_sessions": conversation_memory.get_session_count(),
-            "total_messages": conversation_memory.get_message_count()
+            "active_sessions": status["active_sessions"],
+            "total_messages": status["total_messages"],
+            "max_history_per_session": status["max_history"]
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing sessions: {str(e)}")
