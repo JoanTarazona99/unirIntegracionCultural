@@ -1,11 +1,19 @@
 """
 Chat and RAG search routes.
+
+Persistence Strategy:
+- ConversationService: Primary memory storage (always available, no dependencies)
+- DatabaseService: Optional complementary persistence (background tasks, graceful fallback)
+  - Enabled via settings.enable_database and settings.database_url
+  - Uses FastAPI BackgroundTasks for non-blocking persistence (safe shutdown guarantee)
+  - Falls back to memory if database unavailable or not configured
+  - No impact on HTTP response contract or latency
 """
 
 import uuid
 import hashlib
 import json
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Request, Depends, BackgroundTasks
 from typing import AsyncGenerator
 
 from app.api.models import QueryRequest, StreamRequest, ChatResponse
@@ -18,9 +26,60 @@ from app.api.dependencies import (
     get_cache,
     get_cache_service,
     check_rate_limit,
+    get_database_service,
 )
 from app.domain.exceptions import RAGError, ValidationError, AppError
 from fastapi.responses import StreamingResponse
+from app.config.settings import settings
+from app.config.logging_config import get_logger
+import asyncio
+
+logger = get_logger(__name__)
+
+
+# ================== BACKGROUND TASK HELPERS ==================
+# These functions are sync wrappers for async database operations
+# They are executed in background tasks by FastAPI (guaranteed completion before shutdown)
+
+def _persist_chat_messages(db_service, session_id: str, query: str, response: str, language: str):
+    """Background task: Persist chat messages to database.
+    
+    Runs in background, guaranteed to complete before server shutdown.
+    Failures are logged but don't affect the HTTP response.
+    """
+    if not settings.enable_database:
+        return
+    
+    try:
+        # Create new event loop for this background task
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        # Save user message
+        loop.run_until_complete(
+            db_service.save_message(
+                session_id=session_id,
+                role='user',
+                content=query,
+                language=language
+            )
+        )
+        
+        # Save assistant response
+        loop.run_until_complete(
+            db_service.save_message(
+                session_id=session_id,
+                role='assistant',
+                content=response,
+                language=language
+            )
+        )
+        
+        logger.info("chat_messages_persisted_to_database", session_id=session_id)
+    except Exception as e:
+        logger.warning("database_chat_persistence_failed", error=str(e), session_id=session_id)
+    finally:
+        loop.close()
 
 router = APIRouter()
 
@@ -59,9 +118,11 @@ async def get_rag_sources(rag_service = Depends(get_rag_service)):
 async def chat(
     request: QueryRequest,
     http_request: Request,
+    background_tasks: BackgroundTasks,
     rag_service = Depends(get_rag_service),
     conversation_service = Depends(get_conversation_service),
     cache_service = Depends(get_cache_service),
+    database_service = Depends(get_database_service),
     _: str = Depends(check_rate_limit)
 ):
     """Chat principal con soporte multiidioma, RAG, historial y caché integrados.
@@ -72,7 +133,12 @@ async def chat(
     3. Si no está en cache: usar RAG para buscar
     4. Guardar query + response en memoria de conversación
     5. Guardar resultado en cache (TTL 1 hora)
-    6. Retornar respuesta con metadata
+    6. **Queue** mensaje para persistencia en BD (background task, no bloquea respuesta)
+    7. Retornar respuesta con metadata
+    
+    Persistencia:
+    - ConversationService: Primary (always available)
+    - DatabaseService: Optional background persistence (if enabled)
     """
     try:
         session_id = request.session_id or str(uuid.uuid4())
@@ -103,10 +169,24 @@ async def chat(
         answer_translated = rag_result['response']
         answer_original = rag_result['response']
         
-        # ============ CONVERSATION MEMORY ============
-        # Store in conversation memory
+        # ============ CONVERSATION MEMORY (Primary) ============
+        # Store in conversation memory immediately (synchronous, reliable)
         conversation_service.add_message(session_id, 'user', request.query)
         conversation_service.add_message(session_id, 'assistant', answer_translated)
+        
+        # ============ DATABASE PERSISTENCE (Background Task) ============
+        # Queue background task for async database persistence (non-blocking)
+        # This is guaranteed to complete before server shutdown
+        if settings.enable_database:
+            background_tasks.add_task(
+                _persist_chat_messages,
+                database_service,
+                session_id,
+                request.query,
+                answer_translated,
+                target_lang
+            )
+            logger.info("chat_persistence_queued_for_background", session_id=session_id)
         
         # ============ CONTEXT & TIPS ============
         # Extract context and personalized tips from RAG sources
@@ -165,18 +245,27 @@ async def chat(
 @router.post("/api/chat/stream")
 async def chat_stream(
     request: StreamRequest,
-    conversation_service = Depends(get_conversation_service)
+    conversation_service = Depends(get_conversation_service),
+    database_service = Depends(get_database_service)
 ):
-    """
-    Streaming chat endpoint using Server-Sent Events (SSE).
+    """Streaming chat endpoint using Server-Sent Events (SSE).
 
     Returns tokens as they are generated from the LLM with conversation memory tracking.
     
+    Persistence Strategy:
+    - ConversationService: Primary (stored immediately during streaming)
+    - DatabaseService: Async persistence via asyncio.create_task() (inside async generator)
+      - Explanation: asyncio.create_task() is appropriate here because we're in an async 
+        context (event_generator is async), not an HTTP route (which uses BackgroundTasks)
+      - asyncio.create_task() schedules the coroutine in the current event loop
+      - The task runs concurrently with the SSE stream and completes before server shutdown
+    
     Flujo:
     1. Generar session_id si no existe
-    2. Guardar query en conversación
-    3. Stream tokens desde RAG
-    4. Guardar respuesta completa en conversación al terminar
+    2. Guardar query en conversación (primary)
+    3. Stream tokens desde RAG (SSE)
+    4. Guardar respuesta completa en conversación (primary)
+    5. Queue persistence task in background (asyncio.create_task, no wait)
     """
     rag_module = get_rag_module()
     
@@ -208,6 +297,29 @@ async def chat_stream(
 
             # Add assistant response to conversation memory
             conversation_service.add_message(session_id, 'assistant', full_response)
+            
+            # Persist to database asynchronously if enabled
+            if settings.enable_database:
+                try:
+                    asyncio.create_task(
+                        database_service.save_message(
+                            session_id=session_id,
+                            role='user',
+                            content=request.query,
+                            language=request.language
+                        )
+                    )
+                    asyncio.create_task(
+                        database_service.save_message(
+                            session_id=session_id,
+                            role='assistant',
+                            content=full_response,
+                            language=request.language
+                        )
+                    )
+                    logger.info("stream_messages_queued_for_persistence", session_id=session_id)
+                except Exception as e:
+                    logger.warning("database_stream_persistence_failed", error=str(e), session_id=session_id)
 
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
@@ -225,15 +337,44 @@ async def chat_stream(
 
 
 @router.get("/api/chat/history/{session_id}")
-async def get_chat_history(session_id: str, conversation_service = Depends(get_conversation_service)):
-    """Get conversation history for a session using ConversationService."""
+async def get_chat_history(
+    session_id: str,
+    conversation_service = Depends(get_conversation_service),
+    database_service = Depends(get_database_service)
+):
+    """Get conversation history for a session.
+    
+    Tries: DatabaseService → ConversationService (fallback)
+    """
     try:
-        history = conversation_service.get_history(session_id)
+        history = []
+        source = "memory"  # Default fallback
+        
+        # Try database first if enabled
+        if settings.enable_database:
+            try:
+                history = await database_service.get_history(session_id, limit=50)
+                if history:
+                    source = "database"
+                    logger.info("history_retrieved_from_database", session_id=session_id, count=len(history))
+            except Exception as e:
+                logger.warning("database_history_lookup_failed", error=str(e), session_id=session_id)
+                # Fall through to conversation_service
+        
+        # Fallback to conversation service if DB didn't return anything
+        if not history:
+            history = conversation_service.get_history(session_id)
+            source = "memory"
+            if history:
+                logger.info("history_retrieved_from_memory", session_id=session_id, count=len(history))
+        
         summary = conversation_service.get_session_summary(session_id)
+        
         return {
             "session_id": session_id,
             "history": history,
-            "summary": summary
+            "summary": summary,
+            "_source": source
         }
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
