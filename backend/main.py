@@ -66,6 +66,29 @@ logger.info("personalization_engine_initialized")
 audio_manager = AudioManager()
 logger.info("audio_manager_initialized")
 
+# Initialize Redis client (optional, with fallback to LRU)
+redis_client = None
+if settings.enable_redis:
+    try:
+        import redis.asyncio
+        redis_client = redis.asyncio.from_url(settings.redis_url, decode_responses=False)
+        logger.info("redis_client_initialized", url=settings.redis_url)
+    except Exception as e:
+        logger.warning("redis_initialization_failed", error=str(e), fallback="lru_cache")
+
+# Initialize database service (optional, with fallback to memory)
+from app.services.database_service import DatabaseService
+database_service = DatabaseService(
+    database_url=settings.database_url,
+    db_path=settings.db_path
+)
+import asyncio
+try:
+    asyncio.run(database_service.initialize())
+    logger.info("database_service_initialized", backend=database_service.backend_type)
+except Exception as e:
+    logger.warning("database_service_initialization_failed", error=str(e), backend="memory")
+
 # Check TTS/STT availability
 TTS_AVAILABLE = False
 STT_AVAILABLE = False
