@@ -143,3 +143,35 @@ def get_cache_service():
     from app.services.cache_service import CacheService
     cache = get_cache()
     return CacheService(cache)
+
+
+# ============ SERVICES (Sprint 2 Phase 3) ============
+
+def get_personalization_engine():
+    """Get the personalization engine instance."""
+    return _get_main().personalization_engine
+
+
+def get_audio_manager():
+    """Get the audio manager instance."""
+    return _get_main().audio_manager
+
+
+def get_profile_service():
+    """Get profile service instance.
+    
+    Service wraps PersonalizationEngine for cleaner, testable interface.
+    """
+    from app.services.profile_service import ProfileService
+    personalization_engine = get_personalization_engine()
+    return ProfileService(personalization_engine)
+
+
+def get_audio_service():
+    """Get audio service instance.
+    
+    Service wraps AudioManager for cleaner, testable interface.
+    """
+    from app.services.audio_service import AudioService
+    audio_manager = get_audio_manager()
+    return AudioService(audio_manager)
