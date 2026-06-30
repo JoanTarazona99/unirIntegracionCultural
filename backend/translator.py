@@ -41,9 +41,9 @@ class MultiLanguageTranslator:
             from google_trans_new import google_translator
             self.translator = google_translator()
             self.has_translator = True
-            print("✅ google_trans_new importado correctamente")
+            print("[TRANSLATOR] google_trans_new loaded successfully")
         except (ImportError, Exception) as e:
-            print(f"⚠️ No se pudo importar googletrans ({str(e)}). Usando traducciones estáticas.")
+            print(f"[TRANSLATOR] google_trans_new not available ({str(e)}). Using static translations.")
             self.has_translator = False
             self.translator = None
     

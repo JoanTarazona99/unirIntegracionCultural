@@ -11,6 +11,7 @@ Features:
 """
 
 import json
+import os
 import numpy as np
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Generator, AsyncGenerator
@@ -45,13 +46,20 @@ except ImportError:
         return None
 
 # Try to import sentence-transformers for semantic search
+# NOTE: Disabled by default due to CPU compatibility issues on some systems
+# Set environment variable ENABLE_SEMANTIC_SEARCH=1 to enable it
 SEMANTIC_SEARCH_AVAILABLE = False
-try:
-    from sentence_transformers import SentenceTransformer
-    SEMANTIC_SEARCH_AVAILABLE = True
-    print("[RAG] sentence-transformers loaded successfully - Semantic search enabled")
-except ImportError:
-    print("[RAG] sentence-transformers not available - Using keyword fallback")
+SEMANTIC_SEARCH_DISABLED = True  # Default: disabled for stability
+
+if not SEMANTIC_SEARCH_DISABLED and os.environ.get('ENABLE_SEMANTIC_SEARCH', '0') == '1':
+    try:
+        from sentence_transformers import SentenceTransformer
+        SEMANTIC_SEARCH_AVAILABLE = True
+        print("[RAG] sentence-transformers loaded successfully - Semantic search enabled")
+    except ImportError:
+        print("[RAG] sentence-transformers not available - Using keyword fallback")
+else:
+    print("[RAG] Semantic search disabled (keyword fallback active). Set ENABLE_SEMANTIC_SEARCH=1 to enable.")
 
 
 class SemanticSearchEngine:
@@ -67,11 +75,19 @@ class SemanticSearchEngine:
         if SEMANTIC_SEARCH_AVAILABLE:
             try:
                 print(f"[RAG] Loading model: {model_name}")
+                import warnings
+                warnings.filterwarnings('ignore')
                 self.model = SentenceTransformer(model_name)
                 self._initialized = True
                 print("[RAG] Semantic search engine initialized successfully")
             except Exception as e:
                 print(f"[RAG] Error loading model: {e}")
+                self._initialized = False
+            except SystemError as e:
+                print(f"[RAG] System error in model loading (likely CPU compatibility): {e}")
+                self._initialized = False
+            except BaseException as e:
+                print(f"[RAG] Unexpected error loading model: {type(e).__name__}: {e}")
                 self._initialized = False
 
     def build_index(self, documents: List[Dict]) -> bool:
@@ -138,21 +154,33 @@ class OfficialDocumentLibrary:
 
     def _initialize_semantic_search(self):
         """Initialize semantic search if available"""
-        if SEMANTIC_SEARCH_AVAILABLE:
-            try:
-                self.semantic_engine = SemanticSearchEngine()
-                if self.semantic_engine._initialized:
+        if not SEMANTIC_SEARCH_AVAILABLE:
+            print("[RAG] Using keyword search mode")
+            return
+
+        try:
+            print("[RAG] Initializing semantic search engine...")
+            self.semantic_engine = SemanticSearchEngine()
+            if self.semantic_engine._initialized:
+                try:
                     # Flatten documents for embedding
                     self._flatten_documents()
                     # Build the index
                     if self.semantic_engine.build_index(self.flat_documents):
                         self._use_semantic = True
                         print("[RAG] Semantic search mode activated")
-            except Exception as e:
-                print(f"[RAG] Semantic search initialization failed: {e}")
+                except Exception as e:
+                    print(f"[RAG] Error building semantic index: {e}")
+                    self._use_semantic = False
+            else:
+                print("[RAG] Semantic engine not initialized, using keyword fallback")
                 self._use_semantic = False
-        else:
-            print("[RAG] Using keyword search mode")
+        except Exception as e:
+            print(f"[RAG] Error during semantic initialization: {e}")
+            self._use_semantic = False
+        except BaseException as e:
+            print(f"[RAG] Unexpected error during semantic initialization: {type(e).__name__}: {e}")
+            self._use_semantic = False
 
     def _flatten_documents(self):
         """Flatten nested document structure for embedding"""

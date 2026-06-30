@@ -926,10 +926,7 @@
                             spanish: "¿Puedo tener un formulario?",
                             french: "Puis-je avoir un formulaire?"
                         }
-                    ],
-
-                    // Audio cache
-                    audioCache: {}
+                    ]
                 };
             },
             mounted() {
@@ -1054,9 +1051,6 @@
 
                         this.chatMessages.push(botMessage);
 
-                        // Pre-fetch TTS audio immediately for instant playback later
-                        this.prefetchTTS(botMessage.text, detectedLang);
-
                         // Scroll to bottom
                         this.$nextTick(() => {
                             const container = this.$refs.chatMessages;
@@ -1076,18 +1070,78 @@
                     }
                 },
 
-                // Speak text in specified language (not UI language)
+                // Attempt text-to-speech using Web Speech API (primary path)
+                async speakUsingWebAPI(text, language) {
+                    // Safety check: Web Speech API availability
+                    if (!window.speechSynthesis) {
+                        console.log('Web Speech API unavailable, will fallback to backend');
+                        return false;
+                    }
+
+                    // Language map: ISO 639-1 to BCP 47
+                    const langMap = {
+                        'ru': 'ru-RU',
+                        'es': 'es-ES',
+                        'en': 'en-US',
+                        'fr': 'fr-FR',
+                        'de': 'de-DE',
+                        'pt': 'pt-PT',
+                        'it': 'it-IT',
+                        'zh': 'zh-CN',
+                        'ja': 'ja-JP',
+                        'ko': 'ko-KR',
+                        'ar': 'ar-SA',
+                        'vi': 'vi-VN'
+                    };
+
+                    const targetLang = langMap[language] || language;
+
+                    // Get available voices with timeout
+                    let voices = window.speechSynthesis.getVoices();
+                    
+                    if (voices.length === 0) {
+                        // Wait briefly for voices to load
+                        await new Promise(resolve => {
+                            const handler = () => {
+                                window.speechSynthesis.removeEventListener('voiceschanged', handler);
+                                resolve();
+                            };
+                            window.speechSynthesis.addEventListener('voiceschanged', handler);
+                            setTimeout(resolve, 100);
+                        });
+                        voices = window.speechSynthesis.getVoices();
+                    }
+
+                    // Find suitable voice for target language
+                    const voice = voices.find(v => v.lang.startsWith(language)) || voices.find(v => v.lang.includes(language));
+                    
+                    if (!voice) {
+                        console.log(`No voice found for language ${language}`);
+                        return false;
+                    }
+
+                    // Create utterance and speak
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.voice = voice;
+                    utterance.lang = targetLang;
+
+                    return new Promise((resolve) => {
+                        utterance.onend = () => resolve(true);
+                        utterance.onerror = () => resolve(false);
+                        window.speechSynthesis.speak(utterance);
+                    });
+                },
+
+                // Speak text: try Web Speech API first, fallback to backend
                 async speakText(text, language) {
                     try {
-                        // Check cache first using text+language hash
-                        const cacheKey = this.hashText(text, language);
-                        if (this.audioCache[cacheKey]) {
-                            // Use cached audio
-                            const audio = new Audio(this.audioCache[cacheKey]);
-                            audio.play();
+                        // Primary path: Web Speech API
+                        const success = await this.speakUsingWebAPI(text, language);
+                        if (success) {
                             return;
                         }
 
+                        // Fallback: Backend TTS via /api/tts
                         const response = await fetch('/api/tts', {
                             method: 'POST',
                             headers: {
@@ -1095,29 +1149,26 @@
                             },
                             body: JSON.stringify({
                                 text: text,
-                                language: language  // Use the text's language, not UI language
+                                language: language
                             })
                         });
 
                         if (!response.ok) {
-                            if (response.status === 503) {
-                                alert(this.t('ttsUnavailable'));
-                            }
+                            console.error(`TTS fallback failed: HTTP ${response.status}`);
                             return;
                         }
 
-                        // Get audio blob and cache it
                         const audioBlob = await response.blob();
                         const audioUrl = URL.createObjectURL(audioBlob);
 
-                        // Cache for future use
-                        this.audioCache[cacheKey] = audioUrl;
-
                         const audio = new Audio(audioUrl);
+                        // Revoke ObjectURL after playback ends
+                        audio.onended = () => URL.revokeObjectURL(audioUrl);
+                        audio.onerror = () => URL.revokeObjectURL(audioUrl);
                         audio.play();
 
                     } catch (error) {
-                        console.error('TTS error:', error);
+                        console.error('Speech error:', error);
                     }
                 },
 
@@ -1126,42 +1177,6 @@
                     if (text) {
                         this.speakText(text, detectedLanguage);
                     }
-                },
-
-                // Pre-fetch TTS audio in background for instant playback
-                async prefetchTTS(text, language) {
-                    const cacheKey = this.hashText(text, language);
-
-                    // Skip if already cached
-                    if (this.audioCache[cacheKey]) return;
-
-                    try {
-                        const response = await fetch('/api/tts', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ text, language })
-                        });
-
-                        if (response.ok) {
-                            const audioBlob = await response.blob();
-                            const audioUrl = URL.createObjectURL(audioBlob);
-                            this.audioCache[cacheKey] = audioUrl;
-                        }
-                    } catch (e) {
-                        // Silently fail - will try again on click
-                    }
-                },
-
-                hashText(text, language) {
-                    // Simple hash for cache key
-                    let hash = 0;
-                    const str = text + language;
-                    for (let i = 0; i < str.length; i++) {
-                        const char = str.charCodeAt(i);
-                        hash = ((hash << 5) - hash) + char;
-                        hash = hash & hash;
-                    }
-                    return hash.toString(36);
                 },
 
                 phraseTranslation(phrase) {
