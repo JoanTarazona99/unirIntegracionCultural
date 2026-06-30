@@ -1,0 +1,35 @@
+# Development Dependencies for KubGU Assistant
+# Install with: pip install -r requirements-dev.txt
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+httpx==0.25.0  # For TestClient with async
+
+# Type Checking
+mypy==1.7.1
+types-python-dotenv==1.0.0.20240106
+types-requests==2.31.0.10
+
+# Linting and Formatting
+pylint==3.0.3
+black==23.12.1
+isort==5.13.2
+flake8==6.1.0
+
+# Code Coverage
+coverage==7.4.0
+
+# Dev Tools
+ipython==8.18.1
+ipdb==0.13.13
+pre-commit==3.5.0
+
+# Documentation
+sphinx==7.2.6
+sphinx-rtd-theme==2.0.0
+
+# Task Automation (optional)
+invoke==2.2.0
