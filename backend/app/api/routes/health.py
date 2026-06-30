@@ -2,9 +2,18 @@
 Health check and system status routes.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from app.api.dependencies import get_rag_module, get_tts_available, get_stt_available
+from app.api.dependencies import (
+    get_rag_module,
+    get_rag_service,
+    get_translation_service,
+    get_phrase_service,
+    get_cache,
+    get_conversation_memory,
+    get_tts_available,
+    get_stt_available
+)
 
 router = APIRouter()
 
@@ -28,13 +37,16 @@ async def health_check():
 
 
 @router.get("/api/status")
-async def get_system_status():
+async def get_system_status(
+    rag_service = Depends(get_rag_service),
+    translation_service = Depends(get_translation_service),
+    phrase_service = Depends(get_phrase_service)
+):
     """
     Get comprehensive system status.
 
-    Returns status of all modules: RAG, LLM, TTS, STT, Cache
+    Returns status of all modules: RAG, LLM, TTS, STT, Cache, Translation, Phrases
     """
-    rag_module = get_rag_module()
     cache = get_cache()
     conversation_memory = get_conversation_memory()
     tts_available = get_tts_available()
@@ -42,15 +54,14 @@ async def get_system_status():
     
     from datetime import datetime
     
-    # RAG status
-    semantic_available = hasattr(rag_module.document_library, '_use_semantic') and rag_module.document_library._use_semantic
-    rag_status = {
-        "available": True,
-        "mode": rag_module.document_library.get_search_mode() if hasattr(rag_module.document_library, 'get_search_mode') else "keyword",
-        "sources": len(rag_module.document_library.documents) if hasattr(rag_module, 'document_library') else 0
-    }
-
-    # LLM status
+    # RAG status via service
+    try:
+        rag_status = rag_service.get_status()
+    except Exception as e:
+        rag_status = {"available": False, "error": str(e)}
+    
+    # LLM status (still from RAG module directly, since LLM is part of RAG)
+    rag_module = get_rag_module()
     llm_available = rag_module.is_llm_enabled() if hasattr(rag_module, 'is_llm_enabled') else False
     llm_status = {
         "available": llm_available,
@@ -88,6 +99,12 @@ async def get_system_status():
         "sessions": conversation_memory.get_session_count(),
         "max_history": 10
     }
+    
+    # Translation status via service
+    translation_status = translation_service.get_status()
+    
+    # Phrase status via service
+    phrase_status = phrase_service.get_status()
 
     return {
         "version": "0.5.0",
@@ -98,9 +115,8 @@ async def get_system_status():
         "tts": tts_status,
         "stt": stt_status,
         "cache": cache_status,
-        "conversation": conversation_status
+        "conversation": conversation_status,
+        "translation": translation_status,
+        "phrases": phrase_status
     }
 
-
-# Import dependencies at bottom to avoid issues
-from app.api.dependencies import get_cache, get_conversation_memory

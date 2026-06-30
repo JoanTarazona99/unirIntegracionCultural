@@ -9,40 +9,44 @@ from typing import AsyncGenerator
 from app.api.models import QueryRequest, StreamRequest, ChatResponse
 from app.api.dependencies import (
     get_rag_module,
+    get_rag_service,
     get_translator,
     get_conversation_memory,
     get_cache,
     check_rate_limit,
 )
+from app.domain.exceptions import RAGError
 from fastapi.responses import StreamingResponse
 
 router = APIRouter()
 
 
 @router.post("/api/search")
-async def search_documents(query: QueryRequest):
+async def search_documents(
+    query: QueryRequest,
+    rag_service = Depends(get_rag_service)
+):
     """Búsqueda en documentos oficiales usando RAG mejorado con semantic search."""
     try:
-        rag_module = get_rag_module()
-        result = rag_module.search_and_generate(
-            query.query,
+        result = rag_service.search(
+            query=query.query,
+            language=query.language,
             context_type=f"lang_{query.language}"
         )
         return result
+    except RAGError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error in RAG search: {str(e)}")
 
 
 @router.get("/api/search/sources")
-async def get_rag_sources():
+async def get_rag_sources(rag_service = Depends(get_rag_service)):
     """Obtener fuentes oficiales disponibles."""
     try:
-        rag_module = get_rag_module()
-        return {
-            "sources": rag_module.document_library.list_sources(),
-            "search_mode": rag_module.document_library.get_search_mode(),
-            "description": "Fuentes de documentos oficiales integradas"
-        }
+        return rag_service.get_sources()
+    except RAGError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting sources: {str(e)}")
 

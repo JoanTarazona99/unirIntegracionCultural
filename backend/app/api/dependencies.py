@@ -89,3 +89,35 @@ async def check_rate_limit(request: Request) -> str:
             detail=f"Rate limit exceeded. Max {rate_limiter.max_requests} requests per minute."
         )
     return ip
+
+
+# ============ SERVICES (Sprint 1 Day 3) ============
+
+def get_rag_service():
+    """Get RAG service instance.
+    
+    Service wraps EnhancedRAGModule for cleaner, testable interface.
+    """
+    from app.services.rag_service import RAGService
+    rag_module = get_rag_module()
+    return RAGService(rag_module)
+
+
+def get_translation_service():
+    """Get translation service instance.
+    
+    Service wraps MultiLanguageTranslator for cleaner, testable interface.
+    """
+    from app.services.translation_service import TranslationService
+    translator = get_translator()
+    return TranslationService(translator)
+
+
+def get_phrase_service():
+    """Get phrase service instance.
+    
+    Service wraps phrases database for cleaner, testable interface.
+    """
+    from app.services.phrase_service import PhraseService
+    phrases_db = get_phrases_db()
+    return PhraseService(phrases_db)
