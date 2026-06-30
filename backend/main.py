@@ -23,7 +23,8 @@ from app.middleware.logging_middleware import LoggingMiddleware
 
 from enhanced_rag import EnhancedRAGModule
 from translator import create_translator
-from personalization import get_conversation_memory, ConversationMemory
+from personalization import get_conversation_memory, ConversationMemory, PersonalizationEngine
+from audio_module import AudioManager
 from cache_module import get_rag_cache, LRUCache, cache_rag_query, get_cached_rag_query
 
 # ==================== APPLICATION INITIALIZATION ====================
@@ -56,6 +57,14 @@ conversation_memory = get_conversation_memory(max_history=10)
 
 # Initialize cache
 cache = get_rag_cache(max_entries=settings.cache_max_entries, default_ttl=settings.cache_ttl_seconds)
+
+# Initialize personalization engine
+personalization_engine = PersonalizationEngine()
+logger.info("personalization_engine_initialized")
+
+# Initialize audio manager
+audio_manager = AudioManager()
+logger.info("audio_manager_initialized")
 
 # Check TTS/STT availability
 TTS_AVAILABLE = False
