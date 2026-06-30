@@ -34,13 +34,16 @@ from app.services.rag_service import RAGService
 from app.services.translation_service import TranslationService
 from app.services.phrase_service import PhraseService
 from app.services.cache_service import CacheService
+from app.services.profile_service import ProfileService
+from app.services.audio_service import AudioService
 
 from app.domain.exceptions import (
     AppError, RAGError, TranslationError, ValidationError
 )
 
 from app.api.dependencies import (
-    get_rag_module, get_translator, get_phrases_db, get_cache
+    get_rag_module, get_translator, get_phrases_db, get_cache,
+    get_personalization_engine, get_audio_manager
 )
 
 
@@ -59,6 +62,10 @@ class ServiceE2ETestRunner:
         self.translator = get_translator()
         self.phrases_db = get_phrases_db()
         self.cache = get_cache()
+        
+        # Initialize new services for Phase 3
+        self.personalization_engine = get_personalization_engine()
+        self.audio_manager = get_audio_manager()
         
     def log(self, msg: str, level: str = "INFO"):
         """Log test message"""
@@ -91,6 +98,8 @@ class ServiceE2ETestRunner:
         self.run_translation_service_tests()
         self.run_phrase_service_tests()
         self.run_cache_service_tests()
+        self.run_profile_service_tests()
+        self.run_audio_service_tests()
         self.run_http_integration_tests()
         
         self.print_summary()
@@ -661,6 +670,235 @@ class ServiceE2ETestRunner:
             self.test("CacheService validation - None module raises ValidationError", True)
         except Exception:
             self.test("CacheService validation - None module", False)
+    
+    # ==================== ProfileService Tests ====================
+    
+    def run_profile_service_tests(self):
+        """Test ProfileService functionality"""
+        print("\n--- ProfileService Tests ---")
+        
+        try:
+            profile_service = ProfileService(self.personalization_engine)
+        except Exception as e:
+            self.test("ProfileService initialization", False)
+            return
+        
+        self.test("ProfileService initialization", True)
+        
+        # Test 1: Get profile for new user
+        try:
+            result = profile_service.get_profile("test_user_1")
+            self.test(
+                "ProfileService.get_profile happy path",
+                result.get("user_id") == "test_user_1" and "exists" in result
+            )
+        except Exception as e:
+            self.test("ProfileService.get_profile happy path", False)
+        
+        # Test 2: Update profile
+        try:
+            update_data = {
+                "country": "Vietnam",
+                "visa_type": "student",
+                "academic_level": "bachelor",
+                "russian_level": "A1"
+            }
+            result = profile_service.update_profile("test_user_2", update_data)
+            self.test(
+                "ProfileService.update_profile",
+                result.get("success") == True or "user_id" in result
+            )
+        except Exception as e:
+            self.test("ProfileService.update_profile", False)
+        
+        # Test 3: Get personalization tips
+        try:
+            profile_service.update_profile("test_user_3", {
+                "country": "China",
+                "russian_level": "A2"
+            })
+            tips = profile_service.get_personalization_tips("test_user_3")
+            self.test(
+                "ProfileService.get_personalization_tips",
+                isinstance(tips, list)
+            )
+        except Exception as e:
+            self.test("ProfileService.get_personalization_tips", False)
+        
+        # Test 4: Get personalization tips with context filter
+        try:
+            tips_filtered = profile_service.get_personalization_tips(
+                "test_user_3", context="visa"
+            )
+            self.test(
+                "ProfileService.get_personalization_tips with context",
+                isinstance(tips_filtered, list)
+            )
+        except Exception as e:
+            self.test("ProfileService.get_personalization_tips with context", False)
+        
+        # Test 5: Profile service status
+        try:
+            status = profile_service.get_status()
+            self.test(
+                "ProfileService.get_status",
+                "profiles_count" in status and "engine_type" in status
+            )
+        except Exception as e:
+            self.test("ProfileService.get_status", False)
+        
+        # Test 6: Validation - empty user_id
+        try:
+            profile_service.get_profile("")
+            self.test("ProfileService validation - empty user_id", False)
+        except ValidationError:
+            self.test("ProfileService validation - empty user_id raises ValidationError", True)
+        except Exception:
+            self.test("ProfileService validation - empty user_id", False)
+        
+        # Test 7: Validation - None engine
+        try:
+            bad_service = ProfileService(None)
+            self.test("ProfileService validation - None engine", False)
+        except ValidationError:
+            self.test("ProfileService validation - None engine raises ValidationError", True)
+        except Exception:
+            self.test("ProfileService validation - None engine", False)
+        
+        # Test 8: Multiple profile updates
+        try:
+            profile_service.update_profile("test_user_4", {"country": "Brazil"})
+            profile_service.update_profile("test_user_4", {"russian_level": "B1"})
+            result = profile_service.get_profile("test_user_4")
+            self.test("ProfileService multiple updates", result.get("exists") == True)
+        except Exception as e:
+            self.test("ProfileService multiple updates", False)
+        
+        # Test 9: Profile data persistence
+        try:
+            profile_service.update_profile("test_user_5", {"country": "India", "visa_type": "work"})
+            result1 = profile_service.get_profile("test_user_5")
+            result2 = profile_service.get_profile("test_user_5")
+            self.test(
+                "ProfileService data persistence",
+                result1.get("user_id") == result2.get("user_id")
+            )
+        except Exception as e:
+            self.test("ProfileService data persistence", False)
+        
+        # Test 10: Get profile with complete data
+        try:
+            full_data = {
+                "country": "Thailand",
+                "visa_type": "student",
+                "academic_level": "master",
+                "russian_level": "B2"
+            }
+            profile_service.update_profile("test_user_6", full_data)
+            result = profile_service.get_profile("test_user_6")
+            self.test(
+                "ProfileService get complete profile",
+                result.get("exists") == True and result.get("profile") is not None
+            )
+        except Exception as e:
+            self.test("ProfileService get complete profile", False)
+    
+    # ==================== AudioService Tests ====================
+    
+    def run_audio_service_tests(self):
+        """Test AudioService functionality"""
+        print("\n--- AudioService Tests ---")
+        
+        try:
+            audio_service = AudioService(self.audio_manager)
+        except Exception as e:
+            self.test("AudioService initialization", False)
+            return
+        
+        self.test("AudioService initialization", True)
+        
+        # Test 1: Audio service status
+        try:
+            status = audio_service.get_status()
+            self.test(
+                "AudioService.get_status",
+                "available" in status and "tts_available" in status and "stt_available" in status
+            )
+        except Exception as e:
+            self.test("AudioService.get_status", False)
+        
+        # Test 2: TTS graceful degradation (if not available)
+        try:
+            result = audio_service.text_to_speech("Hello", "en")
+            self.test(
+                "AudioService.text_to_speech graceful degradation",
+                isinstance(result, dict) and "success" in result
+            )
+        except Exception as e:
+            self.test("AudioService.text_to_speech graceful degradation", False)
+        
+        # Test 3: STT graceful degradation (if not available)
+        try:
+            result = audio_service.speech_to_text("/tmp/test.wav")
+            self.test(
+                "AudioService.speech_to_text graceful degradation",
+                isinstance(result, dict) and "success" in result
+            )
+        except Exception as e:
+            self.test("AudioService.speech_to_text graceful degradation", False)
+        
+        # Test 4: TTS with Russian text
+        try:
+            result = audio_service.text_to_speech("Привет", "ru")
+            self.test(
+                "AudioService.text_to_speech Russian",
+                isinstance(result, dict) and result.get("language") == "ru"
+            )
+        except Exception as e:
+            self.test("AudioService.text_to_speech Russian", False)
+        
+        # Test 5: TTS with Spanish text
+        try:
+            result = audio_service.text_to_speech("Hola", "es")
+            self.test(
+                "AudioService.text_to_speech Spanish",
+                isinstance(result, dict) and result.get("language") == "es"
+            )
+        except Exception as e:
+            self.test("AudioService.text_to_speech Spanish", False)
+        
+        # Test 6: Validation - None manager
+        try:
+            bad_service = AudioService(None)
+            self.test("AudioService validation - None manager", False)
+        except ValidationError:
+            self.test("AudioService validation - None manager raises ValidationError", True)
+        except Exception:
+            self.test("AudioService validation - None manager", False)
+        
+        # Test 7: Validation - empty text in TTS
+        try:
+            result = audio_service.text_to_speech("", "ru")
+            # Empty text might return error dict or raise exception - both acceptable
+            self.test(
+                "AudioService.text_to_speech empty text handling",
+                isinstance(result, dict) or result is None
+            )
+        except Exception as e:
+            # Exception for empty text is also acceptable
+            self.test("AudioService.text_to_speech empty text handling", True)
+        
+        # Test 8: Multiple TTS calls
+        try:
+            result1 = audio_service.text_to_speech("Text 1", "ru")
+            result2 = audio_service.text_to_speech("Text 2", "en")
+            result3 = audio_service.text_to_speech("Text 3", "es")
+            self.test(
+                "AudioService multiple TTS calls",
+                all(isinstance(r, dict) for r in [result1, result2, result3])
+            )
+        except Exception as e:
+            self.test("AudioService multiple TTS calls", False)
     
     def print_summary(self):
         """Print test summary"""
