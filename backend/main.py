@@ -1,9 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Request, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
-from pydantic import BaseModel
-from typing import List, Optional, Dict, AsyncGenerator
+import sys
 import json
 import os
 import io
@@ -11,15 +6,45 @@ import uuid
 import time
 from pathlib import Path
 from datetime import datetime, timedelta
+
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
+from pydantic import BaseModel
+from typing import List, Optional, Dict, AsyncGenerator
+
+# Add backend to path for app imports
+sys.path.insert(0, str(Path(__file__).parent))
+
+from app.config.settings import settings
+from app.config.logging_config import configure_logging, get_logger
+from app.middleware.logging_middleware import LoggingMiddleware
+
 from enhanced_rag import EnhancedRAGModule
 from translator import create_translator
 from personalization import get_conversation_memory, ConversationMemory
 from cache_module import get_rag_cache, LRUCache, cache_rag_query, get_cached_rag_query
 
+# ==================== APPLICATION INITIALIZATION ====================
+configure_logging()
+logger = get_logger(__name__)
+
 app = FastAPI(
-    title="Asistente de Integración Cultural - KubGU",
+    title=settings.app_name,
     description="Backend para soporte inteligente a estudiantes extranjeros",
-    version="0.5.0"
+    version=settings.app_version,
+    debug=settings.debug
+)
+
+# Add logging middleware
+app.add_middleware(LoggingMiddleware)
+
+logger.info(
+    "app_startup",
+    app_name=settings.app_name,
+    version=settings.app_version,
+    environment=settings.environment
 )
 
 # Inicializar módulo RAG mejorado e traductor multiidioma
@@ -30,7 +55,7 @@ translator = create_translator()
 conversation_memory = get_conversation_memory(max_history=10)
 
 # Initialize cache
-cache = get_rag_cache(max_entries=500, default_ttl=3600)  # 500 entries, 1 hour TTL
+cache = get_rag_cache(max_entries=settings.cache_max_entries, default_ttl=settings.cache_ttl_seconds)
 
 # Check TTS/STT availability
 TTS_AVAILABLE = False
@@ -38,16 +63,16 @@ STT_AVAILABLE = False
 try:
     from gtts import gTTS
     TTS_AVAILABLE = True
-    print("[TTS] gTTS loaded - Text-to-Speech enabled")
+    logger.info("feature_enabled", service="TTS", provider="gTTS")
 except ImportError:
-    print("[TTS] gTTS not available - TTS endpoint will return error")
+    logger.warning("feature_disabled", service="TTS", reason="gTTS not installed")
 
 try:
     import speech_recognition as sr
     STT_AVAILABLE = True
-    print("[STT] SpeechRecognition loaded - Speech-to-Text enabled")
+    logger.info("feature_enabled", service="STT", provider="Google Speech Recognition")
 except ImportError:
-    print("[STT] SpeechRecognition not available - STT endpoint will return error")
+    logger.warning("feature_disabled", service="STT", reason="SpeechRecognition not installed")
 
 # ==================== RATE LIMITER ====================
 
@@ -104,7 +129,16 @@ class RateLimiter:
                 del self._requests[ip]
 
 
-rate_limiter = RateLimiter(max_requests=30, window_seconds=60)
+rate_limiter = RateLimiter(
+    max_requests=settings.rate_limit_requests,
+    window_seconds=settings.rate_limit_window
+)
+
+logger.info(
+    "rate_limiter_initialized",
+    max_requests=settings.rate_limit_requests,
+    window_seconds=settings.rate_limit_window
+)
 
 
 def get_client_ip(request: Request) -> str:
@@ -127,34 +161,19 @@ async def check_rate_limit(request: Request):
 
 
 # ==================== CORS ====================
-
-# Allowed origins (configure as needed)
-ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://localhost:3000",
-    "http://127.0.0.1:8000",
-    "http://127.0.0.1:3000",
-    "https://kubsu.ru",
-    "https://t.me",  # Telegram web app
-]
-
-# Also allow any localhost for development
-import re
-def is_allowed_origin(origin: str) -> bool:
-    if origin in ALLOWED_ORIGINS:
-        return True
-    # Allow any localhost/127.0.0.1 for development
-    if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
-        return True
-    return False
-
-# CORS middleware
+# CORS middleware - use explicit whitelist from settings (NO wildcard)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS + ["*"],  # Allow all for now, filter in routes
-    allow_credentials=True,
+    allow_origins=settings.cors_allowed_origins,
+    allow_credentials=settings.cors_allow_credentials,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+)
+
+logger.info(
+    "cors_configured",
+    allowed_origins=settings.cors_allowed_origins,
+    allow_credentials=settings.cors_allow_credentials
 )
 
 # Ruta raíz: redireccionar a frontend
@@ -898,5 +917,17 @@ async def get_project_info():
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("API_PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    
+    logger.info(
+        "starting_uvicorn",
+        host=settings.api_host,
+        port=settings.api_port,
+        environment=settings.environment
+    )
+    
+    uvicorn.run(
+        app,
+        host=settings.api_host,
+        port=settings.api_port,
+        log_config=None
+    )
