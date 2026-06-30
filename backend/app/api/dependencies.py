@@ -1,0 +1,91 @@
+"""
+FastAPI dependencies for KubGU Assistant.
+
+Exposes lazy imports of shared application state.
+Uses late binding to avoid circular imports.
+"""
+
+from fastapi import HTTPException, Request
+from typing import Optional
+
+
+# Global state will be accessed lazily
+_main_module = None
+_rate_limiter_instance = None
+
+
+def _get_main():
+    """Lazy import of main module to avoid circular imports."""
+    global _main_module
+    if _main_module is None:
+        import main as _main
+        _main_module = _main
+    return _main_module
+
+
+def get_rag_module():
+    """Get the RAG module instance."""
+    return _get_main().rag_module
+
+
+def get_translator():
+    """Get the translator instance."""
+    return _get_main().translator
+
+
+def get_conversation_memory():
+    """Get the conversation memory instance."""
+    return _get_main().conversation_memory
+
+
+def get_cache():
+    """Get the cache instance."""
+    return _get_main().cache
+
+
+def get_phrases_db():
+    """Get the phrases database."""
+    return _get_main().phrases_db
+
+
+def get_rate_limiter():
+    """Get the rate limiter instance."""
+    return _get_main().rate_limiter
+
+
+def get_tts_available() -> bool:
+    """Check if TTS is available."""
+    return _get_main().TTS_AVAILABLE
+
+
+def get_stt_available() -> bool:
+    """Check if STT is available."""
+    return _get_main().STT_AVAILABLE
+
+
+def get_audio_dirs():
+    """Get audio directories."""
+    return {
+        "audio_dir": _get_main().audio_dir,
+        "tts_cache_dir": _get_main().tts_cache_dir
+    }
+
+
+def get_client_ip(request: Request) -> str:
+    """Extract client IP from request."""
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+async def check_rate_limit(request: Request) -> str:
+    """Dependency to check rate limit."""
+    rate_limiter = get_rate_limiter()
+    ip = get_client_ip(request)
+    if not rate_limiter.is_allowed(ip):
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Max {rate_limiter.max_requests} requests per minute."
+        )
+    return ip
