@@ -10,6 +10,8 @@ from app.services.translation_service import TranslationService
 from app.services.phrase_service import PhraseService
 from app.services.conversation_service import ConversationService
 from app.services.cache_service import CacheService
+from app.services.profile_service import ProfileService
+from app.services.audio_service import AudioService
 
 __all__ = [
     "RAGService",
@@ -17,4 +19,6 @@ __all__ = [
     "PhraseService",
     "ConversationService",
     "CacheService",
+    "ProfileService",
+    "AudioService",
 ]

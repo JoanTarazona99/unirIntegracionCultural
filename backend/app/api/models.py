@@ -72,3 +72,47 @@ class TTSRequest(BaseModel):
     """Text-to-speech request."""
     text: str
     language: str = "ru"
+
+
+# ==================== PROFILE SERVICE MODELS ====================
+
+class ProfileUpdateRequest(BaseModel):
+    """Profile update request."""
+    country: str
+    visa_type: str = "student"
+    academic_level: str = "bachelor"
+    russian_level: str = "A1"
+
+
+class ProfileResponse(BaseModel):
+    """Profile response."""
+    user_id: str
+    exists: bool
+    profile: Optional[Dict] = None
+    message: Optional[str] = None
+
+
+# ==================== AUDIO SERVICE MODELS ====================
+
+class AudioTTSRequest(BaseModel):
+    """Text-to-speech request via AudioService."""
+    text: str
+    language: str = "ru"
+
+
+class AudioSTTResponse(BaseModel):
+    """Speech-to-text response."""
+    success: bool
+    transcription: Optional[str] = None
+    confidence: Optional[float] = None
+    language: str = "ru"
+    message: Optional[str] = None
+
+
+class AudioStatusResponse(BaseModel):
+    """Audio service status response."""
+    available: bool
+    tts_available: bool
+    stt_available: bool
+    manager_type: Optional[str] = None
+    error: Optional[str] = None
