@@ -175,3 +175,33 @@ def get_audio_service():
     from app.services.audio_service import AudioService
     audio_manager = get_audio_manager()
     return AudioService(audio_manager)
+
+
+# ============ SERVICES (Sprint 3 - Persistence) ============
+
+def get_redis_client():
+    """Get Redis client instance.
+    
+    Returns None if Redis not available.
+    """
+    return _get_main().redis_client
+
+
+def get_redis_cache_service():
+    """Get Redis cache service instance.
+    
+    Service wraps Redis client with automatic LRU fallback.
+    If Redis unavailable, transparently uses in-memory LRU cache.
+    """
+    from app.services.redis_cache_service import RedisCacheService
+    redis_client = get_redis_client()
+    return RedisCacheService(redis_client)
+
+
+def get_database_service():
+    """Get database service instance.
+    
+    Service provides persistent storage for conversations and profiles.
+    Supports: SQLite (default) → PostgreSQL (optional) → Memory (fallback)
+    """
+    return _get_main().database_service

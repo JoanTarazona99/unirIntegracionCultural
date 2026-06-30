@@ -124,6 +124,30 @@ class Settings(BaseSettings):
         description="Enable LLM integration (Ollama)"
     )
     
+    # ==================== PERSISTENCE - REDIS ====================
+    redis_url: str = Field(
+        default="redis://localhost:6379",
+        description="Redis connection URL (optional, falls back to LRU if unavailable)"
+    )
+    enable_redis: bool = Field(
+        default=False,
+        description="Enable Redis cache (auto-fallback to LRU if not available)"
+    )
+    
+    # ==================== PERSISTENCE - DATABASE ====================
+    database_url: str = Field(
+        default="sqlite:///./data/assistant.db",
+        description="Database URL (SQLite or PostgreSQL, auto-fallback to memory)"
+    )
+    enable_database: bool = Field(
+        default=False,
+        description="Enable database persistence (auto-fallback to memory if not available)"
+    )
+    db_path: str = Field(
+        default="./data/assistant.db",
+        description="Path to SQLite database file (if using SQLite)"
+    )
+    
     # ==================== VALIDATORS ====================
     @field_validator("environment", mode="before")
     @classmethod

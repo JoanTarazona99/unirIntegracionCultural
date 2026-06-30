@@ -15,6 +15,11 @@ pandas==2.1.3
 # Database
 psycopg2-binary==2.9.9
 sqlalchemy==2.0.23
+aiosqlite==0.20.0  # async SQLite (optional - falls back to memory)
+
+# Cache
+redis==5.0.1  # optional - falls back to LRU if unavailable
+asyncpg==0.29.0  # optional - async PostgreSQL driver
 
 # Telegram bot
 python-telegram-bot==20.3
