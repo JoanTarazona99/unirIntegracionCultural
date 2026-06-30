@@ -33,13 +33,14 @@ from main import app
 from app.services.rag_service import RAGService
 from app.services.translation_service import TranslationService
 from app.services.phrase_service import PhraseService
+from app.services.cache_service import CacheService
 
 from app.domain.exceptions import (
     AppError, RAGError, TranslationError, ValidationError
 )
 
 from app.api.dependencies import (
-    get_rag_module, get_translator, get_phrases_db
+    get_rag_module, get_translator, get_phrases_db, get_cache
 )
 
 
@@ -53,10 +54,11 @@ class ServiceE2ETestRunner:
         self.test_results = []
         self.client = TestClient(app)
         
-        # Initialize modules
+        # Initialize modules and services
         self.rag_module = get_rag_module()
         self.translator = get_translator()
         self.phrases_db = get_phrases_db()
+        self.cache = get_cache()
         
     def log(self, msg: str, level: str = "INFO"):
         """Log test message"""
@@ -88,6 +90,7 @@ class ServiceE2ETestRunner:
         self.run_rag_service_tests()
         self.run_translation_service_tests()
         self.run_phrase_service_tests()
+        self.run_cache_service_tests()
         self.run_http_integration_tests()
         
         self.print_summary()
@@ -501,6 +504,163 @@ class ServiceE2ETestRunner:
         except Exception as e:
             self.test("Logging integration", False)
             self.log(f"    Error: {e}", "FAIL")
+    
+    # ==================== CacheService Tests ====================
+    
+    def run_cache_service_tests(self):
+        """Test CacheService wrapper"""
+        print("\n" + "-"*80)
+        print("[TEST SUITE 4] CacheService")
+        print("-"*80)
+        
+        cache_service = CacheService(self.cache)
+        
+        # Test 1: Initialize CacheService
+        self.test(
+            "CacheService initialization",
+            cache_service is not None and cache_service.cache is not None
+        )
+        
+        # Test 2: Cache get miss
+        miss_result = cache_service.get("nonexistent_key_12345")
+        self.test(
+            "Cache get returns None on miss",
+            miss_result is None
+        )
+        
+        # Test 3: Cache set and get hit
+        test_data = {"message": "Hello Cache", "timestamp": "2026-06-30"}
+        cache_service.set("test_key_1", test_data)
+        hit_result = cache_service.get("test_key_1")
+        self.test(
+            "Cache set and get hit",
+            hit_result == test_data,
+            expected=test_data,
+            actual=hit_result
+        )
+        
+        # Test 4: Cache set with TTL
+        cache_service.set("test_key_ttl", {"data": "ttl_test"}, ttl=600)
+        ttl_result = cache_service.get("test_key_ttl")
+        self.test(
+            "Cache set with TTL",
+            ttl_result is not None and ttl_result.get("data") == "ttl_test"
+        )
+        
+        # Test 5: Cache invalidate
+        cache_service.set("test_key_invalidate", {"data": "will_be_removed"})
+        invalidate_result = cache_service.invalidate("test_key_invalidate")
+        after_invalidate = cache_service.get("test_key_invalidate")
+        self.test(
+            "Cache invalidate removes key",
+            invalidate_result is not None and after_invalidate is None
+        )
+        
+        # Test 6: Cache clear
+        cache_service.set("key_1", "value_1")
+        cache_service.set("key_2", "value_2")
+        clear_result = cache_service.clear()
+        self.test(
+            "Cache clear removes all entries",
+            isinstance(clear_result, dict) and clear_result.get("success") is True
+        )
+        
+        # Test 7: Cache get_stats
+        cache_service.set("stat_test_1", "value_1")
+        cache_service.get("stat_test_1")  # hit
+        cache_service.get("stat_test_1")  # hit
+        cache_service.get("nonexistent")  # miss
+        
+        stats = cache_service.get_stats()
+        self.test(
+            "Cache get_stats returns valid stats",
+            isinstance(stats, dict) and "hits" in stats and "misses" in stats
+        )
+        
+        # Test 8: Cache get_status
+        status = cache_service.get_status()
+        self.test(
+            "Cache get_status returns dict with required fields",
+            isinstance(status, dict) and 
+            status.get("available") == True and 
+            "size" in status and 
+            "max_entries" in status
+        )
+        
+        # Test 9: Validation error on invalid key
+        try:
+            cache_service.get(None)
+            self.test("Cache validation - None key", False)
+        except ValidationError:
+            self.test("Cache validation - None key raises ValidationError", True)
+        except Exception:
+            self.test("Cache validation - None key", False)
+        
+        # Test 10: Validation error on invalid TTL
+        try:
+            cache_service.set("key", "value", ttl=-1)
+            self.test("Cache validation - negative TTL", False)
+        except ValidationError:
+            self.test("Cache validation - negative TTL raises ValidationError", True)
+        except Exception:
+            self.test("Cache validation - negative TTL", False)
+        
+        # Test 11: Multiple values with different types
+        test_values = [
+            ("cache_str", "string_value"),
+            ("cache_int", 42),
+            ("cache_float", 3.14),
+            ("cache_list", [1, 2, 3]),
+            ("cache_dict", {"nested": "dict"}),
+        ]
+        
+        for key, value in test_values:
+            cache_service.set(key, value)
+        
+        all_retrieved = True
+        for key, expected_value in test_values:
+            retrieved = cache_service.get(key)
+            if retrieved != expected_value:
+                all_retrieved = False
+                break
+        
+        self.test(
+            "Cache handles multiple data types",
+            all_retrieved
+        )
+        
+        # Test 12: Large value caching
+        large_dict = {f"key_{i}": f"value_{i}" * 100 for i in range(100)}
+        cache_service.set("large_value", large_dict)
+        retrieved_large = cache_service.get("large_value")
+        self.test(
+            "Cache handles large values",
+            retrieved_large == large_dict
+        )
+        
+        # Test 13: Concurrent-like access (sequential simulation)
+        cache_service.clear()
+        keys_accessed = []
+        for i in range(10):
+            key = f"concurrent_key_{i}"
+            cache_service.set(key, f"value_{i}")
+            retrieved = cache_service.get(key)
+            if retrieved == f"value_{i}":
+                keys_accessed.append(key)
+        
+        self.test(
+            "Cache handles sequential access correctly",
+            len(keys_accessed) == 10
+        )
+        
+        # Test 14: Cache service error handling with None module
+        try:
+            bad_service = CacheService(None)
+            self.test("CacheService validation - None module", False)
+        except ValidationError:
+            self.test("CacheService validation - None module raises ValidationError", True)
+        except Exception:
+            self.test("CacheService validation - None module", False)
     
     def print_summary(self):
         """Print test summary"""

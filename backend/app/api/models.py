@@ -56,6 +56,9 @@ class ChatResponse(BaseModel):
     language: str
     available_languages: List[str] = None
     search_mode: Optional[str] = None
+    session_id: Optional[str] = None
+    cached: bool = False
+    cache_key: Optional[str] = None
 
 
 class TranslationRequest(BaseModel):
