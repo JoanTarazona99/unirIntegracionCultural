@@ -735,9 +735,9 @@ Usa /ask para hacer preguntas.
 
 def main():
     """Main function"""
-    token = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_BOT_TOKEN_HERE").strip()
 
-    if token == "YOUR_BOT_TOKEN_HERE":
+    if not token or token == "YOUR_BOT_TOKEN_HERE":
         logger.error("Configura TELEGRAM_BOT_TOKEN en variables de entorno")
         logger.error("Ejemplo: export TELEGRAM_BOT_TOKEN='tu_token_aqui'")
         return

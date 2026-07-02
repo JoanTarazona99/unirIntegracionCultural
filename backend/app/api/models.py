@@ -4,8 +4,20 @@ Pydantic models for KubGU Assistant API.
 Contains request/response schemas used across all endpoints.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import List, Optional, Dict
+
+
+def _validate_non_empty_text(value: str, max_length: int = 2000) -> str:
+    """Shared validator: strip, reject empty, enforce a maximum length."""
+    if not isinstance(value, str):
+        raise ValueError("must be a string")
+    stripped = value.strip()
+    if not stripped:
+        raise ValueError("must not be empty")
+    if len(stripped) > max_length:
+        raise ValueError(f"must not exceed {max_length} characters")
+    return stripped
 
 
 class UserProfile(BaseModel):
@@ -37,12 +49,22 @@ class QueryRequest(BaseModel):
     target_language: Optional[str] = None
     session_id: Optional[str] = None
 
+    @field_validator("query")
+    @classmethod
+    def validate_query(cls, v):
+        return _validate_non_empty_text(v)
+
 
 class StreamRequest(BaseModel):
     """Streaming chat request."""
     query: str
     session_id: Optional[str] = None
     language: str = "ru"
+
+    @field_validator("query")
+    @classmethod
+    def validate_query(cls, v):
+        return _validate_non_empty_text(v)
 
 
 class ChatResponse(BaseModel):
@@ -67,11 +89,21 @@ class TranslationRequest(BaseModel):
     source_language: str = "es"
     target_language: str = "en"
 
+    @field_validator("text")
+    @classmethod
+    def validate_text(cls, v):
+        return _validate_non_empty_text(v)
+
 
 class TTSRequest(BaseModel):
     """Text-to-speech request."""
     text: str
     language: str = "ru"
+
+    @field_validator("text")
+    @classmethod
+    def validate_text(cls, v):
+        return _validate_non_empty_text(v)
 
 
 # ==================== PROFILE SERVICE MODELS ====================
@@ -98,6 +130,11 @@ class AudioTTSRequest(BaseModel):
     """Text-to-speech request via AudioService."""
     text: str
     language: str = "ru"
+
+    @field_validator("text")
+    @classmethod
+    def validate_text(cls, v):
+        return _validate_non_empty_text(v)
 
 
 class AudioSTTResponse(BaseModel):

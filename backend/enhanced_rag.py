@@ -46,12 +46,19 @@ except ImportError:
         return None
 
 # Try to import sentence-transformers for semantic search
-# NOTE: Disabled by default due to CPU compatibility issues on some systems
-# Set environment variable ENABLE_SEMANTIC_SEARCH=1 to enable it
+# NOTE: Disabled by default due to CPU compatibility issues on some systems.
+# Controlled via settings.enable_semantic_search (env: ENABLE_SEMANTIC_SEARCH=1).
 SEMANTIC_SEARCH_AVAILABLE = False
-SEMANTIC_SEARCH_DISABLED = True  # Default: disabled for stability
 
-if not SEMANTIC_SEARCH_DISABLED and os.environ.get('ENABLE_SEMANTIC_SEARCH', '0') == '1':
+# Resolve the flag from centralized settings, falling back to the env var
+# so the module still works when imported outside the app context.
+try:
+    from app.config.settings import settings as _settings
+    _semantic_search_enabled = _settings.enable_semantic_search
+except Exception:
+    _semantic_search_enabled = os.environ.get('ENABLE_SEMANTIC_SEARCH', '0') == '1'
+
+if _semantic_search_enabled:
     try:
         from sentence_transformers import SentenceTransformer
         SEMANTIC_SEARCH_AVAILABLE = True
@@ -677,6 +684,10 @@ class EnhancedRAGModule:
         self.cache = {}
         self.llm = None
         self._use_llm = use_llm
+        # Advanced retrieval (bm25/dense/hybrid) is built lazily and only used
+        # when settings.retrieval_mode != 'keyword'. Defaults keep legacy behaviour.
+        self._retriever = None
+        self._retrieval_config = self._load_retrieval_config()
 
         # Initialize LLM if available
         if use_llm and LLM_AVAILABLE:
@@ -689,6 +700,71 @@ class EnhancedRAGModule:
             except Exception as e:
                 print(f"[RAG] LLM initialization failed: {e}")
                 self.llm = None
+
+    def _load_retrieval_config(self) -> Dict:
+        """Resolve retrieval/trust settings, tolerant of missing app context."""
+        config = {
+            "mode": "keyword",
+            "dense_model": "paraphrase-multilingual-MiniLM-L12-v2",
+            "reranker_model": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+            "rrf_k": 60,
+            "top_k": 5,
+            "citation_guard": False,
+            "abstention_threshold": 0.35,
+        }
+        try:
+            from app.config.settings import settings as _settings
+            config["mode"] = getattr(_settings, "retrieval_mode", "keyword")
+            config["dense_model"] = getattr(_settings, "dense_model", config["dense_model"])
+            config["reranker_model"] = getattr(_settings, "reranker_model", config["reranker_model"])
+            config["rrf_k"] = getattr(_settings, "rrf_k", 60)
+            config["top_k"] = getattr(_settings, "retrieval_top_k", 5)
+            config["citation_guard"] = getattr(_settings, "enable_citation_guard", False)
+            config["abstention_threshold"] = getattr(_settings, "abstention_threshold", 0.35)
+        except Exception:
+            config["mode"] = os.environ.get("RETRIEVAL_MODE", "keyword")
+        return config
+
+    def _get_retriever(self):
+        """Lazily build the advanced retriever for the configured mode."""
+        if self._retriever is not None:
+            return self._retriever
+        try:
+            from retrieval import build_chunks_from_library, build_retriever
+            chunks = build_chunks_from_library(self.document_library)
+            self._retriever = build_retriever(
+                self._retrieval_config["mode"],
+                chunks,
+                library=self.document_library,
+                dense_model=self._retrieval_config["dense_model"],
+                reranker_model=self._retrieval_config["reranker_model"],
+                rrf_k=self._retrieval_config["rrf_k"],
+            )
+        except Exception as e:
+            print(f"[RAG] Advanced retriever unavailable, using keyword search: {e}")
+            self._retriever = None
+        return self._retriever
+
+    def _retrieve(self, query: str) -> Tuple[List[Dict], str]:
+        """
+        Retrieve results using the configured strategy.
+
+        Returns (results, search_mode). Falls back to the legacy keyword search
+        when retrieval_mode is 'keyword' or the advanced retriever is unavailable.
+        """
+        mode = self._retrieval_config.get("mode", "keyword")
+        if mode and mode != "keyword":
+            retriever = self._get_retriever()
+            if retriever is not None:
+                try:
+                    hits = retriever.search(query, top_k=self._retrieval_config["top_k"])
+                    if hits:
+                        results = [h.chunk.to_result_dict(h.score, mode) for h in hits]
+                        return results, mode
+                except Exception as e:
+                    print(f"[RAG] Advanced retrieval failed ({mode}): {e}")
+        # Legacy path.
+        return self.document_library.search(query), self.document_library.get_search_mode()
 
     def is_llm_enabled(self) -> bool:
         """Check if LLM is currently enabled"""
@@ -719,11 +795,8 @@ class EnhancedRAGModule:
             Dict with response, sources, and metadata
         """
 
-        # Search in document library
-        results = self.document_library.search(query)
-
-        # Get search mode
-        search_mode = self.document_library.get_search_mode()
+        # Search in document library (keyword baseline or advanced retrieval)
+        results, search_mode = self._retrieve(query)
 
         # Determine response mode
         response_mode = "template"
@@ -748,7 +821,24 @@ class EnhancedRAGModule:
             response = self._generate_template_response(query, results, language)
             response_mode = "template"
 
-        return {
+        # Trustworthy-AI guard: verify grounding and abstain if unsupported.
+        grounding = None
+        if self._retrieval_config.get("citation_guard") and results:
+            try:
+                from trust import enforce_grounding
+                grounding = enforce_grounding(
+                    response,
+                    results,
+                    threshold=self._retrieval_config.get("abstention_threshold", 0.35),
+                    language=language,
+                )
+                response = grounding.answer
+                if grounding.abstained:
+                    response_mode = "abstained"
+            except Exception as e:
+                print(f"[RAG] Grounding guard failed: {e}")
+
+        payload = {
             'query': query,
             'response': response,
             'sources_found': len(results),
@@ -759,6 +849,14 @@ class EnhancedRAGModule:
             'language': language,
             'session_id': session_id
         }
+        if grounding is not None:
+            payload['grounding'] = {
+                'grounded': grounding.grounded,
+                'score': round(grounding.score, 3),
+                'abstained': grounding.abstained,
+                'citations': grounding.citations,
+            }
+        return payload
 
     def _generate_template_response(
         self,

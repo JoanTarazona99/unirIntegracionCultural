@@ -103,7 +103,15 @@ class LLMModule:
         system_prompt: str = None
     ):
         self.model = model
-        self.host = host or os.getenv('OLLAMA_HOST', 'http://localhost:11434')
+        if host:
+            self.host = host
+        else:
+            # Prefer centralized settings, fall back to env var / default.
+            try:
+                from app.config.settings import settings as _settings
+                self.host = _settings.ollama_host
+            except Exception:
+                self.host = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
         self.system_prompt = system_prompt or self.DEFAULT_SYSTEM_PROMPT
         self.sessions: Dict[str, ConversationSession] = {}
         self._initialized = False

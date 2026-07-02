@@ -31,7 +31,10 @@ requests==2.31.0
 # Translation
 google-trans-new==1.1.9
 
-# Semantic search (optional - falls back to keyword if not installed)
+# Lexical retrieval (BM25) - pure Python, CPU-friendly, always available
+rank-bm25==0.2.2
+
+# Semantic search (optional - falls back to keyword/BM25 if not installed)
 sentence-transformers==2.2.2
 torch==2.0.1+cpu
 --extra-index-url https://download.pytorch.org/whl/cpu

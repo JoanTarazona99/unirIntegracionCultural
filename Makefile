@@ -87,8 +87,10 @@ test: test-unit test-integration
 	@echo "✅ Todos los tests pasaron"
 
 test-unit:
-	@echo "🧪 Ejecutando tests unitarios..."
-	cd backend && python -m pytest tests/unit/ -v --tb=short 2>/dev/null || echo "⚠️  Sin tests aún"
+	@echo "🧪 Ejecutando tests unitarios RAG (offline, sin Ollama/Redis)..."
+	cd backend && python -m pytest tests/test_unit_rag.py -v --tb=short \
+		--cov=enhanced_rag --cov=retrieval --cov-report=term-missing --cov-report=html
+	@echo "📈 Reporte de cobertura: backend/htmlcov/index.html"
 
 test-integration:
 	@echo "🔗 Ejecutando tests de integración..."

@@ -6,15 +6,15 @@ services:
     image: postgres:15-alpine
     container_name: kubgu_postgres
     environment:
-      POSTGRES_USER: kubgu_user
-      POSTGRES_PASSWORD: secure_password
-      POSTGRES_DB: kubgu_assistant
+      POSTGRES_USER: ${POSTGRES_USER:-kubgu_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-kubgu_assistant}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kubgu_user"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kubgu_user}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,7 +28,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://kubgu_user:secure_password@postgres:5432/kubgu_assistant
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kubgu_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-kubgu_assistant}
       API_DEBUG: "true"
     depends_on:
       postgres:
@@ -38,7 +38,9 @@ services:
       - ./data:/app/data
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-  # Frontend (servidor simple)
+  # Frontend estático servido por Nginx en el puerto 3000.
+  # Nota: el backend FastAPI también puede servir el frontend en :8000/frontend.
+  # Para producción se recomienda usar SOLO este servicio Nginx (:3000) como canónico.
   frontend:
     image: nginx:alpine
     container_name: kubgu_frontend
@@ -48,6 +50,11 @@ services:
       - ./frontend:/usr/share/nginx/html:ro
     depends_on:
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 volumes:
   postgres_data:

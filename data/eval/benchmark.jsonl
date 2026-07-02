@@ -1,0 +1,36 @@
+{"id": "q001", "question": "¿Cuánto tiempo tengo para registrarme tras llegar a Rusia?", "lang": "es", "category": "migration", "relevant_chunk_ids": ["МВД РФ::0"], "notes": "Plazo de 7 días para registro por lugar de estancia"}
+{"id": "q002", "question": "How many days do I have to register after arriving in Russia?", "lang": "en", "category": "migration", "relevant_chunk_ids": ["МВД РФ::0"], "notes": "7-day registration deadline"}
+{"id": "q003", "question": "Сколько дней даётся на регистрацию после приезда в Россию?", "lang": "ru", "category": "migration", "relevant_chunk_ids": ["МВД РФ::0"], "notes": "Регистрация в течение 7 дней"}
+{"id": "q004", "question": "¿Qué documentos necesito para el registro migratorio?", "lang": "es", "category": "migration", "relevant_chunk_ids": ["МВД РФ::0"], "notes": "Pasaporte, visa, tarjeta migratoria, contrato/справка"}
+{"id": "q005", "question": "¿Dónde puedo hacer el registro migratorio?", "lang": "es", "category": "migration", "relevant_chunk_ids": ["МВД РФ::0", "МФЦ::0"], "notes": "MVD (UFMS) o MFC"}
+{"id": "q006", "question": "¿Cómo es el proceso de registro paso a paso en el MFC?", "lang": "es", "category": "admin", "relevant_chunk_ids": ["FAQ::1", "МФЦ::0"], "notes": "Proceso en MFC con número de cola"}
+{"id": "q007", "question": "What is the fine for late migration registration?", "lang": "en", "category": "migration", "relevant_chunk_ids": ["FAQ::1"], "notes": "Штраф 5000-7000 рублей"}
+{"id": "q008", "question": "¿Qué tipos de visa existen para estudiar en Rusia?", "lang": "es", "category": "visa", "relevant_chunk_ids": ["МВД РФ::1"], "notes": "Visa de estudiante tipo D"}
+{"id": "q009", "question": "What documents are required for a student visa?", "lang": "en", "category": "visa", "relevant_chunk_ids": ["МВД РФ::1", "Госуслуги::2"], "notes": "Invitación, seguro, certificado médico"}
+{"id": "q010", "question": "¿Cómo se renueva la visa de estudiante?", "lang": "es", "category": "visa", "relevant_chunk_ids": ["МВД РФ::1"], "notes": "Solicitar 1 mes antes, en MFC o UFMS"}
+{"id": "q011", "question": "Какие документы нужны для студенческой визы?", "lang": "ru", "category": "visa", "relevant_chunk_ids": ["Госуслуги::2", "МВД РФ::1"], "notes": "Паспорт, приглашение от КубГУ, фото"}
+{"id": "q012", "question": "¿Cuánto cuesta el alojamiento en la residencia estudiantil?", "lang": "es", "category": "housing", "relevant_chunk_ids": ["КубГУ::1", "FAQ::2"], "notes": "150-300 rublos/mes"}
+{"id": "q013", "question": "What are the dormitory conditions and curfew?", "lang": "en", "category": "housing", "relevant_chunk_ids": ["КубГУ::1", "FAQ::2"], "notes": "2-3 per room, comendantский час 23:00"}
+{"id": "q014", "question": "¿Cómo solicito una habitación en el dormitorio?", "lang": "es", "category": "housing", "relevant_chunk_ids": ["FAQ::2", "КубГУ::1"], "notes": "email dormitory@kubsu.ru"}
+{"id": "q015", "question": "Сколько стоит проживание в общежитии?", "lang": "ru", "category": "housing", "relevant_chunk_ids": ["FAQ::2", "КубГУ::1"], "notes": "150-300 рублей в месяц"}
+{"id": "q016", "question": "¿Qué nivel de ruso necesito para la maestría?", "lang": "es", "category": "language", "relevant_chunk_ids": ["FAQ::4", "КубГУ::2"], "notes": "Magistratura B2"}
+{"id": "q017", "question": "What Russian language level is required for a bachelor's degree?", "lang": "en", "category": "language", "relevant_chunk_ids": ["FAQ::4", "КубГУ::2"], "notes": "B1 (ТРКИ-II), recomendado B2"}
+{"id": "q018", "question": "¿Existe un curso preparatorio de ruso en KubGU?", "lang": "es", "category": "language", "relevant_chunk_ids": ["FAQ::4"], "notes": "Curso intensivo 3-6 meses"}
+{"id": "q019", "question": "Какой уровень русского языка нужен для магистратуры?", "lang": "ru", "category": "language", "relevant_chunk_ids": ["FAQ::4", "КубГУ::2"], "notes": "B2 для магистратуры"}
+{"id": "q020", "question": "¿Cómo consigo el seguro médico obligatorio (póliza OMS)?", "lang": "es", "category": "health", "relevant_chunk_ids": ["МФЦ::1", "FAQ::3"], "notes": "Compañía de seguros del MFC"}
+{"id": "q021", "question": "How much does medical insurance cost per year?", "lang": "en", "category": "health", "relevant_chunk_ids": ["FAQ::3", "МФЦ::1"], "notes": "5000-8000 руб/год"}
+{"id": "q022", "question": "¿El seguro médico es obligatorio para estudiantes?", "lang": "es", "category": "health", "relevant_chunk_ids": ["МФЦ::1", "FAQ::3"], "notes": "Seguro médico obligatorio"}
+{"id": "q023", "question": "¿Dónde está ubicado el MFC en Krasnodar?", "lang": "es", "category": "admin", "relevant_chunk_ids": ["FAQ::0"], "notes": "ul. Krasnaya 176, etc."}
+{"id": "q024", "question": "What are the working hours of the MFC?", "lang": "en", "category": "admin", "relevant_chunk_ids": ["FAQ::0"], "notes": "ПН-ПТ 08:00-19:00"}
+{"id": "q025", "question": "¿Cómo pido cita previa por internet en Госуслуги?", "lang": "es", "category": "admin", "relevant_chunk_ids": ["Госуслуги::1"], "notes": "Запись через портал"}
+{"id": "q026", "question": "¿Cómo me registro en el portal Госуслуги siendo extranjero?", "lang": "es", "category": "admin", "relevant_chunk_ids": ["Госуслуги::0"], "notes": "Личный кабинет, email/teléfono"}
+{"id": "q027", "question": "¿Qué certificados puedo obtener en el MFC?", "lang": "es", "category": "admin", "relevant_chunk_ids": ["МФЦ::2"], "notes": "Справки и свидетельства"}
+{"id": "q028", "question": "¿Cuál es el procedimiento de admisión para estudiantes extranjeros?", "lang": "es", "category": "academic", "relevant_chunk_ids": ["КубГУ::0"], "notes": "Portal de vuzes, carta invitación"}
+{"id": "q029", "question": "When does the academic year start and end at KubGU?", "lang": "en", "category": "academic", "relevant_chunk_ids": ["КубГУ::0"], "notes": "Sep-May"}
+{"id": "q030", "question": "¿Cuántos años dura la maestría (магистратура)?", "lang": "es", "category": "academic", "relevant_chunk_ids": ["КубГУ::2"], "notes": "2 años"}
+{"id": "q031", "question": "¿Cómo funciona la escala de calificaciones en KubGU?", "lang": "es", "category": "academic", "relevant_chunk_ids": ["КубГУ::2"], "notes": "5, 4, 3; mínimo 3"}
+{"id": "q032", "question": "¿Cuándo son los exámenes en la universidad?", "lang": "es", "category": "academic", "relevant_chunk_ids": ["КубГУ::2"], "notes": "Sesión mayo-junio"}
+{"id": "q033", "question": "What are the rights and obligations of foreigners in Russia?", "lang": "en", "category": "migration", "relevant_chunk_ids": ["МВД РФ::2"], "notes": "Derechos y obligaciones"}
+{"id": "q034", "question": "¿Necesito un examen médico para la visa (VIH, tuberculosis)?", "lang": "es", "category": "visa", "relevant_chunk_ids": ["МВД РФ::1"], "notes": "Certificado médico HIV, tuberculosis"}
+{"id": "q035", "question": "¿Puedo pedir cita en la migración a través de Госуслуги?", "lang": "es", "category": "admin", "relevant_chunk_ids": ["Госуслуги::1"], "notes": "Запись в органы миграции"}
+{"id": "q036", "question": "¿Hay beca disponible para estudiantes destacados?", "lang": "es", "category": "academic", "relevant_chunk_ids": ["КубГУ::0"], "notes": "Стипендия для отличников"}

@@ -573,10 +573,10 @@
                     </div>
                 </div>
 
-                <div class="chat-messages" ref="chatMessages">
+                <div class="chat-messages" ref="chatMessages" role="log" aria-live="polite" aria-atomic="false">
                     <!-- Welcome message -->
                     <div v-if="chatMessages.length === 0" class="message bot">
-                        <div class="message-avatar">🤖</div>
+                        <div class="message-avatar" aria-hidden="true">🤖</div>
                         <div class="message-content">
                             <p>{{ t('welcomeMessage') }}</p>
                             <p>{{ t('welcomeCanHelp') }}</p>
@@ -590,7 +590,7 @@
 
                     <!-- Messages -->
                     <div v-for="msg in chatMessages" :key="msg.id" :class="['message', msg.type]">
-                        <div class="message-avatar">{{ msg.type === 'user' ? '👤' : '🤖' }}</div>
+                        <div class="message-avatar" aria-hidden="true">{{ msg.type === 'user' ? '👤' : '🤖' }}</div>
                         <div class="message-content">
                             <p v-html="formatMessage(msg.text)"></p>
                             <div v-if="msg.sources && msg.sources.length" class="message-sources">
@@ -604,6 +604,8 @@
                             @click="speakMessage(msg.text, msg.detectedLanguage || 'ru')"
                             class="btn-voice"
                             :title="t('listenToResponse')"
+                            :aria-label="t('listenToResponse')"
+                            type="button"
                         >
                             🔊
                         </button>
@@ -611,7 +613,7 @@
 
                     <!-- Typing indicator -->
                     <div v-if="isTyping" class="message bot">
-                        <div class="message-avatar">🤖</div>
+                        <div class="message-avatar" aria-hidden="true">🤖</div>
                         <div class="message-content">
                             <div class="typing-indicator">
                                 <span></span>
@@ -626,10 +628,11 @@
                     <input
                         v-model="chatInput"
                         :placeholder="t('chatPlaceholder')"
+                        :aria-label="t('chatPlaceholder')"
                         @keyup.enter="sendMessage"
                         :disabled="isTyping"
                     >
-                    <button @click="sendMessage" class="btn-primary" :disabled="isTyping || !chatInput.trim()">
+                    <button @click="sendMessage" class="btn-primary" :disabled="isTyping || !chatInput.trim()" :aria-label="t('send')" type="button">
                         {{ t('send') }}
                     </button>
                 </div>
@@ -644,8 +647,8 @@
                         <div class="phrase-translit">{{ phrase.transliteration }}</div>
                         <div class="phrase-translation">{{ phraseTranslation(phrase) }}</div>
                         <div class="phrase-actions">
-                            <button @click.stop="speakText(phrase.russian, 'ru')">{{ t('listen') }}</button>
-                            <button @click.stop="copyToClipboard(phrase.russian)">{{ t('copy') }}</button>
+                            <button @click.stop="speakText(phrase.russian, 'ru')" :aria-label="t('listen') + ': ' + phrase.russian" type="button">{{ t('listen') }}</button>
+                            <button @click.stop="copyToClipboard(phrase.russian)" :aria-label="t('copy') + ': ' + phrase.russian" type="button">{{ t('copy') }}</button>
                         </div>
                     </div>
                 </div>
@@ -835,6 +838,11 @@
         createApp({
             data() {
                 return {
+                    // API base URL (configurable; empty string = same origin)
+                    baseUrl: '',
+                    // Default request timeout in milliseconds
+                    requestTimeout: 15000,
+
                     // UI Language (for page labels/buttons)
                     uiLanguage: 'es',
                     uiLanguages: { es: 'Español', en: 'English', ru: 'Русский', fr: 'Français' },
@@ -942,6 +950,20 @@
                     return i18n[this.uiLanguage]?.[key] || i18n['es'][key] || key;
                 },
 
+                // fetch wrapper with configurable timeout via AbortController
+                async fetchWithTimeout(path, options = {}) {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), this.requestTimeout);
+                    try {
+                        return await fetch(this.baseUrl + path, {
+                            ...options,
+                            signal: controller.signal
+                        });
+                    } finally {
+                        clearTimeout(timer);
+                    }
+                },
+
                 generateSessionId() {
                     return 'session_' + Math.random().toString(36).substring(2, 15);
                 },
@@ -956,7 +978,7 @@
 
                 async checkSystemStatus() {
                     try {
-                        const response = await fetch('/api/status');
+                        const response = await this.fetchWithTimeout('/api/status');
                         if (response.ok) {
                             const data = await response.json();
                             this.systemOnline = data.status === 'operational';
@@ -1016,7 +1038,7 @@
                     this.isTyping = true;
 
                     try {
-                        const response = await fetch('/api/chat', {
+                        const response = await this.fetchWithTimeout('/api/chat', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -1142,7 +1164,7 @@
                         }
 
                         // Fallback: Backend TTS via /api/tts
-                        const response = await fetch('/api/tts', {
+                        const response = await this.fetchWithTimeout('/api/tts', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -1201,7 +1223,14 @@
                 },
 
                 formatMessage(text) {
-                    return text.replace(/\n/g, '<br>');
+                    // Escape HTML to prevent XSS, then convert newlines to <br>
+                    const escaped = String(text)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;');
+                    return escaped.replace(/\n/g, '<br>');
                 },
 
                 clearChat() {

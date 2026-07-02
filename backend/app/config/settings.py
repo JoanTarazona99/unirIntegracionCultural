@@ -123,6 +123,63 @@ class Settings(BaseSettings):
         default=False,
         description="Enable LLM integration (Ollama)"
     )
+    ollama_host: str = Field(
+        default="http://localhost:11434",
+        description="Ollama server host URL (used when enable_llm is True)"
+    )
+
+    # ==================== RETRIEVAL (RAG) ====================
+    retrieval_mode: str = Field(
+        default="keyword",
+        description="Retrieval strategy: keyword | bm25 | dense | hybrid | hybrid_rerank",
+    )
+    dense_model: str = Field(
+        default="paraphrase-multilingual-MiniLM-L12-v2",
+        description="Sentence-transformers model for dense retrieval",
+    )
+    reranker_model: str = Field(
+        default="cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        description="Cross-encoder model used when retrieval_mode=hybrid_rerank",
+    )
+    enable_reranker: bool = Field(
+        default=False,
+        description="Enable cross-encoder reranking (requires sentence-transformers, CPU-heavy)",
+    )
+    rrf_k: int = Field(
+        default=60,
+        description="Reciprocal Rank Fusion constant (higher = flatter fusion)",
+    )
+    retrieval_top_k: int = Field(
+        default=5,
+        description="Number of chunks returned by the retriever",
+    )
+
+    # ==================== TRUSTWORTHY AI ====================
+    enable_citation_guard: bool = Field(
+        default=False,
+        description="Require answers to be grounded in retrieved sources; abstain otherwise",
+    )
+    abstention_threshold: float = Field(
+        default=0.35,
+        description="Minimum grounding/faithfulness score below which the assistant abstains",
+    )
+
+    @field_validator("retrieval_mode")
+    @classmethod
+    def _validate_retrieval_mode(cls, value: str) -> str:
+        allowed = {"keyword", "bm25", "dense", "hybrid", "hybrid_rerank"}
+        normalized = (value or "keyword").strip().lower()
+        if normalized not in allowed:
+            raise ValueError(
+                f"retrieval_mode must be one of {sorted(allowed)}, got '{value}'"
+            )
+        return normalized
+
+    # ==================== TELEGRAM BOT ====================
+    telegram_bot_token: str = Field(
+        default="",
+        description="Telegram bot token (required only when running the Telegram bot)"
+    )
     
     # ==================== PERSISTENCE - REDIS ====================
     redis_url: str = Field(

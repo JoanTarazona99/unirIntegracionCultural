@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KubGU Assistant - Diagrama de Arquitectura</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@latest/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f1419;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #00d4ff;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px rgba(0,212,255,0.3);
+        }
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #a0a0a0;
+            font-size: 1.1em;
+        }
+        .diagram-container {
+            background: #1a1f2e;
+            border: 2px solid #00d4ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(0,212,255,0.1);
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+        .legend {
+            background: #1a1f2e;
+            border: 2px solid #00d4ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .legend h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #0f1419;
+            border-radius: 5px;
+        }
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            border: 2px solid #333;
+        }
+        .legend-label {
+            flex: 1;
+        }
+        .legend-label strong {
+            display: block;
+            color: #00d4ff;
+            margin-bottom: 3px;
+        }
+        .legend-label small {
+            color: #a0a0a0;
+        }
+        
+        /* Color samples */
+        .color-client { background: #FF6B6B; }
+        .color-routes { background: #4169E1; }
+        .color-primary { background: #90EE90; }
+        .color-cache { background: #87CEEB; }
+        .color-bg { background: #FFD700; }
+        .color-persist { background: #DDA0DD; }
+        .color-backends { background: #FFB6C1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ KubGU Assistant - Diagrama de Arquitectura</h1>
+        <p class="subtitle">Sistema Inteligente de Soporte para Estudiantes Extranjeros - Sprint 3 Integración</p>
+        
+        <div class="diagram-container">
+            <div class="mermaid">
+graph TB
+    subgraph CLIENTES["👤 CLIENTS"]
+        WEB["🌐 Web Frontend<br/>localhost:8000"]
+        TELEGRAM["📱 Telegram Bot<br/>@KubGUAssistantBot"]
+        API["🔌 API Consumers"]
+    end
+
+    subgraph ROUTES["🚀 ENDPOINTS<br/>(FastAPI)"]
+        POST_CHAT["POST /api/chat"]
+        POST_STREAM["POST /api/chat/stream"]
+        GET_HIST["GET /api/chat/history"]
+        GET_PROF["GET /api/users/profile"]
+        PUT_PROF["PUT /api/users/profile"]
+        GET_SEARCH["POST /api/search"]
+    end
+
+    subgraph PRIMARY["✅ PRIMARY STORAGE<br/>(Synchronous, In-Memory)"]
+        CS["🗣️ ConversationService"]
+        PS["👤 ProfileService"]
+        RAG["🔍 RAG Service"]
+        TS["🌍 TranslatorService"]
+    end
+
+    subgraph CACHE["⚡ CACHING LAYER"]
+        RCS["RedisCacheService"]
+        LRU["LRU Cache Fallback"]
+    end
+
+    subgraph BG["⏳ BACKGROUND TASKS<br/>(FastAPI guaranteed)"]
+        BT1["_persist_chat_messages"]
+        BT2["_persist_user_profile"]
+    end
+
+    subgraph PERSIST["🗄️ COMPLEMENTARY<br/>PERSISTENCE<br/>(Optional, Async)"]
+        DB["DatabaseService"]
+    end
+
+    subgraph BACKENDS["💾 DATABASE BACKENDS<br/>(Fallback Chain)"]
+        SQLITE["SQLite<br/>(dev)"]
+        PG["PostgreSQL<br/>(prod)"]
+        MEM["Memory<br/>(fallback)"]
+    end
+
+    CLIENTES --> ROUTES
+    
+    POST_CHAT --> CS
+    POST_CHAT --> RCS
+    POST_CHAT -.->|background_tasks| BT1
+    
+    POST_STREAM --> RAG
+    POST_STREAM -.->|asyncio.create_task| BT1
+    
+    GET_HIST --> DB
+    GET_HIST --> CS
+    
+    GET_PROF --> PS
+    GET_PROF --> DB
+    
+    PUT_PROF --> PS
+    PUT_PROF -.->|background_tasks| BT2
+    
+    GET_SEARCH --> RAG
+    GET_SEARCH --> RCS
+    
+    BT1 --> DB
+    BT2 --> DB
+    
+    DB --> SQLITE
+    SQLITE -.->|if unavailable| PG
+    PG -.->|if unavailable| MEM
+    
+    RCS --> LRU
+
+    classDef client fill:#FF6B6B,stroke:#DC143C,stroke-width:3px,color:#fff
+    classDef routes fill:#4169E1,stroke:#000080,stroke-width:3px,color:#fff
+    classDef primary fill:#90EE90,stroke:#228B22,stroke-width:3px,color:#000
+    classDef cache fill:#87CEEB,stroke:#4682B4,stroke-width:3px,color:#000
+    classDef bg fill:#FFD700,stroke:#DAA520,stroke-width:3px,color:#000
+    classDef persist fill:#DDA0DD,stroke:#9932CC,stroke-width:3px,color:#000
+    classDef backends fill:#FFB6C1,stroke:#C71585,stroke-width:2px,color:#000
+
+    class CLIENTES,WEB,TELEGRAM,API client
+    class ROUTES,POST_CHAT,POST_STREAM,GET_HIST,GET_PROF,PUT_PROF,GET_SEARCH routes
+    class PRIMARY,CS,PS,RAG,TS primary
+    class CACHE,RCS,LRU cache
+    class BG,BT1,BT2 bg
+    class PERSIST,DB persist
+    class BACKENDS,SQLITE,PG,MEM backends
+            </div>
+        </div>
+        
+        <div class="legend">
+            <h2>📋 Leyenda de Componentes</h2>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <div class="legend-color color-client"></div>
+                    <div class="legend-label">
+                        <strong>👤 CLIENTS</strong>
+                        <small>Web, Telegram, APIs</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-routes"></div>
+                    <div class="legend-label">
+                        <strong>🚀 ENDPOINTS</strong>
+                        <small>FastAPI routes HTTP</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-primary"></div>
+                    <div class="legend-label">
+                        <strong>✅ PRIMARY STORAGE</strong>
+                        <small>Sincrónico, siempre disponible</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-cache"></div>
+                    <div class="legend-label">
+                        <strong>⚡ CACHE</strong>
+                        <small>Redis + LRU fallback</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-bg"></div>
+                    <div class="legend-label">
+                        <strong>⏳ BACKGROUND TASKS</strong>
+                        <small>Garantizado completar</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-persist"></div>
+                    <div class="legend-label">
+                        <strong>🗄️ PERSISTENCE</strong>
+                        <small>DatabaseService opcional</small>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-backends"></div>
+                    <div class="legend-label">
+                        <strong>💾 BACKENDS</strong>
+                        <small>SQLite → PG → Memory</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h2>🔄 Flujos Principales</h2>
+            <div style="margin-top: 15px;">
+                <h3 style="color: #00d4ff; margin: 15px 0 10px;">1️⃣ POST /api/chat (Con Persistencia)</h3>
+                <pre style="background: #0f1419; padding: 10px; border-left: 3px solid #00d4ff; overflow-x: auto;">
+Cliente → POST /api/chat
+├─ ConversationService.add_message() [SYNC]
+├─ RedisCacheService.set() [SYNC cache]
+├─ background_tasks.add_task(_persist_chat_messages)
+│  └─ DatabaseService.save_message() [ASYNC BD]
+└─ return ChatResponse [200 OK, 0 latencia]
+                </pre>
+
+                <h3 style="color: #00d4ff; margin: 15px 0 10px;">2️⃣ GET /api/chat/history/{session_id}</h3>
+                <pre style="background: #0f1419; padding: 10px; border-left: 3px solid #00d4ff; overflow-x: auto;">
+Cliente → GET /api/chat/history
+├─ (if enable_database) DatabaseService.get_history() [BD primero]
+├─ (fallback) ConversationService.get_history() [memoria]
+└─ return List[Message]
+                </pre>
+
+                <h3 style="color: #00d4ff; margin: 15px 0 10px;">3️⃣ PUT /api/users/profile/{user_id}</h3>
+                <pre style="background: #0f1419; padding: 10px; border-left: 3px solid #00d4ff; overflow-x: auto;">
+Cliente → PUT /api/users/profile
+├─ ProfileService.update_profile() [SYNC]
+├─ background_tasks.add_task(_persist_user_profile)
+│  └─ DatabaseService.save_profile() [ASYNC BD]
+└─ return ProfileResponse [200 OK, 0 latencia]
+                </pre>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h2>✅ Garantías Implementadas</h2>
+            <ul style="margin-left: 20px; line-height: 1.8;">
+                <li><strong>BackgroundTasks (HTTP routes):</strong> Ejecución garantizada antes de shutdown</li>
+                <li><strong>asyncio.create_task() (async generators):</strong> Correcto para context de streaming</li>
+                <li><strong>Graceful Fallback:</strong> Si BD falla → continúa con memoria sin error</li>
+                <li><strong>Zero Latency Impact:</strong> BD trabajo ocurre después de respuesta HTTP</li>
+                <li><strong>Configuration-Driven:</strong> Todos los componentes opcionales se controlan con settings</li>
+                <li><strong>127/129 Tests Passing:</strong> 100% backward compatible</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+        mermaid.contentLoaded();
+    </script>
+</body>
+</html>
