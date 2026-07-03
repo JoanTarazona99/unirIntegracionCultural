@@ -98,10 +98,18 @@ class LLMModule:
 
     def __init__(
         self,
-        model: str = 'llama3',
+        model: str = None,
         host: str = None,
         system_prompt: str = None
     ):
+        # Load from settings or env or default
+        if model is None:
+            try:
+                from app.config.settings import settings as _settings
+                model = _settings.ollama_model
+            except Exception:
+                model = os.getenv('OLLAMA_MODEL', 'qwen2.5:7b-instruct-q4_K_M')
+        
         self.model = model
         if host:
             self.host = host
@@ -114,36 +122,86 @@ class LLMModule:
                 self.host = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
         self.system_prompt = system_prompt or self.DEFAULT_SYSTEM_PROMPT
         self.sessions: Dict[str, ConversationSession] = {}
-        self._initialized = False
+        self._initialized = None  # None = not checked yet, True = available, False = unavailable
         self._available_models = []
+        self._check_attempted = False
+        # Stats from the most recent LLM generation (tokens, timing).
+        # Consumed by the RAG layer for AI-transparency metrics.
+        self.last_generation_stats: Dict = {}
 
+        # Create a dedicated Ollama client with trust_env=False.
+        # This bypasses the system HTTP proxy which otherwise intercepts
+        # localhost requests and returns 503 Service Unavailable.
+        self._client = None
         if OLLAMA_AVAILABLE:
-            self._check_availability()
+            try:
+                self._client = ollama.Client(host=self.host, trust_env=False)
+            except Exception as e:
+                print(f"[LLM] Failed to create Ollama client: {e}")
+                self._client = None
+
+        # DO NOT check availability here - use lazy initialization on first request
+        print("[LLM] Lazy initialization enabled - Ollama check deferred to first request")
 
     def _check_availability(self) -> bool:
-        """Check if Ollama server is running and model is available"""
-        try:
-            # List available models
-            models_response = ollama.list()
-            if models_response and 'models' in models_response:
-                self._available_models = [m['model'] for m in models_response['models']]
-                print(f"[LLM] Available Ollama models: {self._available_models}")
+        """
+        Check if Ollama server is running with aggressive retries.
+        Called lazily on first request, not on startup.
+        """
+        import time
+        
+        if self._check_attempted:
+            return self._initialized == True
+        
+        self._check_attempted = True
+        
+        # Aggressive retry strategy for lazy init
+        max_retries = 15
+        retry_delay = 0.5  # Start with 0.5s
+        
+        print(f"[LLM] Starting lazy initialization check for model '{self.model}'")
+        
+        for attempt in range(max_retries):
+            try:
+                # Use dedicated client (trust_env=False) to bypass system proxy
+                models_response = self._client.list()
+                if models_response and 'models' in models_response:
+                    self._available_models = [m['model'] for m in models_response['models']]
+                    print(f"[LLM] Available models: {self._available_models}")
 
-                # Check if requested model is available
-                if self.model in self._available_models or any(self.model in m for m in self._available_models):
-                    self._initialized = True
-                    print(f"[LLM] Model '{self.model}' available - LLM mode activated")
+                    # Check if requested model is available
+                    if self.model in self._available_models or any(self.model in m for m in self._available_models):
+                        self._initialized = True
+                        print(f"[LLM] ✓ SUCCESS: Model '{self.model}' available - LLM mode ACTIVATED")
+                        return True
+                    else:
+                        print(f"[LLM] Model '{self.model}' not found in available models")
+                        print(f"[LLM] Pull with: ollama pull {self.model}")
+                        self._initialized = False
+                        return False
+                        
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    delay = retry_delay * (1.3 ** attempt)  # Exponential backoff
+                    print(f"[LLM] Attempt {attempt + 1}/{max_retries}: {str(e)[:40]}... Retry in {delay:.2f}s")
+                    time.sleep(min(delay, 5))  # Cap at 5 seconds per retry
                 else:
-                    print(f"[LLM] Model '{self.model}' not found. Available: {self._available_models}")
-                    print(f"[LLM] Pull model with: ollama pull {self.model}")
-            return self._initialized
-        except Exception as e:
-            print(f"[LLM] Ollama check failed: {e}")
-            return False
+                    print(f"[LLM] ✗ FAILED: Ollama unavailable after {max_retries} attempts - Using template mode")
+                    self._initialized = False
+                    return False
+        
+        return False
 
     def is_available(self) -> bool:
-        """Check if LLM is available"""
-        return self._initialized and OLLAMA_AVAILABLE
+        """Check if LLM is available - triggers lazy check if needed"""
+        if not OLLAMA_AVAILABLE:
+            return False
+        
+        # Trigger lazy initialization on first call
+        if self._initialized is None or not self._check_attempted:
+            self._check_availability()
+        
+        return self._initialized == True
 
     def get_status(self) -> Dict:
         """Get LLM module status"""
@@ -152,7 +210,8 @@ class LLMModule:
             "model": self.model,
             "host": self.host,
             "available_models": self._available_models,
-            "fallback_mode": not self.is_available()
+            "fallback_mode": not self.is_available(),
+            "lazy_initialized": self._check_attempted
         }
 
     # ==================== Session Management ====================
@@ -226,14 +285,14 @@ class LLMModule:
                 except Exception as e:
                     print(f"[LLM] Context translation failed: {e}")
 
-            # Language instruction
+            # Language instruction (strict - forces output language)
             lang_instruction = {
-                'ru': 'Отвечай на русском языке.',
-                'es': 'Responde en español.',
-                'en': 'Respond in English.',
-                'fr': 'Répondez en français.',
-                'de': 'Antworten Sie auf Deutsch.'
-            }.get(language, 'Respond in the language of the query.')
+                'ru': 'ВАЖНО: Отвечай ТОЛЬКО на русском языке. Не используй другие языки.',
+                'es': 'IMPORTANTE: Responde ÚNICAMENTE en español. No uses ningún otro idioma (ni chino, ni ruso, ni inglés).',
+                'en': 'IMPORTANT: Respond ONLY in English. Do not use any other language.',
+                'fr': 'IMPORTANT: Répondez UNIQUEMENT en français. N\'utilisez aucune autre langue.',
+                'de': 'WICHTIG: Antworten Sie NUR auf Deutsch. Verwenden Sie keine andere Sprache.'
+            }.get(language, 'IMPORTANT: Respond only in the language of the user query.')
 
             # Build messages
             messages = [
@@ -263,14 +322,37 @@ class LLMModule:
             user_message = f"{query_label}: {query}\n\n{context_label}:\n{context_text}" if context_text else query
             messages.append({"role": "user", "content": user_message})
 
-            # Call Ollama
-            response = ollama.chat(
+            # Call Ollama via dedicated client (bypasses system proxy)
+            response = self._client.chat(
                 model=self.model,
                 messages=messages
             )
 
             # Extract response
             assistant_response = response['message']['content']
+
+            # Capture token / timing stats for AI-transparency metrics.
+            # Ollama returns these counters on the chat response object.
+            try:
+                def _stat(key):
+                    if isinstance(response, dict):
+                        return response.get(key)
+                    return getattr(response, key, None)
+
+                prompt_tokens = _stat('prompt_eval_count') or 0
+                output_tokens = _stat('eval_count') or 0
+                eval_duration_ns = _stat('eval_duration') or 0  # nanoseconds
+                tokens_per_sec = 0.0
+                if eval_duration_ns and output_tokens:
+                    tokens_per_sec = output_tokens / (eval_duration_ns / 1e9)
+                self.last_generation_stats = {
+                    "input_tokens": int(prompt_tokens),
+                    "output_tokens": int(output_tokens),
+                    "tokens_per_sec": round(tokens_per_sec, 1),
+                    "model": self.model,
+                }
+            except Exception as _stats_err:
+                self.last_generation_stats = {"model": self.model}
 
             # Update conversation history
             if session_id:
@@ -404,9 +486,9 @@ class LLMModule:
             user_message = f"Вопрос: {query}\n\nКонтекст:\n{context_text}" if context_text else query
             messages.append({"role": "user", "content": user_message})
 
-            # Stream from Ollama
+            # Stream from Ollama via dedicated client (bypasses system proxy)
             full_response = ""
-            for chunk in ollama.chat(
+            for chunk in self._client.chat(
                 model=self.model,
                 messages=messages,
                 stream=True
@@ -485,8 +567,14 @@ class LLMModule:
             yield self._generate_template_response(query, context_docs, language)
 
 
-def create_llm(model: str = 'llama3') -> LLMModule:
+def create_llm(model: str = None) -> LLMModule:
     """Factory function to create LLM module"""
+    if model is None:
+        try:
+            from app.config.settings import settings
+            model = settings.ollama_model
+        except Exception:
+            model = os.getenv('OLLAMA_MODEL', 'qwen2.5:7b-instruct-q4_K_M')
     return LLMModule(model=model)
 
 
@@ -494,10 +582,16 @@ def create_llm(model: str = 'llama3') -> LLMModule:
 _llm_instance: Optional[LLMModule] = None
 
 
-def get_llm_instance(model: str = 'llama3') -> LLMModule:
+def get_llm_instance(model: str = None) -> LLMModule:
     """Get or create singleton LLM instance"""
     global _llm_instance
     if _llm_instance is None:
+        if model is None:
+            try:
+                from app.config.settings import settings
+                model = settings.ollama_model
+            except Exception:
+                model = os.getenv('OLLAMA_MODEL', 'qwen2.5:7b-instruct-q4_K_M')
         _llm_instance = LLMModule(model=model)
     return _llm_instance
 

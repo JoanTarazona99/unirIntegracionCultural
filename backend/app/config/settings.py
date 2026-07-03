@@ -53,7 +53,7 @@ class Settings(BaseSettings):
         description="API host address"
     )
     api_port: int = Field(
-        default=8000,
+        default=8080,
         description="API port"
     )
     debug: bool = Field(
@@ -65,8 +65,12 @@ class Settings(BaseSettings):
     cors_allowed_origins: List[str] = Field(
         default=[
             "http://localhost:8000",
+            "http://localhost:8001",
+            "http://localhost:8080",
             "http://localhost:3000",
             "http://127.0.0.1:8000",
+            "http://127.0.0.1:8001",
+            "http://127.0.0.1:8080",
             "http://127.0.0.1:3000",
         ],
         description="CORS allowed origins (explicit whitelist, no wildcards)"
@@ -126,6 +130,10 @@ class Settings(BaseSettings):
     ollama_host: str = Field(
         default="http://localhost:11434",
         description="Ollama server host URL (used when enable_llm is True)"
+    )
+    ollama_model: str = Field(
+        default="qwen2.5:7b-instruct-q4_K_M",
+        description="Ollama model name (qwen2.5:7b-instruct-q4_K_M, qwen3:8b-q4_K_M, etc)"
     )
 
     # ==================== RETRIEVAL (RAG) ====================

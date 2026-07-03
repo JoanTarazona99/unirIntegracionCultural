@@ -11,6 +11,8 @@ from .chat import router as chat_router
 from .translation import router as translation_router
 from .audio import router as audio_router
 from .info import router as info_router
+from .metrics import router as metrics_router
+from .eval import router as eval_router
 
 __all__ = [
     "health_router",
@@ -20,4 +22,6 @@ __all__ = [
     "translation_router",
     "audio_router",
     "info_router",
+    "metrics_router",
+    "eval_router",
 ]

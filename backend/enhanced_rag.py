@@ -12,6 +12,7 @@ Features:
 
 import json
 import os
+import time
 import numpy as np
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Generator, AsyncGenerator
@@ -262,6 +263,41 @@ class OfficialDocumentLibrary:
                     - Экзаменационная сессия: май-июнь
                     - Шкала оценок: 5 (отлично), 4 (хорошо), 3 (удовлетворительно)
                     - Минимальная оценка для прохождения: 3
+                    '''
+                },
+                {
+                    'title': 'Расположение и контактная информация КубГУ',
+                    'content': '''
+                    КУБАНСКИЙ ГОСУДАРСТВЕННЫЙ УНИВЕРСИТЕТ
+
+                    📍 ОСНОВНОЙ КАМПУС:
+                    Город: Краснодар
+                    Регион: Краснодарский край, Россия
+                    Адрес: ул. Ставропольская, 149, Краснодар, 350040
+                    Телефон: +7-861-219-91-01
+                    Email: info@kubsu.ru
+                    Веб-сайт: https://kubsu.ru
+
+                    📍 ФИЛИАЛЫ:
+                    - Армавир (Филиал КубГУ в Армавире)
+                    - Геленджик (Черноморское побережье)
+                    - Сочи (Филиал КубГУ в Сочи)
+
+                    🚀 КАК ДОБРАТЬСЯ:
+                    Аэропорт Краснодара: 25 км от основного кампуса
+                    Время в пути: 30-40 минут на такси
+                    Общественный транспорт: автобусы 1, 15, 23, 43
+                    Железнодорожный вокзал: 5 км от кампуса
+
+                    ⏰ ВРЕМЯ РАБОТЫ:
+                    - Понедельник-пятница: 08:00-20:00
+                    - Суббота: 09:00-15:00
+                    - Воскресенье: Закрыто
+
+                    📞 КОНТАКТЫ ДЛЯ ИНОСТРАНЦЕВ:
+                    Отдел международного сотрудничества: +7-861-XXX-XXXX
+                    Email иностранных студентов: international@kubsu.ru
+                    Офис приема: Главное здание, 3 этаж
                     '''
                 }
             ]
@@ -545,6 +581,441 @@ class OfficialDocumentLibrary:
             ]
         }
 
+        # ГУВМ МВД - Migración detallada (bilingüe RU/ES)
+        self.documents['ГУВМ МВД'] = {
+            'name': 'Главное управление по вопросам миграции МВД России',
+            'url': 'https://мвд.рф/mvd/structure1/Glavnie_upravlenija/guvm',
+            'sections': [
+                {
+                    'title': 'Миграционная карта / Tarjeta de migración',
+                    'content': '''
+                    МИГРАЦИОННАЯ КАРТА / TARJETA DE MIGRACIÓN
+
+                    La tarjeta de migración (миграционная карта) se entrega gratis al cruzar
+                    la frontera de Rusia. Es un documento obligatorio.
+
+                    IMPORTANTE / ВАЖНО:
+                    - Consérvala hasta salir del país / Храните до выезда
+                    - Indica el motivo de entrada: "учёба" (estudios) / Цель въезда: учёба
+                    - Si la pierdes, acude al ГУВМ МВД en 3 días / При потере обратитесь в течение 3 дней
+                    - Es necesaria para el registro migratorio / Нужна для миграционного учёта
+
+                    Multa por pérdida / Штраф за утерю: 2000-5000 руб.
+                    '''
+                },
+                {
+                    'title': 'Продление визы / Prórroga de la visa de estudiante',
+                    'content': '''
+                    PRÓRROGA DE LA VISA / ПРОДЛЕНИЕ ВИЗЫ
+
+                    La visa de estudiante se prorroga cada año a través de la universidad.
+
+                    PROCESO / ПРОЦЕСС:
+                    1. La oficina internacional de KubGU prepara los documentos / Международный отдел готовит документы
+                    2. Presenta la solicitud 20 días antes del vencimiento / Подать заявление за 20 дней до окончания
+                    3. Paga la tasa estatal / Оплатить госпошлину: 1600 руб.
+                    4. Espera la resolución del ГУВМ МВД / Ожидать решение: 20 дней
+
+                    DOCUMENTOS / ДОКУМЕНТЫ:
+                    - Pasaporte y visa / Паспорт и виза
+                    - Carta de la universidad / Ходатайство вуза
+                    - Tarjeta de migración / Миграционная карта
+                    - Registro vigente / Действующая регистрация
+                    '''
+                },
+                {
+                    'title': 'Патент и разрешение на работу / Permiso de trabajo',
+                    'content': '''
+                    TRABAJO PARA ESTUDIANTES EXTRANJEROS / РАБОТА ДЛЯ ИНОСТРАННЫХ СТУДЕНТОВ
+
+                    Los estudiantes de tiempo completo pueden trabajar SIN patente ni permiso
+                    especial si trabajan en su universidad o durante las vacaciones.
+                    Студенты-очники могут работать без патента в своём вузе или на каникулах.
+
+                    REGLAS / ПРАВИЛА:
+                    - Trabajo compatible con estudios / Работа совместимая с учёбой
+                    - Contrato laboral oficial / Официальный трудовой договор
+                    - Necesitas ИНН y СНИЛС / Нужны ИНН и СНИЛС
+                    - Al terminar/abandonar estudios el permiso se cancela / При отчислении разрешение аннулируется
+                    '''
+                }
+            ]
+        }
+
+        # Здравоохранение - Salud y sanidad
+        self.documents['Здравоохранение'] = {
+            'name': 'Система здравоохранения России / Sistema de salud',
+            'url': 'https://www.rospotrebnadzor.ru',
+            'sections': [
+                {
+                    'title': 'Медицинский осмотр / Examen médico obligatorio',
+                    'content': '''
+                    EXAMEN MÉDICO OBLIGATORIO / ОБЯЗАТЕЛЬНЫЙ МЕДОСМОТР
+
+                    Los estudiantes extranjeros deben pasar un examen médico en los primeros
+                    90 días. Иностранные студенты проходят медосмотр в первые 90 дней.
+
+                    PRUEBAS / ОБСЛЕДОВАНИЯ:
+                    - VIH / ВИЧ
+                    - Tuberculosis (fluorografía) / Туберкулёз (флюорография)
+                    - Lepra y otras enfermedades infecciosas / Проказа и инфекции
+                    - Adicción a drogas / Наркозависимость
+
+                    DÓNDE / ГДЕ: Centro médico autorizado / Уполномоченный медцентр
+                    COSTO / СТОИМОСТЬ: 5000-9000 руб.
+                    RESULTADO / РЕЗУЛЬТАТ: Certificado médico / Медицинское заключение
+                    '''
+                },
+                {
+                    'title': 'Поликлиника и врач / Policlínica y médico',
+                    'content': '''
+                    ATENCIÓN MÉDICA / МЕДИЦИНСКАЯ ПОМОЩЬ
+
+                    Con el seguro médico (ОМС/ДМС) puedes acudir a la policlínica.
+                    С полисом можно обращаться в поликлинику.
+
+                    CÓMO / КАК:
+                    1. Regístrate en la policlínica del distrito / Прикрепиться к поликлинике
+                    2. Pide cita con el terapeuta / Записаться к терапевту
+                    3. Lleva pasaporte y póliza / Взять паспорт и полис
+
+                    URGENCIAS / СКОРАЯ ПОМОЩЬ: llama al 103 o 112 (gratis) / звоните 103 или 112
+                    Farmacia / Аптека: аптека - medicamentos con o sin receta
+                    '''
+                }
+            ]
+        }
+
+        # Банк - Servicios bancarios
+        self.documents['Банк'] = {
+            'name': 'Банковские услуги для студентов / Servicios bancarios',
+            'url': 'https://www.sberbank.ru',
+            'sections': [
+                {
+                    'title': 'Открытие счёта / Abrir una cuenta bancaria',
+                    'content': '''
+                    ABRIR UNA CUENTA BANCARIA / ОТКРЫТИЕ БАНКОВСКОГО СЧЁТА
+
+                    Los estudiantes extranjeros pueden abrir cuenta y tarjeta en bancos rusos
+                    (Сбербанк, Тинькофф, ВТБ, Альфа-Банк).
+
+                    DOCUMENTOS / ДОКУМЕНТЫ:
+                    - Pasaporte con traducción notarial / Паспорт с нотариальным переводом
+                    - Visa y tarjeta de migración / Виза и миграционная карта
+                    - Registro migratorio / Миграционная регистрация
+                    - ИНН (número de contribuyente) / ИНН
+                    - Certificado de estudios de KubGU / Справка из КубГУ
+
+                    TARJETA / КАРТА: Мир (sistema nacional) recomendada para estudiantes.
+                    Las tarjetas Visa/Mastercard extranjeras pueden no funcionar en Rusia.
+                    Иностранные Visa/Mastercard могут не работать в России.
+                    '''
+                },
+                {
+                    'title': 'Оплата и переводы / Pagos y transferencias',
+                    'content': '''
+                    PAGOS Y TRANSFERENCIAS / ПЛАТЕЖИ И ПЕРЕВОДЫ
+
+                    - Pago por SBP (Система быстрых платежей) con número de teléfono / Оплата по СБП
+                    - Aplicación móvil del banco / Мобильное приложение банка
+                    - Pago de la residencia y matrícula / Оплата общежития и обучения
+                    - Transferencias entre tarjetas Мир / Переводы между картами Мир
+
+                    CONSEJO / СОВЕТ: activa las notificaciones SMS / Подключите SMS-уведомления
+                    '''
+                }
+            ]
+        }
+
+        # Документы - SNILS, INN, otros
+        self.documents['Документы РФ'] = {
+            'name': 'Личные документы в России / Documentos personales',
+            'url': 'https://www.nalog.gov.ru',
+            'sections': [
+                {
+                    'title': 'ИНН - número de contribuyente',
+                    'content': '''
+                    ИНН / NÚMERO DE IDENTIFICACIÓN FISCAL
+
+                    El ИНН (ИНН - идентификационный номер налогоплательщика) es necesario
+                    para trabajar y para operaciones bancarias.
+
+                    DÓNDE / ГДЕ: Servicio Fiscal (ФНС) o МФЦ / Налоговая или МФЦ
+                    DOCUMENTOS / ДОКУМЕНТЫ: pasaporte + traducción, registro / Паспорт + перевод, регистрация
+                    COSTO / СТОИМОСТЬ: gratis / бесплатно
+                    PLAZO / СРОК: 5 días hábiles / 5 рабочих дней
+                    '''
+                },
+                {
+                    'title': 'СНИЛС - seguro social',
+                    'content': '''
+                    СНИЛС / NÚMERO DE SEGURO SOCIAL
+
+                    El СНИЛС es el número de la cuenta individual del seguro de pensiones.
+                    Necesario para trabajar oficialmente y recibir servicios.
+
+                    DÓNDE / ГДЕ: Фонд пенсионного и социального страхования (СФР) o МФЦ
+                    DOCUMENTOS / ДОКУМЕНТЫ: pasaporte + traducción / Паспорт + перевод
+                    COSTO / СТОИМОСТЬ: gratis / бесплатно
+                    PLAZO / СРОК: 1-5 días / 1-5 дней
+                    '''
+                }
+            ]
+        }
+
+        # Транспорт Краснодара - Transporte
+        self.documents['Транспорт'] = {
+            'name': 'Общественный транспорт Краснодара / Transporte de Krasnodar',
+            'url': 'https://transport.krd.ru',
+            'sections': [
+                {
+                    'title': 'Городской транспорт / Transporte urbano',
+                    'content': '''
+                    TRANSPORTE EN KRASNODAR / ТРАНСПОРТ В КРАСНОДАРЕ
+
+                    TIPOS / ВИДЫ:
+                    - Tranvía / Трамвай
+                    - Trolebús / Троллейбус
+                    - Autobús / Автобус
+                    - Marshrutka (minibús) / Маршрутка
+
+                    PAGO / ОПЛАТА:
+                    - Tarjeta de transporte "Транспортная карта" / Транспортная карта
+                    - Tarjeta bancaria Мир sin contacto / Бесконтактная карта Мир
+                    - Efectivo al conductor / Наличные водителю
+                    Tarifa aproximada / Стоимость проезда: 35-40 руб.
+
+                    Cómo llegar a KubGU / Как добраться до КубГУ:
+                    autobuses / автобусы 1, 15, 23, 43 hasta "ул. Ставропольская".
+                    '''
+                },
+                {
+                    'title': 'Такси и каршеринг / Taxi y coche compartido',
+                    'content': '''
+                    TAXI Y APLICACIONES / ТАКСИ И ПРИЛОЖЕНИЯ
+
+                    - Яндекс Go (Yandex Go) - la más popular / самая популярная
+                    - Максим (Maxim)
+                    - Ситимобил
+
+                    CONSEJO / СОВЕТ: pide taxi por la aplicación, es más barato y seguro
+                    que en la calle. Заказывайте такси через приложение - дешевле и безопаснее.
+
+                    Tren / Поезд: estación Краснодар-1 para viajes a otras ciudades (РЖД).
+                    '''
+                }
+            ]
+        }
+
+        # Мобильная связь - SIM y comunicaciones
+        self.documents['Мобильная связь'] = {
+            'name': 'Мобильная связь и интернет / Telefonía móvil',
+            'url': 'https://www.gosuslugi.ru',
+            'sections': [
+                {
+                    'title': 'SIM-карта / Comprar una tarjeta SIM',
+                    'content': '''
+                    TARJETA SIM RUSA / РОССИЙСКАЯ SIM-КАРТА
+
+                    Operadores / Операторы: МТС, Билайн, МегаФон, Tele2, Yota.
+
+                    PARA COMPRAR / ДЛЯ ПОКУПКИ:
+                    - Pasaporte con traducción / Паспорт с переводом
+                    - Tarjeta de migración / Миграционная карта
+                    - A veces registro / Иногда регистрация
+
+                    IMPORTANTE / ВАЖНО:
+                    - Registra la SIM a tu nombre / Оформляйте SIM на своё имя
+                    - No compres SIM en la calle sin registro / Не покупайте SIM без оформления
+                    - Necesaria para bancos y Госуслуги / Нужна для банков и Госуслуг
+                    Costo / Стоимость: 300-700 руб. con saldo.
+                    '''
+                }
+            ]
+        }
+
+        # Безопасность - Emergencias y seguridad
+        self.documents['Безопасность'] = {
+            'name': 'Экстренные службы и безопасность / Emergencias',
+            'url': 'https://мчс.рф',
+            'sections': [
+                {
+                    'title': 'Телефоны экстренных служб / Números de emergencia',
+                    'content': '''
+                    NÚMEROS DE EMERGENCIA / ЭКСТРЕННЫЕ ТЕЛЕФОНЫ
+
+                    - 112 - Emergencia general (todos los servicios) / Единый номer
+                    - 101 - Bomberos / Пожарная служба
+                    - 102 - Policía / Полиция
+                    - 103 - Ambulancia / Скорая помощь
+                    - 104 - Fuga de gas / Аварийная газовая служба
+
+                    El 112 funciona sin saldo y sin SIM / 112 работает без денег и без SIM.
+                    Puedes hablar en inglés en el 112 en muchas regiones.
+
+                    CONSEJO / СОВЕТ: guarda estos números y la dirección de tu residencia
+                    en ruso. Сохраните адрес общежития на русском языке.
+                    '''
+                },
+                {
+                    'title': 'Потеря документов / Pérdida de documentos',
+                    'content': '''
+                    PÉRDIDA DE DOCUMENTOS / УТЕРЯ ДОКУМЕНТОВ
+
+                    Si pierdes el pasaporte / При утере паспорта:
+                    1. Denuncia en la policía (102) / Заявить в полицию
+                    2. Contacta tu consulado / Обратиться в консульство
+                    3. Informa a la oficina internacional de KubGU / Сообщить в международный отдел
+
+                    Si pierdes visa/tarjeta de migración / При утере визы или миграционной карты:
+                    acude al ГУВМ МВД en 3 días / обратитесь в ГУВМ МВД в течение 3 дней.
+                    '''
+                }
+            ]
+        }
+
+        # Стипендии - Becas y finanzas
+        self.documents['Стипендии'] = {
+            'name': 'Стипендии и финансовая поддержка / Becas',
+            'url': 'https://kubsu.ru',
+            'sections': [
+                {
+                    'title': 'Виды стипендий / Tipos de becas',
+                    'content': '''
+                    BECAS PARA ESTUDIANTES / СТИПЕНДИИ ДЛЯ СТУДЕНТОВ
+
+                    - Beca del gobierno ruso (cuota estatal) / Стипендия по квоте Правительства РФ
+                    - Beca académica por buenas notas / Академическая стипендия за успеваемость
+                    - Beca social / Социальная стипендия
+
+                    CUOTA ESTATAL / ГОСУДАРСТВЕННАЯ КВОТА (Rossotrudnichestvo):
+                    - Matrícula gratuita / Бесплатное обучение
+                    - Beca mensual / Ежемесячная стипендия
+                    - Plaza en residencia / Место в общежитии
+                    Solicitud / Заявка: education-in-russia.com (Отбор)
+                    '''
+                }
+            ]
+        }
+
+        # Адаптация - Adaptación cultural
+        self.documents['Адаптация'] = {
+            'name': 'Культурная адаптация / Adaptación cultural',
+            'url': 'https://kubsu.ru',
+            'sections': [
+                {
+                    'title': 'Советы по адаптации / Consejos de adaptación',
+                    'content': '''
+                    ADAPTACIÓN CULTURAL / КУЛЬТУРНАЯ АДАПТАЦИЯ
+
+                    - Aprende ruso básico cuanto antes / Учите базовый русский как можно раньше
+                    - El clima de Krasnodar es templado, inviernos suaves / Климат Краснодара мягкий
+                    - Horario de tiendas: normalmente 9:00-21:00 / Магазины работают 9:00-21:00
+                    - Supermercados: Магнит, Пятёрочка, Лента / Супермаркеты
+                    - Usa Яндекс Карты y 2ГИС para orientarte / Используйте Яндекс Карты и 2ГИС
+
+                    ASOCIACIÓN DE ESTUDIANTES EXTRANJEROS / АССОЦИАЦИЯ ИНОСТРАННЫХ СТУДЕНТОВ:
+                    KubGU tiene un club internacional que organiza eventos y apoyo.
+                    В КубГУ есть международный клуб - мероприятия и поддержка.
+                    Contacto / Контакт: international@kubsu.ru
+                    '''
+                },
+                {
+                    'title': 'Праздники и традиции / Fiestas y tradiciones',
+                    'content': '''
+                    FIESTAS PRINCIPALES / ОСНОВНЫЕ ПРАЗДНИКИ
+
+                    - Año Nuevo (31 dic - 8 ene) - la fiesta más importante / Новый год
+                    - Día del Defensor de la Patria (23 feb) / День защитника Отечества
+                    - Día Internacional de la Mujer (8 mar) / Международный женский день
+                    - Día de la Victoria (9 may) / День Победы
+                    - Día de Rusia (12 jun) / День России
+
+                    En estos días muchas oficinas cierran / В праздники учреждения не работают.
+                    Planifica trámites con antelación / Планируйте документы заранее.
+                    '''
+                }
+            ]
+        }
+
+        # Языковая подготовка - TRKI / idioma ruso
+        self.documents['Русский язык'] = {
+            'name': 'Русский язык и ТРКИ / Idioma ruso y certificación',
+            'url': 'https://kubsu.ru',
+            'sections': [
+                {
+                    'title': 'Сертификат ТРКИ / Certificado TRKI',
+                    'content': '''
+                    CERTIFICADO TRKI / СЕРТИФИКАТ ТРКИ
+
+                    El ТРКИ (Тест по русскому языку как иностранному) certifica tu nivel
+                    de ruso, equivalente al MCER.
+
+                    NIVELES / УРОВНИ:
+                    - ТРКИ-I = B1 (mínimo para grado / минимум для бакалавриата)
+                    - ТРКИ-II = B2 (máster / магистратура)
+                    - ТРКИ-III = C1
+
+                    Preparación / Подготовка: curso preparatorio de KubGU (3-6 meses).
+                    Подготовительный факультет КубГУ.
+                    Costo del examen / Стоимость экзамена: aproximadamente 3000-6000 руб.
+                    '''
+                }
+            ]
+        }
+
+        # Жильё - Vivienda (alquiler privado)
+        self.documents['Жильё'] = {
+            'name': 'Аренда жилья / Alquiler de vivienda',
+            'url': 'https://kubsu.ru',
+            'sections': [
+                {
+                    'title': 'Аренда квартиры / Alquilar un apartamento',
+                    'content': '''
+                    ALQUILER PRIVADO / АРЕНДА КВАРТИРЫ
+
+                    Si no vives en la residencia, puedes alquilar un apartamento.
+                    Если не живёте в общежитии, можно снять квартиру.
+
+                    PLATAFORMAS / ПЛОЩАДКИ: Авито, Циан, Домклик.
+
+                    IMPORTANTE / ВАЖНО:
+                    - Firma un contrato de alquiler / Заключите договор аренды
+                    - El propietario debe registrarte (миграционный учёт) / Собственник обязан оформить регистрацию
+                    - Sin registro tendrás problemas legales / Без регистрации - проблемы с законом
+                    - Precio en Krasnodar / Цена в Краснодаре: 15000-30000 руб./mes por 1 habitación
+
+                    CONSEJO / СОВЕТ: desconfía de precios muy bajos / Остерегайтесь слишком низких цен.
+                    '''
+                }
+            ]
+        }
+
+        # Питание - Comida y comedores
+        self.documents['Питание'] = {
+            'name': 'Питание для студентов / Alimentación',
+            'url': 'https://kubsu.ru',
+            'sections': [
+                {
+                    'title': 'Столовая и кафе / Comedor y cafeterías',
+                    'content': '''
+                    ALIMENTACIÓN / ПИТАНИЕ
+
+                    - Comedor universitario (столовая) - económico / Университетская столовая - недорого
+                    - Menú del día 150-250 руб. / Комплексный обед 150-250 руб.
+                    - Cafeterías en el campus / Кафе на кампусе
+
+                    COMPRAS / ПОКУПКИ:
+                    - Supermercados: Магнит, Пятёрочка, Лента, Ашан
+                    - Mercados locales de frutas y verduras / Рынки: фрукты и овощи
+
+                    COMIDA HALAL / ХАЛЯЛЬ: hay tiendas y cafés halal en Krasnodar.
+                    В Краснодаре есть халяльные магазины и кафе.
+                    '''
+                }
+            ]
+        }
+
     def search(self, query: str, source: Optional[str] = None) -> List[Dict]:
         """Search in documents - semantic or keyword based on availability"""
 
@@ -590,11 +1061,26 @@ class OfficialDocumentLibrary:
             'documento': ['документ', 'documento'],
             'estudiante': ['студент', 'estudiante'],
             'rusol': ['русский', 'язык', 'русском'],
-            'donde': ['направление', 'адрес', 'локация', 'donde'],
+            'donde': ['направление', 'адрес', 'локация', 'местоположение', 'расположение', 'ubicacion', 'location', 'where', 'краснодар', 'krasnodar'],
             'como': ['как', 'процесс', 'procedimiento', 'como'],
             'informacion': ['информация', 'info', 'informacion'],
             'gastos': ['стоимость', 'цена', 'gastos'],
-            'costo': ['стоимость', 'руб', 'costo']
+            'costo': ['стоимость', 'руб', 'costo'],
+            'ubicacion': ['адрес', 'местоположение', 'расположение', 'краснодар', 'krasnodar', 'ubicacion'],
+            'localización': ['адрес', 'местоположение', 'расположение', 'локация', 'localizacion'],
+            'direcion': ['адрес', 'направление', 'calle', 'улица', 'direccion'],
+            'address': ['адрес', 'направление', 'address', 'местоположение'],
+            'location': ['местоположение', 'расположение', 'адрес', 'location'],
+            'campus': ['кампус', 'campus', 'здание', 'здания'],
+            'ciudad': ['город', 'краснодар', 'ciudad'],
+            'city': ['город', 'краснодар', 'city'],
+            'telefono': ['телефон', 'контакт', 'телефонный', 'telefono'],
+            'contacto': ['контакт', 'телефон', 'email', 'contacto'],
+            'contact': ['контакт', 'телефон', 'email', 'contact'],
+            'kubgu': ['кубгу', 'кубанский', 'университет', 'kubgu'],
+            'university': ['университет', 'вуз', 'university', 'кубгу'],
+            'транспорт': ['транспорт', 'автобус', 'метро', 'такси', 'transport', 'добраться'],
+            'como_llegar': ['как', 'добраться', 'маршрут', 'транспорт', 'llegada']
         }
 
         # Expand query words with synonyms
@@ -602,6 +1088,11 @@ class OfficialDocumentLibrary:
         for keyword, synonyms in keyword_mapping.items():
             if keyword in query_words:
                 expanded_words.update(synonyms)
+
+        # Detect if query is about KubGU location
+        query_normalized = query_lower.replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
+        is_kubgu_location_query = ('кубгу' in query_lower or 'kubgu' in query_normalized or 'kuban' in query_normalized or 'universidad' in query_normalized) and \
+                                 any(word in query_normalized for word in ['donde', 'dónde', 'где', 'ubicacion', 'localizacion', 'ciudad', 'city', 'location', 'raspolozhen', 'adres', 'dirección', 'direccion'])
 
         # Search in all documents
         for source_name in self.documents.keys():
@@ -614,7 +1105,10 @@ class OfficialDocumentLibrary:
                 # Calculate relevance score
                 match_score = 0
 
-                if query_lower in title:
+                # PRIORITY BOOST: If query is about КубГУ location and section is about location/contacts
+                if is_kubgu_location_query and source_name == 'КубГУ' and ('расположение' in title or 'контактная' in title or 'адрес' in title):
+                    match_score = 1.0  # Maximum priority for КубГУ location sections
+                elif query_lower in title:
                     match_score = 1.0
                 elif query_lower in content:
                     match_score = 0.8
@@ -630,6 +1124,10 @@ class OfficialDocumentLibrary:
 
                     if matched_words > 0:
                         match_score = min(0.9, matched_words * 0.1)
+
+                # Boost score for КубГУ location sections when searching for КубГУ info
+                if source_name == 'КубГУ' and ('расположение' in title or 'контактная' in title) and match_score > 0:
+                    match_score = min(1.0, match_score * 1.3)
 
                 if match_score > 0.3:
                     results.append({
@@ -796,21 +1294,28 @@ class EnhancedRAGModule:
         """
 
         # Search in document library (keyword baseline or advanced retrieval)
+        _t_retrieval_start = time.perf_counter()
         results, search_mode = self._retrieve(query)
+        retrieval_ms = (time.perf_counter() - _t_retrieval_start) * 1000.0
 
         # Determine response mode
         response_mode = "template"
         response = None
+        llm_ms = 0.0
+        llm_stats = {}
 
         # Try LLM first if available and enabled
         if use_llm and self.is_llm_enabled():
             try:
+                _t_llm_start = time.perf_counter()
                 response = self.llm.generate_response(
                     query=query,
                     context_docs=results,
                     language=language,
                     session_id=session_id
                 )
+                llm_ms = (time.perf_counter() - _t_llm_start) * 1000.0
+                llm_stats = dict(getattr(self.llm, "last_generation_stats", {}) or {})
                 response_mode = "llm"
             except Exception as e:
                 print(f"[RAG] LLM generation failed: {e}")
@@ -856,6 +1361,54 @@ class EnhancedRAGModule:
                 'abstained': grounding.abstained,
                 'citations': grounding.citations,
             }
+
+        # ===== AI transparency metrics (non-destructive, informational) =====
+        # Per-source retrieval scores.
+        retrieval_scores = [
+            {
+                'source': r.get('source', 'Unknown'),
+                'title': r.get('title', ''),
+                'score': round(float(r.get('relevance', 0.0)), 3),
+            }
+            for r in results[:5]
+        ]
+
+        # Lexical faithfulness estimate against retrieved content (no abstention).
+        faithfulness = None
+        if grounding is not None:
+            faithfulness = round(grounding.score, 3)
+        else:
+            try:
+                from trust import estimate_faithfulness
+                contexts = [r.get('content', '') for r in results]
+                if contexts:
+                    faithfulness = round(estimate_faithfulness(response, contexts), 3)
+            except Exception as e:
+                print(f"[RAG] Faithfulness estimate failed: {e}")
+
+        payload['ai_metrics'] = {
+            'search_mode': search_mode,
+            'response_mode': response_mode,
+            'retrieval_scores': retrieval_scores,
+            'faithfulness': faithfulness,
+            'grounded': None if grounding is None else grounding.grounded,
+            'abstained': None if grounding is None else grounding.abstained,
+            'latency_ms': {
+                'retrieval': round(retrieval_ms, 1),
+                'llm': round(llm_ms, 1),
+            },
+            'tokens': {
+                'input': llm_stats.get('input_tokens', 0),
+                'output': llm_stats.get('output_tokens', 0),
+                'per_sec': llm_stats.get('tokens_per_sec', 0.0),
+            },
+            'models_active': {
+                'llm': llm_stats.get('model') if response_mode == 'llm' else None,
+                'embedding': self._retrieval_config.get('dense_model') if search_mode in ('dense', 'hybrid', 'hybrid_rerank') else None,
+                'reranker': self._retrieval_config.get('reranker_model') if search_mode == 'hybrid_rerank' else None,
+            },
+            'query_expansion': [],
+        }
         return payload
 
     def _generate_template_response(

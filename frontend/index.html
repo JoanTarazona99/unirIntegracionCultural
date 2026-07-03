@@ -98,6 +98,22 @@
             border-radius: 20px;
         }
 
+        .dashboard-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            padding: 6px 14px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+        .dashboard-link:hover { background: rgba(255,255,255,0.35); }
+
         .status-dot {
             width: 8px;
             height: 8px;
@@ -286,6 +302,85 @@
         .message.user .message-sources {
             border-top-color: rgba(255,255,255,0.2);
             color: rgba(255,255,255,0.8);
+        }
+
+        /* ==================== AI Transparency Panel ==================== */
+        .ai-panel {
+            margin-top: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fbfcfe;
+        }
+        .ai-panel-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+            border: none;
+            cursor: pointer;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: left;
+        }
+        .ai-panel-toggle:hover { background: #e0e7ff; }
+        .ai-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+        .ai-caret { margin-left: auto; color: var(--text-light); font-size: 0.7rem; }
+        .ai-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #e2e8f0;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .ai-badge.mode-llm { background: #dcfce7; color: #15803d; }
+        .ai-badge.mode-abstained { background: #fef3c7; color: #b45309; }
+        .ai-badge.search { background: #e0f2fe; color: #0369a1; }
+        .ai-badge.good { background: #dcfce7; color: #15803d; }
+        .ai-badge.medium { background: #fef3c7; color: #b45309; }
+        .ai-badge.low { background: #fee2e2; color: #b91c1c; }
+
+        .ai-panel-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+        .ai-metric { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; }
+        .ai-metric-label {
+            font-size: 0.75rem; font-weight: 600; color: var(--text-light);
+            grid-column: 1 / -1; display: flex; align-items: center; gap: 6px;
+        }
+        .ai-help { cursor: help; color: var(--primary); font-size: 0.7rem; }
+        .ai-metric-value { font-weight: 700; font-size: 0.8rem; }
+        .ai-gauge {
+            height: 10px; background: #eef2f7; border-radius: 6px; overflow: hidden; grid-column: 1;
+        }
+        .ai-gauge.sm { height: 7px; }
+        .ai-gauge-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; background: var(--primary); }
+        .ai-gauge-fill.good { background: var(--success); }
+        .ai-gauge-fill.medium { background: var(--warning); }
+        .ai-gauge-fill.low { background: var(--error); }
+        .ai-gauge-fill.score { background: linear-gradient(90deg, #6366f1, #2563eb); }
+
+        .ai-metric-block { display: flex; flex-direction: column; gap: 6px; }
+        .ai-score-row { display: grid; grid-template-columns: 90px 1fr 36px; align-items: center; gap: 8px; }
+        .ai-score-src { font-size: 0.72rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ai-score-val { font-size: 0.72rem; font-weight: 700; text-align: right; color: var(--text-light); }
+
+        .ai-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 8px; }
+        .ai-stat {
+            background: white; border: 1px solid var(--border); border-radius: 8px;
+            padding: 8px 6px; text-align: center;
+        }
+        .ai-stat-val { font-size: 0.95rem; font-weight: 700; color: var(--primary); }
+        .ai-stat-key { font-size: 0.62rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.02em; margin-top: 2px; }
+
+        .ai-models { display: flex; gap: 6px; flex-wrap: wrap; }
+        .ai-chip {
+            font-size: 0.68rem; font-family: 'SFMono-Regular', Consolas, monospace;
+            background: #1e293b; color: #e2e8f0; padding: 3px 8px; border-radius: 6px;
         }
 
         /* Typing indicator */
@@ -510,6 +605,9 @@
                         <span :class="['status-dot', {offline: !systemOnline}]"></span>
                         <span>{{ systemOnline ? t('statusOnline') : t('statusOffline') }}</span>
                     </div>
+                    <a href="dashboard.html" class="dashboard-link" :title="t('dashboardLink')">
+                        📊 {{ t('dashboardLink') }}
+                    </a>
                 </div>
             </div>
         </header>
@@ -597,6 +695,86 @@
                                 📚 {{ t('sources') }}:
                                 <div v-for="source in msg.sources" :key="source">{{ source }}</div>
                             </div>
+
+                            <!-- AI transparency panel -->
+                            <div v-if="msg.aiMetrics" class="ai-panel">
+                                <button class="ai-panel-toggle" @click="msg.showMetrics = !msg.showMetrics" type="button">
+                                    🔬 {{ t('aiAnalysis') }}
+                                    <span class="ai-badges">
+                                        <span class="ai-badge" :class="'mode-' + (msg.aiMetrics.response_mode || '')">
+                                            {{ msg.aiMetrics.response_mode === 'llm' ? 'LLM' : (msg.aiMetrics.response_mode === 'abstained' ? '⚠︎' : 'Template') }}
+                                        </span>
+                                        <span class="ai-badge search">{{ msg.aiMetrics.search_mode }}</span>
+                                        <span v-if="msg.aiMetrics.faithfulness !== null && msg.aiMetrics.faithfulness !== undefined"
+                                              class="ai-badge" :class="faithClass(msg.aiMetrics.faithfulness)">
+                                            {{ Math.round(msg.aiMetrics.faithfulness * 100) }}%
+                                        </span>
+                                    </span>
+                                    <span class="ai-caret">{{ msg.showMetrics ? '▲' : '▼' }}</span>
+                                </button>
+
+                                <div v-show="msg.showMetrics" class="ai-panel-body">
+                                    <!-- Faithfulness gauge -->
+                                    <div v-if="msg.aiMetrics.faithfulness !== null && msg.aiMetrics.faithfulness !== undefined" class="ai-metric">
+                                        <div class="ai-metric-label">
+                                            {{ t('faithfulness') }}
+                                            <span class="ai-help" :title="t('faithfulnessHelp')">ⓘ</span>
+                                        </div>
+                                        <div class="ai-gauge">
+                                            <div class="ai-gauge-fill" :class="faithClass(msg.aiMetrics.faithfulness)"
+                                                 :style="{ width: (msg.aiMetrics.faithfulness * 100) + '%' }"></div>
+                                        </div>
+                                        <div class="ai-metric-value">{{ (msg.aiMetrics.faithfulness * 100).toFixed(1) }}%</div>
+                                    </div>
+
+                                    <!-- Retrieval scores -->
+                                    <div v-if="msg.aiMetrics.retrieval_scores && msg.aiMetrics.retrieval_scores.length" class="ai-metric-block">
+                                        <div class="ai-metric-label">{{ t('retrievalScores') }}</div>
+                                        <div v-for="(rs, i) in msg.aiMetrics.retrieval_scores" :key="i" class="ai-score-row">
+                                            <span class="ai-score-src" :title="rs.title">{{ rs.source }}</span>
+                                            <div class="ai-gauge sm">
+                                                <div class="ai-gauge-fill score" :style="{ width: (rs.score * 100) + '%' }"></div>
+                                            </div>
+                                            <span class="ai-score-val">{{ rs.score.toFixed(2) }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Stats grid -->
+                                    <div class="ai-stats-grid">
+                                        <div class="ai-stat" v-if="msg.aiMetrics.latency_ms">
+                                            <div class="ai-stat-val">{{ fmtMs(msg.aiMetrics.latency_ms.total) }}</div>
+                                            <div class="ai-stat-key">{{ t('latencyTotal') }}</div>
+                                        </div>
+                                        <div class="ai-stat" v-if="msg.aiMetrics.latency_ms && msg.aiMetrics.latency_ms.llm">
+                                            <div class="ai-stat-val">{{ fmtMs(msg.aiMetrics.latency_ms.llm) }}</div>
+                                            <div class="ai-stat-key">{{ t('latencyLlm') }}</div>
+                                        </div>
+                                        <div class="ai-stat" v-if="msg.aiMetrics.latency_ms">
+                                            <div class="ai-stat-val">{{ fmtMs(msg.aiMetrics.latency_ms.retrieval) }}</div>
+                                            <div class="ai-stat-key">{{ t('latencyRetrieval') }}</div>
+                                        </div>
+                                        <div class="ai-stat" v-if="msg.aiMetrics.tokens && msg.aiMetrics.tokens.per_sec">
+                                            <div class="ai-stat-val">{{ msg.aiMetrics.tokens.per_sec }}</div>
+                                            <div class="ai-stat-key">tok/s</div>
+                                        </div>
+                                        <div class="ai-stat" v-if="msg.aiMetrics.tokens">
+                                            <div class="ai-stat-val">{{ msg.aiMetrics.tokens.input }}</div>
+                                            <div class="ai-stat-key">{{ t('tokensIn') }}</div>
+                                        </div>
+                                        <div class="ai-stat" v-if="msg.aiMetrics.tokens">
+                                            <div class="ai-stat-val">{{ msg.aiMetrics.tokens.output }}</div>
+                                            <div class="ai-stat-key">{{ t('tokensOut') }}</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Active models -->
+                                    <div v-if="msg.aiMetrics.models_active" class="ai-models">
+                                        <span v-if="msg.aiMetrics.models_active.llm" class="ai-chip">🧠 {{ msg.aiMetrics.models_active.llm }}</span>
+                                        <span v-if="msg.aiMetrics.models_active.embedding" class="ai-chip">🔢 {{ msg.aiMetrics.models_active.embedding }}</span>
+                                        <span v-if="msg.aiMetrics.models_active.reranker" class="ai-chip">🎯 {{ msg.aiMetrics.models_active.reranker }}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <!-- Audio button for bot messages - uses message's detected language -->
                         <button
@@ -670,6 +848,7 @@
                 uiLanguage: 'Idioma UI',
                 statusOnline: 'En línea',
                 statusOffline: 'Sin conexión',
+                dashboardLink: 'Dashboard IA',
                 profileTitle: 'Mi Perfil',
                 profileName: 'Nombre',
                 profileNamePlaceholder: 'Tu nombre',
@@ -696,6 +875,15 @@
                 welcomeItem4: 'Frases útiles en ruso',
                 welcomeHowHelp: '¿En qué puedo ayudarte?',
                 sources: 'Fuentes',
+                aiAnalysis: 'Análisis IA',
+                faithfulness: 'Fidelidad (grounding)',
+                faithfulnessHelp: 'Estimación léxica de cuánto se apoya la respuesta en las fuentes recuperadas (0-100%).',
+                retrievalScores: 'Scores de recuperación',
+                latencyTotal: 'Latencia total',
+                latencyLlm: 'LLM',
+                latencyRetrieval: 'Recuperación',
+                tokensIn: 'Tokens entrada',
+                tokensOut: 'Tokens salida',
                 listenToResponse: 'Escuchar respuesta',
                 chatPlaceholder: 'Escribe tu pregunta...',
                 send: 'Enviar',
@@ -712,6 +900,7 @@
                 uiLanguage: 'UI Language',
                 statusOnline: 'Online',
                 statusOffline: 'Offline',
+                dashboardLink: 'AI Dashboard',
                 profileTitle: 'My Profile',
                 profileName: 'Name',
                 profileNamePlaceholder: 'Your name',
@@ -738,6 +927,15 @@
                 welcomeItem4: 'Useful Russian phrases',
                 welcomeHowHelp: 'How can I help you?',
                 sources: 'Sources',
+                aiAnalysis: 'AI Analysis',
+                faithfulness: 'Faithfulness (grounding)',
+                faithfulnessHelp: 'Lexical estimate of how well the answer is supported by the retrieved sources (0-100%).',
+                retrievalScores: 'Retrieval scores',
+                latencyTotal: 'Total latency',
+                latencyLlm: 'LLM',
+                latencyRetrieval: 'Retrieval',
+                tokensIn: 'Input tokens',
+                tokensOut: 'Output tokens',
                 listenToResponse: 'Listen to response',
                 chatPlaceholder: 'Type your question...',
                 send: 'Send',
@@ -754,6 +952,7 @@
                 uiLanguage: 'Язык интерфейса',
                 statusOnline: 'В сети',
                 statusOffline: 'Не в сети',
+                dashboardLink: 'Панель ИИ',
                 profileTitle: 'Мой профиль',
                 profileName: 'Имя',
                 profileNamePlaceholder: 'Ваше имя',
@@ -780,6 +979,15 @@
                 welcomeItem4: 'Полезные русские фразы',
                 welcomeHowHelp: 'Чем могу помочь?',
                 sources: 'Источники',
+                aiAnalysis: 'Анализ ИИ',
+                faithfulness: 'Достоверность (grounding)',
+                faithfulnessHelp: 'Лексическая оценка того, насколько ответ подкреплён найденными источниками (0-100%).',
+                retrievalScores: 'Оценки поиска',
+                latencyTotal: 'Общая задержка',
+                latencyLlm: 'LLM',
+                latencyRetrieval: 'Поиск',
+                tokensIn: 'Токены (вход)',
+                tokensOut: 'Токены (выход)',
                 listenToResponse: 'Прослушать ответ',
                 chatPlaceholder: 'Введите ваш вопрос...',
                 send: 'Отправить',
@@ -796,6 +1004,7 @@
                 uiLanguage: 'Langue UI',
                 statusOnline: 'En ligne',
                 statusOffline: 'Hors ligne',
+                dashboardLink: 'Tableau IA',
                 profileTitle: 'Mon Profil',
                 profileName: 'Nom',
                 profileNamePlaceholder: 'Votre nom',
@@ -822,6 +1031,15 @@
                 welcomeItem4: 'Phrases russes utiles',
                 welcomeHowHelp: 'Comment puis-je vous aider?',
                 sources: 'Sources',
+                aiAnalysis: 'Analyse IA',
+                faithfulness: 'Fidélité (grounding)',
+                faithfulnessHelp: 'Estimation lexicale du degré de soutien de la réponse par les sources récupérées (0-100%).',
+                retrievalScores: 'Scores de récupération',
+                latencyTotal: 'Latence totale',
+                latencyLlm: 'LLM',
+                latencyRetrieval: 'Récupération',
+                tokensIn: 'Jetons entrée',
+                tokensOut: 'Jetons sortie',
                 listenToResponse: 'Écouter la réponse',
                 chatPlaceholder: 'Tapez votre question...',
                 send: 'Envoyer',
@@ -841,7 +1059,8 @@
                     // API base URL (configurable; empty string = same origin)
                     baseUrl: '',
                     // Default request timeout in milliseconds
-                    requestTimeout: 15000,
+                    // Increased to 120s to accommodate local LLM (Qwen2.5:7b) generation on CPU
+                    requestTimeout: 120000,
 
                     // UI Language (for page labels/buttons)
                     uiLanguage: 'es',
@@ -948,6 +1167,19 @@
                 // i18n translation function
                 t(key) {
                     return i18n[this.uiLanguage]?.[key] || i18n['es'][key] || key;
+                },
+
+                // ---- AI transparency helpers ----
+                faithClass(v) {
+                    if (v === null || v === undefined) return '';
+                    if (v >= 0.6) return 'good';
+                    if (v >= 0.35) return 'medium';
+                    return 'low';
+                },
+                fmtMs(v) {
+                    if (v === null || v === undefined) return '—';
+                    if (v >= 1000) return (v / 1000).toFixed(1) + 's';
+                    return Math.round(v) + 'ms';
                 },
 
                 // fetch wrapper with configurable timeout via AbortController
@@ -1068,7 +1300,9 @@
                             type: 'bot',
                             text: data.answer || this.t('noResponse'),
                             sources: data.context || [],
-                            detectedLanguage: detectedLang  // Store detected language
+                            detectedLanguage: detectedLang,  // Store detected language
+                            aiMetrics: data.ai_metrics || null,  // AI transparency metrics
+                            showMetrics: false                    // Panel collapsed by default
                         };
 
                         this.chatMessages.push(botMessage);

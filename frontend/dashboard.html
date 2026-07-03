@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KubGU · Dashboard de IA / RAG</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --indigo: #6366f1;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --panel-2: #273449;
+            --border: #334155;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        a { color: inherit; }
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #312e81 100%);
+            padding: 22px 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 50;
+        }
+        .header-content {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 14px;
+        }
+        .header h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; }
+        .header .subtitle { font-size: 0.8rem; color: var(--text-dim); margin-top: 3px; }
+        .back-link {
+            font-size: 0.82rem; font-weight: 600; text-decoration: none;
+            padding: 8px 16px; background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
+        }
+        .back-link:hover { background: rgba(255,255,255,0.2); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
+        .section-title {
+            font-size: 1.05rem; font-weight: 700; margin: 28px 0 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title:first-child { margin-top: 4px; }
+
+        .grid { display: grid; gap: 16px; }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+
+        .card {
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 14px; padding: 18px;
+        }
+        .stat-card { text-align: left; }
+        .stat-label { font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+        .stat-value { font-size: 1.7rem; font-weight: 800; margin-top: 6px; color: white; }
+        .stat-value.sm { font-size: 1.05rem; word-break: break-word; }
+        .stat-sub { font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; }
+        .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .dot.on { background: var(--success); }
+        .dot.off { background: var(--error); }
+
+        /* Pipeline diagram */
+        .pipeline {
+            display: flex; align-items: stretch; gap: 0; flex-wrap: wrap;
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 14px; padding: 20px; overflow-x: auto;
+        }
+        .pstage {
+            flex: 1; min-width: 120px; display: flex; flex-direction: column;
+            align-items: center; text-align: center; position: relative; padding: 0 6px;
+        }
+        .pstage-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--indigo));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; margin-bottom: 8px;
+        }
+        .pstage-title { font-size: 0.78rem; font-weight: 700; }
+        .pstage-desc { font-size: 0.66rem; color: var(--text-dim); margin-top: 3px; }
+        .pstage:not(:last-child)::after {
+            content: '→'; position: absolute; right: -6px; top: 14px;
+            color: var(--text-dim); font-size: 1.1rem;
+        }
+        .pstage.dim .pstage-icon { background: #334155; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-dim); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em; }
+        td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        tr:last-child td { border-bottom: none; }
+        .best { color: var(--success); font-weight: 800; }
+        .mode-tag {
+            font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 6px;
+            background: #1e3a8a; color: #bfdbfe;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--indigo));
+            color: white; border: none; padding: 10px 18px; border-radius: 10px;
+            font-size: 0.85rem; font-weight: 700; cursor: pointer;
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn.secondary { background: var(--panel-2); border: 1px solid var(--border); }
+        .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+        .checkbox { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; }
+        .chip {
+            font-size: 0.7rem; font-family: Consolas, monospace;
+            background: #0f172a; color: #93c5fd; padding: 3px 9px; border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .muted { color: var(--text-dim); font-size: 0.8rem; }
+        .spinner {
+            width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%; display: inline-block;
+            animation: spin 0.7s linear infinite; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .chart-wrap { position: relative; height: 300px; }
+        .note { font-size: 0.72rem; color: var(--text-dim); margin-top: 8px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1>🔬 KubGU · Dashboard de IA / RAG</h1>
+                    <div class="subtitle">Retrieval-Augmented Generation · Evaluación IR · Transparencia del modelo</div>
+                </div>
+                <a href="index.html" class="back-link">← Volver al chat</a>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- ============ SYSTEM METRICS ============ -->
+            <div class="section-title">📊 Estado del sistema</div>
+            <div class="grid grid-4">
+                <div class="card stat-card">
+                    <div class="stat-label">Modelo LLM</div>
+                    <div class="stat-value sm">{{ metrics.models?.llm?.name || '—' }}</div>
+                    <div class="stat-sub">
+                        <span class="dot" :class="metrics.models?.llm?.available ? 'on' : 'off'"></span>
+                        {{ metrics.models?.llm?.provider || 'no disponible' }}
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-label">Modo de recuperación</div>
+                    <div class="stat-value">{{ metrics.pipeline?.retrieval_mode || '—' }}</div>
+                    <div class="stat-sub">top-k = {{ metrics.pipeline?.top_k ?? '—' }} · RRF k = {{ metrics.pipeline?.rrf_k ?? '—' }}</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-label">Base de conocimiento</div>
+                    <div class="stat-value">{{ metrics.knowledge_base?.sources ?? '—' }}</div>
+                    <div class="stat-sub">fuentes oficiales</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-label">Cache hit-rate</div>
+                    <div class="stat-value">{{ metrics.cache?.hit_rate_percent ?? 0 }}%</div>
+                    <div class="stat-sub">{{ metrics.cache?.hits ?? 0 }} hits / {{ metrics.cache?.misses ?? 0 }} misses</div>
+                </div>
+            </div>
+
+            <!-- ============ RAG PIPELINE ============ -->
+            <div class="section-title">🧬 Arquitectura del pipeline RAG</div>
+            <div class="pipeline">
+                <div class="pstage">
+                    <div class="pstage-icon">💬</div>
+                    <div class="pstage-title">Consulta</div>
+                    <div class="pstage-desc">ES / EN / RU / FR</div>
+                </div>
+                <div class="pstage">
+                    <div class="pstage-icon">🔤</div>
+                    <div class="pstage-title">Expansión</div>
+                    <div class="pstage-desc">sinónimos dominio→RU</div>
+                </div>
+                <div class="pstage">
+                    <div class="pstage-icon">🔎</div>
+                    <div class="pstage-title">BM25 + Denso</div>
+                    <div class="pstage-desc">sparse + embeddings</div>
+                </div>
+                <div class="pstage" :class="{ dim: metrics.pipeline?.retrieval_mode === 'keyword' }">
+                    <div class="pstage-icon">🔀</div>
+                    <div class="pstage-title">Fusión RRF</div>
+                    <div class="pstage-desc">k = {{ metrics.pipeline?.rrf_k ?? 60 }}</div>
+                </div>
+                <div class="pstage" :class="{ dim: !metrics.features?.reranker }">
+                    <div class="pstage-icon">🎯</div>
+                    <div class="pstage-title">Reranker</div>
+                    <div class="pstage-desc">cross-encoder</div>
+                </div>
+                <div class="pstage">
+                    <div class="pstage-icon">🧠</div>
+                    <div class="pstage-title">LLM</div>
+                    <div class="pstage-desc">generación</div>
+                </div>
+                <div class="pstage" :class="{ dim: !metrics.pipeline?.citation_guard }">
+                    <div class="pstage-icon">🛡️</div>
+                    <div class="pstage-title">Grounding</div>
+                    <div class="pstage-desc">faithfulness</div>
+                </div>
+            </div>
+            <div class="note">Las etapas atenuadas están inactivas con la configuración actual (modo <b>{{ metrics.pipeline?.retrieval_mode }}</b>). Cambia <code>retrieval_mode</code> a <code>hybrid</code> / <code>hybrid_rerank</code> para activar recuperación densa y reranking.</div>
+
+            <!-- ============ MODEL REGISTRY ============ -->
+            <div class="section-title">🗂️ Registro de modelos</div>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr><th>Componente</th><th>Modelo</th><th>Estado</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>LLM generativo</td>
+                            <td><span class="chip">{{ metrics.models?.llm?.name || '—' }}</span></td>
+                            <td><span class="dot" :class="metrics.models?.llm?.available ? 'on':'off'"></span>{{ metrics.models?.llm?.available ? 'activo' : 'inactivo' }}</td>
+                        </tr>
+                        <tr>
+                            <td>Embeddings (denso)</td>
+                            <td><span class="chip">{{ metrics.models?.embedding?.name || 'paraphrase-multilingual-MiniLM-L12-v2' }}</span></td>
+                            <td><span class="dot" :class="metrics.models?.embedding?.active ? 'on':'off'"></span>{{ metrics.models?.embedding?.active ? 'activo' : 'inactivo' }}</td>
+                        </tr>
+                        <tr>
+                            <td>Reranker (cross-encoder)</td>
+                            <td><span class="chip">{{ metrics.models?.reranker?.name || 'mmarco-mMiniLMv2-L12' }}</span></td>
+                            <td><span class="dot" :class="metrics.models?.reranker?.active ? 'on':'off'"></span>{{ metrics.models?.reranker?.active ? 'activo' : 'inactivo' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ============ IR EVALUATION ============ -->
+            <div class="section-title">🎯 Evaluación de recuperación (IR)</div>
+            <div class="card">
+                <div class="controls">
+                    <span class="muted">Modos:</span>
+                    <label class="checkbox"><input type="checkbox" value="keyword" v-model="selectedModes"> keyword</label>
+                    <label class="checkbox"><input type="checkbox" value="bm25" v-model="selectedModes"> bm25</label>
+                    <label class="checkbox"><input type="checkbox" value="hybrid" v-model="selectedModes"> hybrid</label>
+                    <label class="checkbox"><input type="checkbox" value="hybrid_rerank" v-model="selectedModes"> hybrid_rerank</label>
+                    <span class="muted">k =</span>
+                    <select v-model.number="evalK" class="chip" style="padding:5px 8px;">
+                        <option :value="3">3</option><option :value="5">5</option><option :value="10">10</option>
+                    </select>
+                    <button class="btn" :disabled="evalRunning || !selectedModes.length" @click="runEval">
+                        <span v-if="evalRunning" class="spinner"></span>
+                        {{ evalRunning ? 'Ejecutando…' : '▶ Ejecutar evaluación' }}
+                    </button>
+                    <span v-if="evalError" class="muted" style="color:var(--error)">{{ evalError }}</span>
+                </div>
+
+                <div v-if="evalData">
+                    <p class="muted" style="margin-bottom:12px;">
+                        {{ evalData.num_queries }} consultas del benchmark · k = {{ evalData.k }} ·
+                        <span class="muted">{{ evalData.timestamp ? new Date(evalData.timestamp).toLocaleString() : '' }}</span>
+                    </p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Modo</th>
+                                <th class="num">Hit@{{ evalData.k }}</th>
+                                <th class="num">Recall@{{ evalData.k }}</th>
+                                <th class="num">Precision@{{ evalData.k }}</th>
+                                <th class="num">MRR</th>
+                                <th class="num">nDCG@{{ evalData.k }}</th>
+                                <th class="num">Latencia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="r in evalData.results" :key="r.mode">
+                                <td><span class="mode-tag">{{ r.mode }}</span></td>
+                                <td class="num" :class="{ best: isBest('Hit@'+evalData.k, r) }">{{ pct(r.aggregate['Hit@'+evalData.k]) }}</td>
+                                <td class="num" :class="{ best: isBest('Recall@'+evalData.k, r) }">{{ pct(r.aggregate['Recall@'+evalData.k]) }}</td>
+                                <td class="num" :class="{ best: isBest('Precision@'+evalData.k, r) }">{{ pct(r.aggregate['Precision@'+evalData.k]) }}</td>
+                                <td class="num" :class="{ best: isBest('MRR', r) }">{{ pct(r.aggregate['MRR']) }}</td>
+                                <td class="num" :class="{ best: isBest('nDCG@'+evalData.k, r) }">{{ pct(r.aggregate['nDCG@'+evalData.k]) }}</td>
+                                <td class="num muted">{{ r.latency_ms ? Math.round(r.latency_ms) + 'ms' : '—' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="note">Métricas IR estándar (mayor = mejor). El valor en <span class="best">verde</span> es el mejor por columna. nDCG penaliza rankings donde los documentos relevantes aparecen en posiciones bajas.</div>
+                </div>
+                <p v-else class="muted">Aún no se ha ejecutado la evaluación. Pulsa «Ejecutar evaluación» para calcular las métricas sobre el benchmark del dominio.</p>
+            </div>
+
+            <!-- ============ CHARTS ============ -->
+            <div v-if="evalData" class="grid grid-2" style="margin-top:16px;">
+                <div class="card">
+                    <div class="section-title" style="margin-top:0;">📈 Comparación de métricas</div>
+                    <div class="chart-wrap"><canvas ref="barChart"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="section-title" style="margin-top:0;">🌐 nDCG por idioma (equidad)</div>
+                    <div class="chart-wrap"><canvas ref="langChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    baseUrl: '',
+                    metrics: {},
+                    selectedModes: ['keyword', 'bm25'],
+                    evalK: 5,
+                    evalRunning: false,
+                    evalError: '',
+                    evalData: null,
+                    barChartObj: null,
+                    langChartObj: null,
+                    palette: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
+                };
+            },
+            mounted() {
+                this.loadMetrics();
+                this.loadCachedEval();
+                setInterval(this.loadMetrics, 15000);
+            },
+            methods: {
+                async loadMetrics() {
+                    try {
+                        const r = await fetch(this.baseUrl + '/api/metrics/system');
+                        if (r.ok) this.metrics = await r.json();
+                    } catch (e) { /* offline */ }
+                },
+                async loadCachedEval() {
+                    try {
+                        const r = await fetch(this.baseUrl + '/api/eval/results');
+                        if (r.ok) {
+                            const d = await r.json();
+                            if (d && d.results && d.results.length) {
+                                this.evalData = d;
+                                this.$nextTick(this.renderCharts);
+                            }
+                        }
+                    } catch (e) { /* none yet */ }
+                },
+                async runEval() {
+                    this.evalRunning = true;
+                    this.evalError = '';
+                    try {
+                        const modes = this.selectedModes.join(',');
+                        const r = await fetch(`${this.baseUrl}/api/eval/run?modes=${modes}&k=${this.evalK}`, { method: 'POST' });
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        this.evalData = await r.json();
+                        this.$nextTick(this.renderCharts);
+                    } catch (e) {
+                        this.evalError = 'Error: ' + e.message;
+                    } finally {
+                        this.evalRunning = false;
+                    }
+                },
+                pct(v) { return v === undefined || v === null ? '—' : (v * 100).toFixed(1) + '%'; },
+                isBest(metric, row) {
+                    const vals = this.evalData.results.map(r => r.aggregate[metric] ?? -1);
+                    const max = Math.max(...vals);
+                    return (row.aggregate[metric] ?? -1) === max && max > 0;
+                },
+                renderCharts() {
+                    if (!this.evalData || !window.Chart) return;
+                    const k = this.evalData.k;
+                    const metricKeys = ['Hit@'+k, 'Recall@'+k, 'Precision@'+k, 'MRR', 'nDCG@'+k];
+
+                    // Bar chart: metrics per mode
+                    if (this.barChartObj) this.barChartObj.destroy();
+                    this.barChartObj = new Chart(this.$refs.barChart, {
+                        type: 'bar',
+                        data: {
+                            labels: metricKeys,
+                            datasets: this.evalData.results.map((r, i) => ({
+                                label: r.mode,
+                                data: metricKeys.map(m => +(r.aggregate[m] ?? 0).toFixed(3)),
+                                backgroundColor: this.palette[i % this.palette.length],
+                                borderRadius: 5
+                            }))
+                        },
+                        options: this.chartOpts()
+                    });
+
+                    // Language fairness chart
+                    const langs = [...new Set(this.evalData.results.flatMap(r => Object.keys(r.by_lang_ndcg || {})))].sort();
+                    if (this.langChartObj) this.langChartObj.destroy();
+                    if (langs.length) {
+                        this.langChartObj = new Chart(this.$refs.langChart, {
+                            type: 'radar',
+                            data: {
+                                labels: langs.map(l => l.toUpperCase()),
+                                datasets: this.evalData.results.map((r, i) => ({
+                                    label: r.mode,
+                                    data: langs.map(l => +((r.by_lang_ndcg || {})[l] ?? 0).toFixed(3)),
+                                    backgroundColor: this.palette[i % this.palette.length] + '33',
+                                    borderColor: this.palette[i % this.palette.length],
+                                    borderWidth: 2
+                                }))
+                            },
+                            options: this.chartOpts(true)
+                        });
+                    }
+                },
+                chartOpts(radar = false) {
+                    const grid = { color: '#334155' };
+                    const ticks = { color: '#94a3b8' };
+                    const base = {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                    };
+                    if (radar) {
+                        base.scales = { r: { grid, angleLines: grid, pointLabels: { color: '#e2e8f0' }, ticks: { ...ticks, backdropColor: 'transparent' }, min: 0, max: 1 } };
+                    } else {
+                        base.scales = { x: { grid, ticks }, y: { grid, ticks, min: 0, max: 1 } };
+                    }
+                    return base;
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

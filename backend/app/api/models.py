@@ -67,6 +67,31 @@ class StreamRequest(BaseModel):
         return _validate_non_empty_text(v)
 
 
+class RetrievalScore(BaseModel):
+    """Per-source retrieval score for AI transparency."""
+    source: str
+    title: Optional[str] = None
+    score: float
+
+
+class AIMetrics(BaseModel):
+    """AI/ML transparency metrics surfaced for each chat response.
+
+    All fields are optional so the response stays backward compatible when a
+    component (LLM, retriever, trust layer) is unavailable.
+    """
+    search_mode: Optional[str] = None          # keyword | bm25 | dense | hybrid | hybrid_rerank
+    response_mode: Optional[str] = None         # llm | template | abstained
+    retrieval_scores: List[RetrievalScore] = []
+    faithfulness: Optional[float] = None        # lexical grounding estimate [0,1]
+    grounded: Optional[bool] = None
+    abstained: Optional[bool] = None
+    latency_ms: Optional[Dict[str, float]] = None   # {retrieval, llm, total}
+    tokens: Optional[Dict[str, float]] = None       # {input, output, per_sec}
+    models_active: Optional[Dict[str, Optional[str]]] = None  # {llm, embedding, reranker}
+    query_expansion: List[str] = []
+
+
 class ChatResponse(BaseModel):
     """Chat response with translations and context."""
     query: str
@@ -81,6 +106,7 @@ class ChatResponse(BaseModel):
     session_id: Optional[str] = None
     cached: bool = False
     cache_key: Optional[str] = None
+    ai_metrics: Optional[AIMetrics] = None
 
 
 class TranslationRequest(BaseModel):

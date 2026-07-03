@@ -13,10 +13,11 @@ Persistence Strategy:
 import uuid
 import hashlib
 import json
+import time
 from fastapi import APIRouter, HTTPException, Request, Depends, BackgroundTasks
 from typing import AsyncGenerator
 
-from app.api.models import QueryRequest, StreamRequest, ChatResponse
+from app.api.models import QueryRequest, StreamRequest, ChatResponse, AIMetrics
 from app.api.dependencies import (
     get_rag_module,
     get_rag_service,
@@ -143,6 +144,7 @@ async def chat(
     try:
         session_id = request.session_id or str(uuid.uuid4())
         target_lang = request.language
+        _t_request_start = time.perf_counter()
         
         # ============ CACHE LOOKUP ============
         # Generate deterministic cache key
@@ -156,6 +158,13 @@ async def chat(
         if cached_result:
             cached_result['cached'] = True
             cached_result['cache_key'] = cache_key
+            # Reflect near-zero latency for cache hits in the AI metrics panel.
+            if isinstance(cached_result.get('ai_metrics'), dict):
+                total_ms = round((time.perf_counter() - _t_request_start) * 1000.0, 1)
+                latency = cached_result['ai_metrics'].get('latency_ms') or {}
+                latency['total'] = total_ms
+                latency['cache_hit'] = True
+                cached_result['ai_metrics']['latency_ms'] = latency
             return cached_result
         
         # ============ RAG SEARCH ============
@@ -207,6 +216,32 @@ async def chat(
                 "Consulte los documentos oficiales para más información"
             ]
         
+        # ============ AI TRANSPARENCY METRICS ============
+        # Surface retrieval/trust/latency/token metrics computed by the RAG layer.
+        ai_metrics = None
+        raw_metrics = rag_result.get('ai_metrics')
+        if raw_metrics:
+            total_ms = round((time.perf_counter() - _t_request_start) * 1000.0, 1)
+            latency = dict(raw_metrics.get('latency_ms') or {})
+            latency['total'] = total_ms
+            latency['cache_hit'] = False
+            try:
+                ai_metrics = AIMetrics(
+                    search_mode=raw_metrics.get('search_mode'),
+                    response_mode=raw_metrics.get('response_mode'),
+                    retrieval_scores=raw_metrics.get('retrieval_scores', []),
+                    faithfulness=raw_metrics.get('faithfulness'),
+                    grounded=raw_metrics.get('grounded'),
+                    abstained=raw_metrics.get('abstained'),
+                    latency_ms=latency,
+                    tokens=raw_metrics.get('tokens'),
+                    models_active=raw_metrics.get('models_active'),
+                    query_expansion=raw_metrics.get('query_expansion', []),
+                )
+            except Exception as e:
+                logger.warning("ai_metrics_build_failed", error=str(e))
+                ai_metrics = None
+
         # ============ BUILD RESPONSE ============
         response = ChatResponse(
             query=request.query,
@@ -220,7 +255,8 @@ async def chat(
             search_mode=rag_result.get('search_mode', 'keyword'),
             session_id=session_id,
             cached=False,
-            cache_key=cache_key
+            cache_key=cache_key,
+            ai_metrics=ai_metrics
         )
         
         # ============ CACHE UPDATE ============

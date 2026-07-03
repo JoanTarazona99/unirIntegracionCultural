@@ -254,6 +254,8 @@ from app.api.routes import (
     translation_router,
     audio_router,
     info_router,
+    metrics_router,
+    eval_router,
 )
 
 # Register all routers
@@ -264,8 +266,10 @@ app.include_router(chat_router)
 app.include_router(translation_router)
 app.include_router(audio_router)
 app.include_router(info_router)
+app.include_router(metrics_router)
+app.include_router(eval_router)
 
-logger.info("routers_registered", count=7)
+logger.info("routers_registered", count=9)
 
 # ==================== DEPRECATED SECTION (TODO: REMOVE IN SPRINT 2) ====================
 # All endpoint definitions have been moved to backend/app/api/routes/
