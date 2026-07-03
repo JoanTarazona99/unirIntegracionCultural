@@ -1,0 +1,18 @@
+{
+  "id": "Госуслуги",
+  "lang": "es",
+  "sections": [
+    {
+      "title": "Registro en el portal para extranjeros.",
+      "content": "CUENTA PERSONAL:\nLos ciudadanos extranjeros pueden registrarse y acceder a los servicios.\n\nSERVICIOS PARA EXTRANJEROS:\n- Concertar una cita con las autoridades de migración.\n- Comprobación del estado de los documentos.\n- Recepción de certificados en formato electrónico.\n\nREQUISITOS DE INSCRIPCIÓN:\n- Correo electrónico o número de teléfono\n- Nombre completo y fecha de nacimiento\n- Información correcta sobre el alojamiento."
+    },
+    {
+      "title": "Cita electrónica",
+      "content": "CITA CON ESPECIALISTAS:\n- Ministerio del Interior (servicio de migración)\n- MFC (servicios públicos)\n- Instituciones médicas\n\nVENTAJAS:\n- Ahorra tiempo en la fila\n- Día y hora especificados.\n- No te preocupes por la disponibilidad.\n\nCÓMO REGISTRARSE:\n1. Inicie sesión en el portal de Servicios del Estado\n2. Encuentra el servicio que necesitas\n3. Haga clic en \"Registrarse\"\n4. Elija un horario conveniente\n5. Confirma tu entrada"
+    },
+    {
+      "title": "Tipo de visa Visa de estudiante Tipo de visa de estudiante",
+      "content": "VISA FOR STUDENT to Russia:\n- Periodo de validez: depende del programa de formación.\n- Objetivo: estudiar en una universidad\n- Se requiere invitación de la universidad.\n- Expedido en el Consulado Ruso\n\nDOCUMENTOS:\n1. Pasaporte (válido por mínimo 18 meses)\n2. Invitación de KubSU\n3. Formulario de solicitud de visa\n4. Foto 3x4cm\n5. Certificado de buena conducta"
+    }
+  ]
+}

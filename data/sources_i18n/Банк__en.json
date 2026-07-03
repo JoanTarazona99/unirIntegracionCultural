@@ -1,0 +1,14 @@
+{
+  "id": "Банк",
+  "lang": "en",
+  "sections": [
+    {
+      "title": "Opening an account / Abrir una cuenta bancaria",
+      "content": "ABRIR UNA CUENTA BANCARIA / OPENING A BANK ACCOUNT\n\nLos estudiantes extranjeros pueden abrir cuenta y tarjeta en bancos rusos\n(Sberbank, Tinkoff, VTB, Alfa-Bank).\n\nDOCUMENTOS / DOCUMENTS:\n- Pasaporte con traducción notarial / Passport with notarized translation\n- Visa y tarjeta de migración / Visa and migration card\n- Registro migratorio / Migration registration\n- Taxpayer Identification Number (TIN)\n- Certificado de estudios de KubGU / Certificate from KubGU\n\nTARJETA / MAP: World (sistema nacional) recomendada para estudiantes.\nLas tarjetas Visa/Mastercard extranjeras pueden no funcionar en Russia.\nForeign Visa/Mastercard may not work in Russia."
+    },
+    {
+      "title": "Payment and transfers / Pagos y transferencias",
+      "content": "PAGOS Y TRANSFERENCIAS / PAYMENTS AND TRANSFERS\n\n- Pago por SBP (Fast Payment System) con número de telefono / Payment via SBP\n- Applicación móvil del banco / Bank mobile application\n- Pago de la residencia y matrícula / Payment for hostel and tuition\n- Transferencias entre tarjetas World / Transfers between cards World\n\nCONSEJO / TIP: activa las notificaciones SMS / Enable SMS notifications"
+    }
+  ]
+}

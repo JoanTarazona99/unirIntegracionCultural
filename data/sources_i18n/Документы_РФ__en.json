@@ -1,0 +1,14 @@
+{
+  "id": "Документы РФ",
+  "lang": "en",
+  "sections": [
+    {
+      "title": "ИНН - taxpayer number",
+      "content": "TIN / NÚMERO DE IDENTIFICACIÓN FISCAL\n\nEl INN (Taxpayer Identification Number) es necesario\npara trabajar y para operaciones bancarias.\n\nDÓNDE / WHERE: Servicio Fiscal (FTS) o MFC / Tax or MFC\nDOCUMENTOS / DOCUMENTS: pasaporte + traducción, registro / Passport + translation, registration\nCOSTO / COST: gratis / free\nPLAZO / DEADLINE: 5 days / 5 working days"
+    },
+    {
+      "title": "SNILS - seguro social",
+      "content": "SNILS / NÚMERO DE SEGURO SOCIAL\n\nEl SNILS es el número de la cuenta individual del seguro de pensiones.\nNecesario para trabajar oficialmente y recibir servicios.\n\nDÓNDE / WHERE: Pension and Social Insurance Fund (PSI) o MFC\nDOCUMENTOS / DOCUMENTS: pasaporte + traducción / Passport + translation\nCOSTO / COST: gratis / free\nPLAZO / DURATION: 1-5 days / 1-5 days"
+    }
+  ]
+}

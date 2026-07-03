@@ -1,0 +1,14 @@
+{
+  "id": "Документы РФ",
+  "lang": "zh",
+  "sections": [
+    {
+      "title": "ИНН - 纳税人号码",
+      "content": "锡/税务识别号码\n\nEl INN（纳税人识别号）是必要的\npara trabajar y para operaciones bancarias。\n\nDÓNDE / 地点：Servicio Fiscal (FTS) o MFC / Tax 或 MFC\nDOCUMENTOS / 文件：pasaporte + traducción、注册 / 护照 + 翻译、注册\nCOSTO / COST：免费/免费\nPLAZO / 截止日期：5 天 / 5 个工作日"
+    },
+    {
+      "title": "SNILS-安全社会",
+      "content": "SNILS / 社会安全号码\n\nSNILS 是个人养老金保险的号码。\n需要官方工作和服务。\n\nDÓNDE / 地点：养老金和社会保险基金 (PSI) o MFC\nDOCUMENTOS / 文件：pasaporte + traducción / 护照 + 翻译\nCOSTO / COST：免费/免费\nPLAZO / 持续时间： 1-5 天 / 1-5 天"
+    }
+  ]
+}

@@ -810,25 +810,45 @@ class OfficialDocumentLibrary:
         # Мобильная связь - SIM y comunicaciones
         self.documents['Мобильная связь'] = {
             'name': 'Мобильная связь и интернет / Telefonía móvil',
-            'url': 'https://www.gosuslugi.ru',
+            'url': 'https://www.mts.ru',
             'sections': [
                 {
                     'title': 'SIM-карта / Comprar una tarjeta SIM',
                     'content': '''
                     TARJETA SIM RUSA / РОССИЙСКАЯ SIM-КАРТА
 
-                    Operadores / Операторы: МТС, Билайн, МегаФон, Tele2, Yota.
+                    Operadores principales / Основные операторы:
+                    - МТС (MTS) - la mayor cobertura / крупнейшее покрытие - mts.ru
+                    - МегаФон (MegaFon) - buen internet móvil / хороший мобильный интернет - megafon.ru
+                    - Билайн (Beeline) - beeline.ru
+                    - Tele2 - tarifas económicas / выгодные тарифы - tele2.ru
+                    - Yota - datos para internet / интернет-тарифы
 
                     PARA COMPRAR / ДЛЯ ПОКУПКИ:
-                    - Pasaporte con traducción / Паспорт с переводом
+                    - Pasaporte con traducción notarial / Паспорт с нотариальным переводом
                     - Tarjeta de migración / Миграционная карта
-                    - A veces registro / Иногда регистрация
+                    - A veces registro migratorio / Иногда миграционная регистрация
 
                     IMPORTANTE / ВАЖНО:
-                    - Registra la SIM a tu nombre / Оформляйте SIM на своё имя
+                    - Registra la SIM a tu nombre en tienda oficial / Оформляйте SIM на своё имя в салоне
                     - No compres SIM en la calle sin registro / Не покупайте SIM без оформления
-                    - Necesaria para bancos y Госуслуги / Нужна для банков и Госуслуг
-                    Costo / Стоимость: 300-700 руб. con saldo.
+                    - La necesitas para el banco, Госуслуги y avisos / Нужна для банка, Госуслуг
+                    Costo / Стоимость: 300-700 руб. con saldo incluido.
+                    Tiendas МТС/МегаФон hay en centros comerciales / Салоны есть в ТЦ.
+                    '''
+                },
+                {
+                    'title': 'Тарифы и интернет / Tarifas e internet',
+                    'content': '''
+                    TARIFAS MÓVILES / МОБИЛЬНЫЕ ТАРИФЫ
+
+                    - Tarifa de estudiante con internet + llamadas / Студенческий тариф
+                    - Precio típico / Обычная цена: 400-700 руб./mes
+                    - Recarga en la app, cajeros o tiendas / Пополнение в приложении, банкоматах, салонах
+                    - eSIM disponible en МТС y МегаФон / eSIM доступна в МТС и МегаФон
+
+                    CONSEJO / СОВЕТ: descarga la app del operador (МТС, МегаФон) para controlar
+                    tu saldo y datos. Установите приложение оператора для контроля баланса.
                     '''
                 }
             ]

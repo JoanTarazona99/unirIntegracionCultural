@@ -1,0 +1,14 @@
+{
+  "id": "Документы РФ",
+  "lang": "fr",
+  "sections": [
+    {
+      "title": "ИНН - numéro de contribuable",
+      "content": "TIN / NUMÉRO D'IDENTIFICATION FISCALE\n\nL’INN (numéro d’identification fiscale) est nécessaire\npour le travail et les opérations bancaires.\n\nDÓNDE / OÙ : Servicio Fiscal (FTS) ou MFC / Taxe ou MFC\nDOCUMENTOS / DOCUMENTS: pasaporte + traducción, registro / Passeport + traduction, enregistrement\nCOSTO / COÛT : gratuit / gratuit\nPLAZO / DATE LIMITE : 5 jours / 5 jours ouvrés"
+    },
+    {
+      "title": "SNILS - sécurité sociale",
+      "content": "SNILS / NUMÉRO DE SÉCURITÉ SOCIALE\n\nLe SNILS est le numéro du compte individuel de sécurité des pensions.\nNécessaire pour travailler officiellement et recevoir des services.\n\nDÓNDE / OÙ : Caisse de retraite et d'assurance sociale (PSI) o MFC\nDOCUMENTOS / DOCUMENTS: pasaporte + traducción / Passeport + traduction\nCOSTO / COÛT : gratuit / gratuit\nPLAZO / DURÉE : 1-5 jours / 1-5 jours"
+    }
+  ]
+}

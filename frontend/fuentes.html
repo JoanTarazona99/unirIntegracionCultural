@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuentes oficiales · Asistente KubGU</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb; --primary-dark: #1d4ed8; --indigo: #6366f1;
+            --success: #10b981; --warning: #f59e0b; --error: #ef4444;
+            --bg-light: #f8fafc; --text-dark: #1e293b; --text-light: #64748b; --border: #e2e8f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-light); color: var(--text-dark); min-height: 100vh; }
+        a { color: inherit; }
+        .header { background: linear-gradient(135deg, var(--primary) 0%, var(--indigo) 100%); color: white; padding: 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header-content { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
+        .header h1 { font-size: 1.35rem; font-weight: 700; }
+        .header .subtitle { font-size: 0.8rem; opacity: 0.9; margin-top: 3px; }
+        .header-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .lang-selector select { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; }
+        .lang-selector select option { color: #1e293b; }
+        .navlink { font-size: 0.8rem; font-weight: 600; text-decoration: none; padding: 6px 14px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.35); border-radius: 20px; }
+        .navlink:hover { background: rgba(255,255,255,0.35); }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+        .intro { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px; }
+        .intro h2 { font-size: 1.05rem; margin-bottom: 6px; }
+        .intro p { font-size: 0.9rem; color: var(--text-light); line-height: 1.55; }
+
+        .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+        .search { flex: 1; min-width: 200px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 0.9rem; }
+        .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .chip { font-size: 0.78rem; font-weight: 600; padding: 6px 13px; border-radius: 20px; background: white; border: 1px solid var(--border); color: var(--text-light); cursor: pointer; }
+        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .sources-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .source-card { background: white; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+        .source-head { display: flex; align-items: flex-start; gap: 12px; padding: 16px; cursor: pointer; }
+        .source-head:hover { background: #f8fafc; }
+        .source-icon { font-size: 1.6rem; line-height: 1; }
+        .source-info { flex: 1; min-width: 0; }
+        .source-name { font-weight: 700; font-size: 0.98rem; }
+        .source-title { font-size: 0.76rem; color: var(--text-light); margin-top: 2px; }
+        .source-cat { display: inline-block; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--primary); background: #eef2ff; padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
+        .source-caret { color: var(--text-light); font-size: 0.8rem; }
+
+        .source-body { border-top: 1px solid var(--border); padding: 4px 16px 16px; }
+        .section { padding: 12px 0; border-bottom: 1px dashed var(--border); }
+        .section:last-child { border-bottom: none; }
+        .section-title { font-weight: 700; font-size: 0.85rem; margin-bottom: 6px; color: var(--primary-dark); }
+        .section-content { font-size: 0.82rem; line-height: 1.55; color: var(--text-dark); white-space: pre-wrap; }
+        .source-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; background: #f8fafc; border-top: 1px solid var(--border); }
+        .source-url { font-size: 0.74rem; color: var(--primary); text-decoration: none; word-break: break-all; }
+        .source-url:hover { text-decoration: underline; }
+        .translate-btn { font-size: 0.74rem; font-weight: 600; padding: 5px 11px; border-radius: 8px; border: 1px solid var(--border); background: white; cursor: pointer; white-space: nowrap; }
+        .translate-btn:hover { background: #eef2ff; }
+        .translate-btn.on { background: var(--primary); color: white; border-color: var(--primary); }
+        .translating { font-size: 0.72rem; color: var(--text-light); }
+        .empty { text-align: center; color: var(--text-light); padding: 40px; }
+        .count-note { font-size: 0.8rem; color: var(--text-light); margin-bottom: 14px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1>📚 {{ t('title') }}</h1>
+                    <div class="subtitle">{{ t('subtitle') }}</div>
+                </div>
+                <div class="header-controls">
+                    <div class="lang-selector">
+                        <select v-model="lang" @change="onLangChange">
+                            <option v-for="(name, code) in langs" :key="code" :value="code">{{ name }}</option>
+                        </select>
+                    </div>
+                    <a href="index.html" class="navlink">💬 {{ t('chat') }}</a>
+                    <a href="dashboard.html" class="navlink">📊 Dashboard</a>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="intro">
+                <h2>{{ t('introTitle') }}</h2>
+                <p>{{ t('introText') }}</p>
+            </div>
+
+            <div class="toolbar">
+                <input class="search" v-model="query" :placeholder="t('searchPlaceholder')">
+            </div>
+
+            <div class="chips">
+                <span class="chip" :class="{active: activeCat === null}" @click="activeCat = null">{{ t('all') }}</span>
+                <span v-for="cat in categories" :key="cat" class="chip" :class="{active: activeCat === cat}" @click="activeCat = cat">{{ cat }}</span>
+            </div>
+
+            <div class="count-note">{{ filtered.length }} / {{ sources.length }} {{ t('sourcesWord') }}</div>
+
+            <div v-if="filtered.length" class="sources-grid">
+                <div v-for="src in filtered" :key="src.id" class="source-card">
+                    <div class="source-head" @click="toggle(src.id)">
+                        <div class="source-icon">{{ src.icon }}</div>
+                        <div class="source-info">
+                            <div class="source-name">{{ src.name }}</div>
+                            <div class="source-title">{{ src.title }}</div>
+                            <span class="source-cat">{{ src.category }}</span>
+                        </div>
+                        <div class="source-caret">{{ expanded[src.id] ? '▲' : '▼' }}</div>
+                    </div>
+
+                    <div v-show="expanded[src.id]" class="source-body">
+                        <div v-for="(sec, i) in src.sections" :key="i" class="section">
+                            <div class="section-title">{{ displayTitle(src, i, sec) }}</div>
+                            <div class="section-content">{{ displayContent(src, i, sec) }}</div>
+                        </div>
+                    </div>
+
+                    <div v-show="expanded[src.id]" class="source-foot">
+                        <a :href="src.url" target="_blank" rel="noopener" class="source-url">🔗 {{ src.url }}</a>
+                        <span v-if="translatingId === src.id" class="translating">⏳ {{ t('translating') }}</span>
+                        <button v-else-if="lang !== 'original'" class="translate-btn" :class="{on: translated[src.id]}" @click="toggleTranslate(src)">
+                            🌐 {{ translated[src.id] ? t('showOriginal') : t('translateTo') + ' ' + langs[lang] }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div v-else class="empty">{{ t('noResults') }}</div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        const I18N = {
+            es: { title: 'Fuentes oficiales', subtitle: 'Toda la información para tu integración en Rusia', chat: 'Chat',
+                introTitle: '¿Qué es esto?', introText: 'Aquí puedes leer todas las fuentes oficiales que usa el asistente: universidad, migración, banco, salud, transporte, telefonía y más. Elige tu idioma arriba y pulsa «traducir» en cada fuente para leerla en tu lengua.',
+                searchPlaceholder: 'Buscar (visa, banco, SIM, médico...)', all: 'Todas', sourcesWord: 'fuentes', translateTo: 'Traducir a', showOriginal: 'Ver original', translating: 'Traduciendo…', noResults: 'No se encontraron fuentes.' },
+            en: { title: 'Official sources', subtitle: 'All the information for your integration in Russia', chat: 'Chat',
+                introTitle: 'What is this?', introText: 'Here you can read all the official sources the assistant uses: university, migration, bank, health, transport, mobile and more. Pick your language above and press “translate” on each source to read it in your language.',
+                searchPlaceholder: 'Search (visa, bank, SIM, doctor...)', all: 'All', sourcesWord: 'sources', translateTo: 'Translate to', showOriginal: 'Show original', translating: 'Translating…', noResults: 'No sources found.' },
+            ru: { title: 'Официальные источники', subtitle: 'Вся информация для адаптации в России', chat: 'Чат',
+                introTitle: 'Что это?', introText: 'Здесь вы можете прочитать все официальные источники, которые использует ассистент: университет, миграция, банк, здоровье, транспорт, связь и другое. Выберите язык вверху и нажмите «перевести».',
+                searchPlaceholder: 'Поиск (виза, банк, SIM, врач...)', all: 'Все', sourcesWord: 'источников', translateTo: 'Перевести на', showOriginal: 'Оригинал', translating: 'Перевод…', noResults: 'Источники не найдены.' },
+            fr: { title: 'Sources officielles', subtitle: 'Toutes les informations pour votre intégration en Russie', chat: 'Chat',
+                introTitle: 'Qu\'est-ce que c\'est ?', introText: 'Ici vous pouvez lire toutes les sources officielles utilisées par l\'assistant : université, migration, banque, santé, transport, mobile et plus. Choisissez votre langue en haut et appuyez sur « traduire ».',
+                searchPlaceholder: 'Rechercher (visa, banque, SIM, médecin...)', all: 'Toutes', sourcesWord: 'sources', translateTo: 'Traduire en', showOriginal: 'Voir l\'original', translating: 'Traduction…', noResults: 'Aucune source trouvée.' }
+        };
+        createApp({
+            data() {
+                return {
+                    baseUrl: '',
+                    lang: localStorage.getItem('kubgu_ui_language') || 'es',
+                    langs: { original: '— Original —', es: 'Español', en: 'English', ru: 'Русский', fr: 'Français' },
+                    sources: [], categories: [], activeCat: null, query: '',
+                    expanded: {}, translated: {}, translationCache: {}, translatingId: null
+                };
+            },
+            computed: {
+                filtered() {
+                    let list = this.sources;
+                    if (this.activeCat) list = list.filter(s => s.category === this.activeCat);
+                    const q = this.query.trim().toLowerCase();
+                    if (q) {
+                        list = list.filter(s =>
+                            s.name.toLowerCase().includes(q) ||
+                            s.title.toLowerCase().includes(q) ||
+                            s.category.toLowerCase().includes(q) ||
+                            s.sections.some(sec => (sec.title + ' ' + sec.content).toLowerCase().includes(q))
+                        );
+                    }
+                    return list;
+                }
+            },
+            mounted() { this.loadSources(); },
+            methods: {
+                t(k) { return (I18N[this.lang] && I18N[this.lang][k]) || I18N.es[k] || k; },
+                async loadSources() {
+                    try {
+                        const r = await fetch(this.baseUrl + '/api/sources');
+                        if (r.ok) {
+                            const d = await r.json();
+                            this.sources = d.sources || [];
+                            this.categories = d.categories || [];
+                        }
+                    } catch (e) { /* offline */ }
+                },
+                toggle(id) { this.expanded[id] = !this.expanded[id]; },
+                onLangChange() {
+                    if (this.lang !== 'original') localStorage.setItem('kubgu_ui_language', this.lang);
+                    // Reset translations so they re-fetch in the new language on demand.
+                    this.translated = {};
+                },
+                displayTitle(src, i, sec) {
+                    const tr = this.translationCache[this.key(src.id)];
+                    return (this.translated[src.id] && tr && tr[i]) ? tr[i].title : sec.title;
+                },
+                displayContent(src, i, sec) {
+                    const tr = this.translationCache[this.key(src.id)];
+                    return (this.translated[src.id] && tr && tr[i]) ? tr[i].content : sec.content;
+                },
+                key(id) { return `${id}:${this.lang}`; },
+                async toggleTranslate(src) {
+                    if (this.translated[src.id]) { this.translated[src.id] = false; return; }
+                    const k = this.key(src.id);
+                    if (!this.translationCache[k]) {
+                        this.translatingId = src.id;
+                        try {
+                            const r = await fetch(`${this.baseUrl}/api/sources/${encodeURIComponent(src.id)}/translate?lang=${this.lang}`);
+                            if (r.ok) {
+                                const d = await r.json();
+                                this.translationCache[k] = d.sections || [];
+                            }
+                        } catch (e) { /* keep original on error */ }
+                        this.translatingId = null;
+                    }
+                    if (this.translationCache[k]) this.translated[src.id] = true;
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

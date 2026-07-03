@@ -1,0 +1,14 @@
+{
+  "id": "Банк",
+  "lang": "zh",
+  "sections": [
+    {
+      "title": "开设账户 / Abrir unacuenta bancaria",
+      "content": "ABRIR UNA CUENTA BANCARIA / 开设银行账户\n\n俄罗斯银行的外来学生\n（俄罗斯联邦储蓄银行、Tinkoff、VTB、阿尔法银行）。\n\n文件/文件：\n- Pasaporte con traducción notarial / 护照及公证翻译\n- Visa y tarjeta de migración / 签证和移民卡\n- Registro migratorio / 迁移注册\n- 纳税人识别号 (TIN)\n- Certificado de estudios de KubGU / KubGU 证书\n\nTARJETA / MAP：世界（国家系统）向学生推荐。\n俄罗斯境内没有 Visa/Mastercard 外币支付服务。\n外国签证/万事达卡可能无法在俄罗斯使用。"
+    },
+    {
+      "title": "付款和转账 / Pagos y Transferencias",
+      "content": "PAGOS Y 转账 / 付款和转账\n\n- Pago por SBP（快速支付系统）与电话号码/通过 SBP 付款\n- Applicación móvil del banco / 银行移动应用程序\n- Pago de la Residence y Matrícula / 支付宿舍费和学费\n- Transferencias entre tarjetas World / 卡世界之间的转账\n\nCONSEJO /提示：activa las notificaciones SMS /启用短信通知"
+    }
+  ]
+}

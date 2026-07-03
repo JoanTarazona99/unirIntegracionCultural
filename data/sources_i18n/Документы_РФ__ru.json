@@ -1,0 +1,14 @@
+{
+  "id": "Документы РФ",
+  "lang": "ru",
+  "sections": [
+    {
+      "title": "ИНН - номер налогоплательщика",
+      "content": "ИНН / NÚMERO DE IDENTIFICACIÓN FISCAL\n\nEl ИНН (ИНН - идентификационный номер налогоплательщика) es necesario\npara trabajar y para operaciones bancarias.\n\nDÓNDE / ГДЕ: Servicio Fiscal (ФНС) o МФЦ / Налоговая или МФЦ\nDOCUMENTOS / ДОКУМЕНТЫ: pasaporte + traducción, registro / Паспорт + перевод, регистрация\nCOSTO / СТОИМОСТЬ: gratis / бесплатно\nPLAZO / СРОК: 5 días hábiles / 5 рабочих дней"
+    },
+    {
+      "title": "СНИЛС - seguro social",
+      "content": "СНИЛС / NÚMERO DE SEGURO SOCIAL\n\nEl СНИЛС es el número de la cuenta individual del seguro de pensiones.\nNecesario para trabajar oficialmente y recibir servicios.\n\nDÓNDE / ГДЕ: Фонд пенсионного и социального страхования (СФР) o МФЦ\nDOCUMENTOS / ДОКУМЕНТЫ: pasaporte + traducción / Паспорт + перевод\nCOSTO / СТОИМОСТЬ: gratis / бесплатно\nPLAZO / СРОК: 1-5 días / 1-5 дней"
+    }
+  ]
+}

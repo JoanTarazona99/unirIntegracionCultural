@@ -1,0 +1,14 @@
+{
+  "id": "Здравоохранение",
+  "lang": "ru",
+  "sections": [
+    {
+      "title": "Медицинский осмотр / Examen médico obligatorio",
+      "content": "EXAMEN MÉDICO OBLIGATORIO / ОБЯЗАТЕЛЬНЫЙ МЕДОСМОТР\n\nLos estudiantes extranjeros deben pasar un examen médico en los primeros\n90 días. Иностранные студенты проходят медосмотр в первые 90 дней.\n\nPRUEBAS / ОБСЛЕДОВАНИЯ:\n- VIH / ВИЧ\n- Tuberculosis (fluorografía) / Туберкулёз (флюорография)\n- Lepra y otras enfermedades infecciosas / Проказа и инфекции\n- Adicción a drogas / Наркозависимость\n\nDÓNDE / ГДЕ: Centro médico autorizado / Уполномоченный медцентр\nCOSTO / СТОИМОСТЬ: 5000-9000 руб.\nRESULTADO / РЕЗУЛЬТАТ: Certificado médico / Медицинское заключение"
+    },
+    {
+      "title": "Поликлиника и врач / Policlínica y médico",
+      "content": "ATENCIÓN MÉDICA / МЕДИЦИНСКАЯ ПОМОЩЬ\n\nCon el seguro médico (ОМС/ДМС) puedes acudir a la policlínica.\nС полисом можно обращаться в поликлинику.\n\nCÓMO / КАК:\n1. Regístrate en la policlínica del distrito / Прикрепиться к поликлинике\n2. Pide cita con el terapeuta / Записаться к терапевту\n3. Lleva pasaporte y póliza / Взять паспорт и полис\n\nURGENCIAS / СКОРАЯ ПОМОЩЬ: llama al 103 o 112 (gratis) / звоните 103 или 112\nFarmacia / Аптека: аптека - medicamentos con o sin receta"
+    }
+  ]
+}

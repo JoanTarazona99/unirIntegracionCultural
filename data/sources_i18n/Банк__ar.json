@@ -1,0 +1,14 @@
+{
+  "id": "Банк",
+  "lang": "ar",
+  "sections": [
+    {
+      "title": "فتح حساب / فتح حساب مصرفي",
+      "content": "ABRIR UNA CUENTA BANCARIA / فتح حساب بنكي\n\nيمكن للطلاب الأجانب فتح الحساب والبطاقة في البنوك الروسية\n(سبيربنك، تينكوف، VTB، ألفا بنك).\n\nالمستندات / المستندات:\n- Pasaporte con traducción notarial / جواز السفر مع ترجمة موثقة\n- Visa y tarjeta de migración / بطاقة التأشيرة والهجرة\n- Registro migratorio / تسجيل الهجرة\n- رقم تعريف دافع الضرائب (TIN)\n- شهادة دراسات KubGU / شهادة من KubGU\n\nتارجيتا / خريطة: العالم (النظام الوطني) الموصى به للطلاب.\nلا يمكن تشغيل بطاقات Visa/Mastercard الخارجية في روسيا.\nقد لا تعمل بطاقة Visa/Mastercard الأجنبية في روسيا."
+    },
+    {
+      "title": "الدفع والتحويلات / Pagos y Transferencias",
+      "content": "PAGOS Y TRANSFERENCIAS / المدفوعات والتحويلات\n\n- Pago por SBP (نظام الدفع السريع) برقم الهاتف / الدفع عبر SBP\n- تطبيق الهاتف المحمول البنكي / البنك\n- Pago de la residencia y matrícula / الدفع مقابل النزل والرسوم الدراسية\n- Transferencias entre tarjetas World / التحويلات بين بطاقات العالم\n\nنصيحة / نصيحة: تنشيط إشعارات الرسائل القصيرة / تمكين إشعارات الرسائل القصيرة"
+    }
+  ]
+}

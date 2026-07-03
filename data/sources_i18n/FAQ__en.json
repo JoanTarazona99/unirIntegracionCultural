@@ -1,0 +1,26 @@
+{
+  "id": "FAQ",
+  "lang": "en",
+  "sections": [
+    {
+      "title": "What about MFC? Where is the MFC located?",
+      "content": "The MFC is located in the center of Krasnodar.\n\nAddresses of the MFC in Krasnodar:\n- Main office: st. Krasnaya, 176, bldg. 1\n- Branch: st. Kubanskaya, 45\n- Branch: Karl Marx Ave., 77\n\nOpening hours: Mon-Fri 08:00-19:00, Sat 09:00-13:00\nPhone: +7-861-262-0000"
+    },
+    {
+      "title": "How about me register? How to register?",
+      "content": "REGISTRATION PROCESS:\n1. Arrival at the MFC with documents\n2. Receiving a number in the electronic queue\n3. Waiting for an operator to call\n4. Submitting documents to the operator\n5. Receiving a receipt\n6. Waiting for results (usually 3-5 days)\n\nIMPORTANT: Do not delay registration!\nFine for being late: 5000-7000 rubles"
+    },
+    {
+      "title": "¿Información sobre dormitorio? Information about the hostel",
+      "content": "HOSTEL FOR FOREIGN STUDENTS:\n\nTERMS:\n- 2-3 people per room\n- Bed, wardrobe, desk\n- Shared kitchen and bathroom\n- Internet enabled\n\nCOST: 150-300 rubles per month\nAPPLICATION: Send email. letter to dormitory@kubsu.ru\n\nCURRENTHOUR:\n- Weekdays: 23:00-07:00\n- Weekends: 24:00-08:00"
+    },
+    {
+      "title": "How about conseguir póliza médica? How to get a medical insurance?",
+      "content": "HEALTH INSURANCE IS MANDATORY:\n\nPROCESS:\n1. Contact the MFC insurance company\n2. Provide documents\n3. Pay for the policy (5000-8000 rubles/year)\n4. Get a compulsory medical insurance policy\n\nPOLICY VALID:\n- In any public clinic\n- In private institutions under contract\n- Includes: consultations, tests, treatment"
+    },
+    {
+      "title": "¿Qué nivel de ruso necesito? What level of Russian language is needed?",
+      "content": "RUSSIAN LANGUAGE REQUIREMENTS:\n\nBACHELOR:\n- Minimum: level B1 (TRKI-II certificate)\n- Recommended: B2 for full training\n\nMASTER'S PROGRAM:\n- Minimum: B2\n\nPREPARATION COURSE:\n- Available at KubSU\n- Intensive: 3-6 months\n- Cost: 50,000-100,000 rub."
+    }
+  ]
+}

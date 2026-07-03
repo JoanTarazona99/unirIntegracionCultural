@@ -1,0 +1,26 @@
+{
+  "id": "FAQ",
+  "lang": "es",
+  "sections": [
+    {
+      "title": "¿Qué pasa con el MFC? ¿Dónde está ubicado el MFC?",
+      "content": "El MFC está situado en el centro de Krasnodar.\n\nDirecciones del MFC en Krasnodar:\n- Oficina principal: st. Krasnaya, 176, edif. 1\n- Sucursal: st. Kubanskaya, 45 años\n- Sucursal: Avenida Karl Marx, 77\n\nHorario de apertura: lunes a viernes de 08:00 a 19:00, sábados de 09:00 a 13:00\nTeléfono: +7-861-262-0000"
+    },
+    {
+      "title": "¿Qué tal si me registro? ¿Cómo registrarse?",
+      "content": "PROCESO DE INSCRIPCIÓN:\n1. Llegada al MFC con documentos.\n2. Recibir un número en la cola electrónica\n3. Esperando que llame un operador\n4. Presentación de documentos al operador.\n5. Recibir un recibo\n6. Esperando resultados (normalmente de 3 a 5 días)\n\nIMPORTANTE: ¡No demores la inscripción!\nMulta por llegar tarde: 5000-7000 rublos"
+    },
+    {
+      "title": "¿Información sobre dormitorio? Información sobre el albergue",
+      "content": "ALBERGUE PARA ESTUDIANTES EXTRANJEROS:\n\nTÉRMINOS:\n- 2-3 personas por habitación\n- Cama, armario, escritorio.\n- Cocina y baño compartidos.\n- Internet habilitado\n\nCOSTO: 150-300 rublos por mes\nSOLICITUD: Enviar correo electrónico. carta a dormitory@kubsu.ru\n\nHORA ACTUAL:\n- Días laborables: 23:00-07:00\n- Fines de semana: 24:00-08:00"
+    },
+    {
+      "title": "¿Qué tal conseguir una póliza médica? ¿Cómo contratar un seguro médico?",
+      "content": "EL SEGURO MÉDICO ES OBLIGATORIO:\n\nPROCESO:\n1. Póngase en contacto con la compañía de seguros MFC\n2. Proporcionar documentos\n3. Pagar la póliza (5000-8000 rublos/año)\n4. Contrata una póliza de seguro médico obligatorio\n\nPOLÍTICA VÁLIDA:\n- En cualquier clínica pública\n- En instituciones privadas bajo contrato\n- Incluye: consultas, pruebas, tratamiento."
+    },
+    {
+      "title": "¿Qué nivel de ruso necesito? ¿Qué nivel de idioma ruso se necesita?",
+      "content": "REQUISITOS DEL IDIOMA RUSO:\n\nBACHILLERATO:\n- Mínimo: nivel B1 (certificado TRKI-II)\n- Recomendado: B2 para formación completa\n\nPROGRAMA DE MAESTRÍA:\n- Mínimo: B2\n\nCURSO DE PREPARACIÓN:\n- Disponible en KubSU\n- Intensivo: 3-6 meses\n- Costo: 50 000-100 000 rublos."
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "МФЦ",
+  "lang": "es",
+  "sections": [
+    {
+      "title": "Registro de extranjeros",
+      "content": "SERVICIO: Inscripción de ciudadano extranjero para registro migratorio\n\nDOCUMENTOS:\n- Pasaporte (original y copia)\n- Visa (copia)\n- Tarjeta de migración\n- Certificado de lugar de residencia (del arrendador o universidad)\n\nPLAZO: 3-5 días hábiles\nCOSTO: Gratis (para estudiantes)\nHORARIO DE APERTURA: lunes a viernes de 8:00 a 20:00, sábados de 8:00 a 13:00\n\nDIRECCIÓN EN KRASNODAR:\nst. Krasnaya, 1\nTeléfono: +7-861-XXXXXXXX"
+    },
+    {
+      "title": "Póliza de seguro médico obligatorio (seguro de salud)",
+      "content": "SERVICIO: Contratación de una póliza de seguro médico obligatorio\n\nDOCUMENTOS:\n- Pasaporte (copia)\n- SNILS (si está disponible)\n- Certificado de registro\n\nPLAZO: 1 día\nCOSTO: Gratis\n\nINFORMACIÓN ÚTIL:\n- Con una póliza de seguro médico obligatorio tienes acceso a todos los servicios médicos\n- Válido en toda Rusia\n- Se recomienda aplicar en la primera semana."
+    },
+    {
+      "title": "Certificados y certificados",
+      "content": "REFERENCIAS DISPONIBLES:\n- Sobre el lugar de residencia/estancia\n- Sobre la composición de la familia.\n- Certificado de antecedentes penales (para expediente personal)\n- Extractos del registro\n\nTIEMPO DE PROCESAMIENTO: 1-5 días hábiles\nCOSTO: Varía (normalmente entre 100 y 500 rublos)"
+    }
+  ]
+}

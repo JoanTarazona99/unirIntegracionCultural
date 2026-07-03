@@ -46,3 +46,4 @@ SpeechRecognition==3.10.0
 # LLM integration (optional - local LLM via Ollama)
 httpx
 python-multipart
+deep-translator>=1.11.4

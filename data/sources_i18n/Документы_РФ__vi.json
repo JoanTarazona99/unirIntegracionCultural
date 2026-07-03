@@ -1,0 +1,14 @@
+{
+  "id": "Документы РФ",
+  "lang": "vi",
+  "sections": [
+    {
+      "title": "ИНН - mã số người nộp thuế",
+      "content": "TÍN / SỐ IDIDIFICACIÓN TÀI CHÍNH\n\nEl INN (Mã số nhận dạng người nộp thuế) cần thiết\nđể trabajar và cho các hoạt động bancarias.\n\nDÓNDE / WHERE: Servicio Fiscal (FTS) o MFC / Tax hoặc MFC\nTÀI LIỆU / TÀI LIỆU: pasaporte + traducción, registro / Hộ chiếu + dịch thuật, đăng ký\nCHI PHÍ / CHI PHÍ: miễn phí / miễn phí\nPLAZO/THỜI HẠN: 5 ngày/5 ngày làm việc"
+    },
+    {
+      "title": "SNILS - xã hội seguro",
+      "content": "SNILS / NÚMERO DE SEGURO XÃ HỘI\n\nEl SNILS là số điện thoại cá nhân được bảo đảm về hưu.\nCần phải cung cấp dịch vụ chính thức và người nhận dịch vụ.\n\nDÓNDE / WHERE: Quỹ hưu trí và bảo hiểm xã hội (PSI) o MFC\nTÀI LIỆU / GIẤY TỜ: pasaporte + traducción / Hộ chiếu + dịch thuật\nCHI PHÍ / CHI PHÍ: miễn phí / miễn phí\nPLAZO/THỜI GIAN: 1-5 ngày/1-5 ngày"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "Документы РФ",
+  "lang": "es",
+  "sections": [
+    {
+      "title": "ИНН - número de contribuyente",
+      "content": "TIN / NÚMERO DE IDENTIFICACIÓN FISCAL\n\nEl DCI (Número de Identificación del Contribuyente) es necesario\npara trabajar y para operaciones bancarias.\n\nDÓNDE / DÓNDE: Servicio Fiscal (FTS) o MFC / Tax o MFC\nDOCUMENTOS / DOCUMENTOS: pasaporte + traducción, registro / Pasaporte + traducción, registro\nCOSTO / COSTE: gratis / gratis\nPLAZO / PLAZO: 5 días / 5 días laborables"
+    },
+    {
+      "title": "SNILS - seguro social",
+      "content": "SNILS / NÚMERO DE SEGURO SOCIAL\n\nEl SNILS es el número de la cuenta individual del seguro de pensiones.\nNecesario para trabajar oficialmente y recibir servicios.\n\nDÓNDE / DÓNDE: Fondo de Pensiones y Seguro Social (PSI) o MFC\nDOCUMENTOS / DOCUMENTOS: pasaporte + traducción / Pasaporte + traducción\nCOSTO / COSTE: gratis / gratis\nPLAZO / DURACIÓN: 1-5 días / 1-5 días"
+    }
+  ]
+}

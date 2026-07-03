@@ -1,0 +1,18 @@
+{
+  "id": "Госуслуги",
+  "lang": "en",
+  "sections": [
+    {
+      "title": "Registration on the portal for foreigners",
+      "content": "PERSONAL ACCOUNT:\nForeign citizens can register and access services\n\nSERVICES FOR FOREIGNERS:\n- Making an appointment with the migration authorities\n- Checking the status of documents\n- Receiving certificates in electronic form\n\nREGISTRATION REQUIREMENTS:\n- Email or phone number\n- Full name and date of birth\n- Correct information about accommodation"
+    },
+    {
+      "title": "Electronic appointment",
+      "content": "APPOINTMENT WITH SPECIALISTS:\n- Ministry of Internal Affairs (migration service)\n- MFC (public services)\n- Medical institutions\n\nADVANTAGES:\n- Save time in line\n- Specified day and time\n- No worries about availability\n\nHOW TO REGISTER:\n1. Log in to the State Services portal\n2. Find the service you need\n3. Click \"Sign up\"\n4. Choose a convenient time\n5. Confirm your entry"
+    },
+    {
+      "title": "Visa type Student visa Student visa type",
+      "content": "VISA FOR STUDENT to Russia:\n- Validity period: depends on the training program\n- Goal: studying at a university\n- An invitation from the university is required\n- Issued at the Russian Consulate\n\nDOCUMENTS:\n1. Passport (valid for min. 18 months)\n2. Invitation from KubSU\n3. Visa application form\n4. Photo 3x4 cm\n5. Certificate of good conduct"
+    }
+  ]
+}

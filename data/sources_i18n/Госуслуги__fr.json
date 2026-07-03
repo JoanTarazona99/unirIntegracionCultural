@@ -1,0 +1,18 @@
+{
+  "id": "Госуслуги",
+  "lang": "fr",
+  "sections": [
+    {
+      "title": "Inscription sur le portail pour étrangers",
+      "content": "COMPTE PERSONNEL :\nLes citoyens étrangers peuvent s'inscrire et accéder aux services\n\nSERVICES POUR LES ÉTRANGERS :\n- Making an appointment with the migration authorities\n- Vérification de l'état des documents\n- Réception des certificats sous forme électronique\n\nCONDITIONS D'INSCRIPTION :\n- Email ou numéro de téléphone\n- Nom complet et date de naissance\n- Informations correctes sur l'hébergement"
+    },
+    {
+      "title": "Rendez-vous électronique",
+      "content": "RENDEZ-VOUS AVEC DES SPÉCIALISTES :\n- Ministère de l'Intérieur (service des migrations)\n- MFC (services publics)\n- Établissements médicaux\n\nADVANTAGES:\n- Gagnez du temps en ligne\n- Jour et heure spécifiés\n- Pas de soucis de disponibilité\n\nCOMMENT S'INSCRIRE :\n1. Connectez-vous au portail des Services de l'État\n2. Trouvez le service dont vous avez besoin\n3. Cliquez sur \"S'inscrire\"\n4. Choisissez un moment qui vous convient\n5. Confirmez votre saisie"
+    },
+    {
+      "title": "Type de visa Visa étudiant Type de visa étudiant",
+      "content": "VISA POUR ÉTUDIANT pour la Russie :\n- Durée de validité : dépend du programme de formation\n- Objectif : étudier dans une université\n- Une invitation de l'université est requise\n- Délivré au consulat de Russie\n\nDOCUMENTAIRES :\n1. Passeport (valable minimum 18 mois)\n2. Invitation de KubSU\n3. Formulaire de demande de visa\n4. Photo 3x4 cm\n5. Certificat de bonne conduite"
+    }
+  ]
+}

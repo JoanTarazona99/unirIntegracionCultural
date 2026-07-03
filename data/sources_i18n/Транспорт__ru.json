@@ -1,0 +1,14 @@
+{
+  "id": "Транспорт",
+  "lang": "ru",
+  "sections": [
+    {
+      "title": "Городской транспорт / Transporte urbano",
+      "content": "TRANSPORTE EN KRASNODAR / ТРАНСПОРТ В КРАСНОДАРЕ\n\nTIPOS / ВИДЫ:\n- Tranvía / Трамвай\n- Trolebús / Троллейбус\n- Autobús / Автобус\n- Marshrutka (minibús) / Маршрутка\n\nPAGO / ОПЛАТА:\n- Tarjeta de transporte \"Транспортная карта\" / Транспортная карта\n- Tarjeta bancaria Мир sin contacto / Бесконтактная карта Мир\n- Efectivo al conductor / Наличные водителю\nTarifa aproximada / Стоимость проезда: 35-40 руб.\n\nCómo llegar a KubGU / Как добраться до КубГУ:\nautobuses / автобусы 1, 15, 23, 43 hasta \"ул. Ставропольская\"."
+    },
+    {
+      "title": "Такси и каршеринг / Taxi y coche compartido",
+      "content": "TAXI Y APLICACIONES / ТАКСИ И ПРИЛОЖЕНИЯ\n\n- Яндекс Go (Yandex Go) - la más popular / самая популярная\n- Максим (Maxim)\n- Ситимобил\n\nCONSEJO / СОВЕТ: pide taxi por la aplicación, es más barato y seguro\nque en la calle. Заказывайте такси через приложение - дешевле и безопаснее.\n\nTren / Поезд: estación Краснодар-1 para viajes a otras ciudades (РЖД)."
+    }
+  ]
+}

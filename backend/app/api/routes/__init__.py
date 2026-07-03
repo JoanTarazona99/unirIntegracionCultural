@@ -13,6 +13,7 @@ from .audio import router as audio_router
 from .info import router as info_router
 from .metrics import router as metrics_router
 from .eval import router as eval_router
+from .sources import router as sources_router
 
 __all__ = [
     "health_router",
@@ -24,4 +25,5 @@ __all__ = [
     "info_router",
     "metrics_router",
     "eval_router",
+    "sources_router",
 ]

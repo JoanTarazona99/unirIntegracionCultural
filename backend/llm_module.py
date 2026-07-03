@@ -263,6 +263,43 @@ class LLMModule:
         else:
             return self._generate_template_response(query, context_docs, language)
 
+    def translate(self, text: str, target_language: str = 'es') -> Optional[str]:
+        """Translate arbitrary text to a target language using the LLM.
+
+        Reliable multilingual translation via the local model (used for the
+        source reader). Returns None if the LLM is unavailable.
+        """
+        if not text or not text.strip():
+            return text
+        if not self.is_available():
+            return None
+
+        lang_names = {
+            'es': 'español', 'en': 'English', 'ru': 'русский язык',
+            'fr': 'français', 'de': 'Deutsch', 'zh': '中文 (chino simplificado)',
+            'ar': 'العربية (árabe)', 'vi': 'Tiếng Việt (vietnamita)',
+            'hy': 'հայերեն (armenio)', 'kk': 'қазақ тілі (kazajo)',
+            'pt': 'português', 'it': 'italiano', 'tr': 'Türkçe',
+        }
+        target = lang_names.get(target_language, target_language)
+        prompt = (
+            f"Traduce el siguiente texto al {target}. "
+            "Reglas: conserva EXACTAMENTE los números, teléfonos, precios, URLs y los "
+            "nombres propios en ruso (МТС, МегаФон, Билайн, Сбербанк, КубГУ, МФЦ, Госуслуги, "
+            "ГУВМ МВД, СНИЛС, ИНН). Mantén la estructura de líneas y las viñetas. "
+            "Devuelve SOLO la traducción, sin explicaciones ni comentarios.\n\n"
+            f"TEXTO:\n{text}"
+        )
+        try:
+            response = self._client.chat(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return response['message']['content'].strip()
+        except Exception as e:
+            print(f"[LLM] Translate error: {e}")
+            return None
+
     def _generate_with_llm(
         self,
         query: str,
