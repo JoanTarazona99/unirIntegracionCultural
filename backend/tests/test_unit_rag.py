@@ -42,10 +42,14 @@ from enhanced_rag import (
     EnhancedRAGModule,
 )
 from retrieval.base import RetrievalResult
-from retrieval.chunks import Chunk, build_chunks_from_flat
+from retrieval.chunks import Chunk, build_chunks_from_flat, build_chunks_from_library
 from retrieval.fusion import reciprocal_rank_fusion
 from retrieval.sparse import BM25Retriever
 from retrieval.hybrid import HybridRetriever
+from retrieval.dense import DenseRetriever
+from retrieval.rerank import CrossEncoderReranker
+from retrieval.factory import build_retriever
+from retrieval.baseline import KeywordBaselineRetriever
 
 # rank_bm25 es opcional; si faltara, los tests de BM25/Hybrid se omiten.
 _BM25_AVAILABLE = BM25Retriever().is_available()
@@ -123,6 +127,12 @@ def sample_documents():
 def sample_chunks(sample_documents):
     """Objetos Chunk construidos desde los documentos de prueba."""
     return build_chunks_from_flat(sample_documents)
+
+
+@pytest.fixture(scope="module")
+def official_library():
+    """Instancia real de OfficialDocumentLibrary (modo keyword, offline)."""
+    return OfficialDocumentLibrary()
 
 
 def _vec384(*first_values):
@@ -360,6 +370,167 @@ class TestOfficialDocumentLibrary:
         assert isinstance(sources, list)
         for expected in ["КубГУ", "МВД РФ", "МФЦ", "Госуслуги", "FAQ"]:
             assert expected in sources
+
+
+# ── GRUPO F: DenseRetriever (retrieval.dense) ────────────────────────
+class TestDenseRetriever:
+    """Recuperador denso (sentence-transformers mockeado)."""
+
+    def test_dense_index_builds_embeddings(self, sample_chunks):
+        """index debe construir una matriz de embeddings (n, 384)."""
+        with patch("retrieval.dense._ST_AVAILABLE", True), \
+                patch("retrieval.dense.SentenceTransformer", create=True) as MockST:
+            model = MagicMock()
+            model.encode.side_effect = lambda x, **kw: np.random.rand(len(x), 384)
+            MockST.return_value = model
+
+            retriever = DenseRetriever()
+            assert retriever.is_available() is True
+            retriever.index(sample_chunks)
+            assert retriever._embeddings is not None
+            assert retriever._embeddings.shape == (len(sample_chunks), 384)
+
+    def test_dense_search_returns_ranked_results(self, sample_chunks):
+        """search debe devolver RetrievalResult ordenados por similitud."""
+        with patch("retrieval.dense._ST_AVAILABLE", True), \
+                patch("retrieval.dense.SentenceTransformer", create=True) as MockST:
+            model = MagicMock()
+            model.encode.side_effect = lambda x, **kw: np.random.rand(len(x), 384)
+            MockST.return_value = model
+
+            retriever = DenseRetriever()
+            retriever.index(sample_chunks)
+            results = retriever.search("регистрация", top_k=3)
+            assert len(results) <= 3
+            assert all(isinstance(r, RetrievalResult) for r in results)
+            scores = [r.score for r in results]
+            assert scores == sorted(scores, reverse=True)
+
+    def test_dense_ranks_by_cosine_similarity(self, sample_chunks):
+        """El documento alineado con la consulta debe quedar primero."""
+        retriever = DenseRetriever()
+        retriever._model = MagicMock()
+        retriever._model.encode.return_value = np.array([_vec384(1.0, 0.0)])
+        retriever._chunks = sample_chunks[:3]
+        retriever._embeddings = np.array([
+            _vec384(1.0, 0.0),          # coseno = 1.0
+            _vec384(0.8, 0.6),          # coseno = 0.8
+            _vec384(0.5, 0.866025),     # coseno = 0.5
+        ])
+        results = retriever.search("запрос", top_k=3)
+        assert len(results) == 3
+        assert results[0].chunk is sample_chunks[0]
+        scores = [r.score for r in results]
+        assert scores == sorted(scores, reverse=True)
+
+    def test_dense_unavailable_returns_empty(self, sample_chunks):
+        """Sin sentence-transformers, el retriever degrada a resultado vacío."""
+        with patch("retrieval.dense._ST_AVAILABLE", False):
+            retriever = DenseRetriever()
+            assert retriever.is_available() is False
+            retriever.index(sample_chunks)
+            assert retriever._embeddings is None
+            assert retriever.search("регистрация", top_k=5) == []
+
+
+# ── GRUPO G: _keyword_search (fallback de enhanced_rag) ────────────────
+class TestKeywordSearchFallback:
+    """Búsqueda por palabras clave con expansión de sinónimos (degradación)."""
+
+    def test_keyword_search_finds_relevant(self, official_library):
+        """Una consulta en ruso recupera secciones relevantes (modo keyword)."""
+        results = official_library._keyword_search("регистрация")
+        assert len(results) >= 1
+        assert all(r["relevance"] > 0.3 for r in results)
+        assert results[0]["search_mode"] == "keyword"
+        top_text = (results[0]["title"] + results[0]["content"]).lower()
+        assert "регистрац" in top_text
+
+    def test_keyword_search_synonym_expansion(self, official_library):
+        """Una consulta en español se expande a sinónimos rusos y recupera docs."""
+        results = official_library._keyword_search("registro de migracion")
+        assert any(r["search_mode"] == "keyword" for r in results)
+        assert any(
+            "регистрац" in (r["title"] + r["content"]).lower()
+            or "миграцион" in (r["title"] + r["content"]).lower()
+            for r in results
+        )
+
+    def test_keyword_search_no_match_returns_fallback(self, official_library):
+        """Sin coincidencias, se devuelve una única entrada de tipo 'fallback'."""
+        results = official_library._keyword_search("xyzzy qwerty zzz")
+        assert len(results) == 1
+        assert results[0]["search_mode"] == "fallback"
+
+
+# ── GRUPO H: CrossEncoderReranker (retrieval.rerank) ─────────────────
+class TestCrossEncoderReranker:
+    """Re-ranker cross-encoder (modelo mockeado)."""
+
+    def test_rerank_reorders_by_cross_encoder_score(self, sample_chunks):
+        """rerank debe reordenar los candidatos según el score del cross-encoder."""
+        with patch("retrieval.rerank._CE_AVAILABLE", True), \
+                patch("retrieval.rerank.CrossEncoder", create=True) as MockCE:
+            model = MagicMock()
+            model.predict.return_value = [0.1, 0.9, 0.5]
+            MockCE.return_value = model
+
+            reranker = CrossEncoderReranker()
+            assert reranker.is_available() is True
+            inputs = [
+                RetrievalResult(chunk=sample_chunks[0], score=0.9),
+                RetrievalResult(chunk=sample_chunks[1], score=0.5),
+                RetrievalResult(chunk=sample_chunks[2], score=0.3),
+            ]
+            reranked = reranker.rerank("регистрация", inputs)
+            assert reranked[0].chunk is sample_chunks[1]   # score 0.9
+            assert reranked[-1].chunk is sample_chunks[0]  # score 0.1
+            scores = [r.score for r in reranked]
+            assert scores == sorted(scores, reverse=True)
+
+    def test_rerank_noop_when_unavailable(self, sample_chunks):
+        """Sin cross-encoder disponible, rerank preserva la lista de entrada."""
+        with patch("retrieval.rerank._CE_AVAILABLE", False):
+            reranker = CrossEncoderReranker()
+            assert reranker.is_available() is False
+            inputs = [
+                RetrievalResult(chunk=sample_chunks[0], score=0.5),
+                RetrievalResult(chunk=sample_chunks[1], score=0.9),
+            ]
+            out = reranker.rerank("q", inputs)
+            assert out is inputs
+
+    def test_rerank_empty_results_returns_empty(self):
+        """rerank sobre una lista vacía devuelve una lista vacía."""
+        reranker = CrossEncoderReranker()
+        assert reranker.rerank("q", []) == []
+
+
+# ── GRUPO I: factory + baseline ───────────────────────────────
+class TestFactoryAndBaseline:
+    """Fábrica de retrievers y baseline por palabras clave."""
+
+    @bm25_required
+    def test_build_retriever_bm25(self, sample_chunks):
+        """build_retriever('bm25') devuelve un BM25Retriever ya indexado."""
+        retriever = build_retriever("bm25", sample_chunks)
+        assert isinstance(retriever, BM25Retriever)
+        results = retriever.search("регистрация", top_k=3)
+        assert len(results) >= 1
+
+    def test_build_retriever_unknown_mode_raises(self, sample_chunks):
+        """Un modo desconocido debe lanzar ValueError."""
+        with pytest.raises(ValueError):
+            build_retriever("modo_inexistente", sample_chunks)
+
+    def test_keyword_baseline_maps_results_to_chunks(self, official_library):
+        """El baseline mapea los resultados keyword a chunks con IDs estables."""
+        chunks = build_chunks_from_library(official_library)
+        retriever = KeywordBaselineRetriever(official_library)
+        retriever.index(chunks)
+        results = retriever.search("регистрация", top_k=5)
+        assert all(isinstance(r, RetrievalResult) for r in results)
+        assert all("::" in r.chunk.id for r in results)
 
 
 if __name__ == "__main__":
