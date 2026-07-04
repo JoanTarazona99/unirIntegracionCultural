@@ -328,7 +328,10 @@ class LLMModule:
                 'es': 'IMPORTANTE: Responde ÚNICAMENTE en español. No uses ningún otro idioma (ni chino, ni ruso, ni inglés).',
                 'en': 'IMPORTANT: Respond ONLY in English. Do not use any other language.',
                 'fr': 'IMPORTANT: Répondez UNIQUEMENT en français. N\'utilisez aucune autre langue.',
-                'de': 'WICHTIG: Antworten Sie NUR auf Deutsch. Verwenden Sie keine andere Sprache.'
+                'de': 'WICHTIG: Antworten Sie NUR auf Deutsch. Verwenden Sie keine andere Sprache.',
+                'zh': '重要：请只用简体中文回答。不要使用其他任何语言。',
+                'ar': 'مهم: أجب فقط باللغة العربية. لا تستخدم أي لغة أخرى.',
+                'vi': 'QUAN TRỌNG: Chỉ trả lời bằng tiếng Việt. Không sử dụng bất kỳ ngôn ngữ nào khác.'
             }.get(language, 'IMPORTANT: Respond only in the language of the user query.')
 
             # Build messages
