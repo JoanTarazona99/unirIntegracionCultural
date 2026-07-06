@@ -205,3 +205,13 @@ def get_database_service():
     Supports: SQLite (default) → PostgreSQL (optional) → Memory (fallback)
     """
     return _get_main().database_service
+
+
+def get_knowledge_acquisition_agent():
+    """Get knowledge acquisition agent instance.
+    
+    Agent handles low-grounding scenarios by searching external sources
+    (Wikipedia, Google AI, DuckDuckGo) and ingesting new documents.
+    """
+    from knowledge_acquisition import get_acquisition_agent
+    return get_acquisition_agent(data_dir="data")

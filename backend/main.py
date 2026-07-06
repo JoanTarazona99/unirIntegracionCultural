@@ -6,6 +6,10 @@ import uuid
 import time
 from pathlib import Path
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,6 +30,7 @@ from translator import create_translator
 from personalization import get_conversation_memory, ConversationMemory, PersonalizationEngine
 from audio_module import AudioManager
 from cache_module import get_rag_cache, LRUCache, cache_rag_query, get_cached_rag_query
+from retrieval.model_warmer import warm_models_background
 
 # ==================== APPLICATION INITIALIZATION ====================
 configure_logging()
@@ -171,6 +176,21 @@ logger.info(
     max_requests=settings.rate_limit_requests,
     window_seconds=settings.rate_limit_window
 )
+
+# ==================== MODEL WARMING ====================
+# Pre-load ML models in background to eliminate cold-start latency
+model_warmer_task = None
+
+@app.on_event("startup")
+async def startup_model_warmer():
+    """Warm up ML models (Dense embedder + Rerankers) on app startup"""
+    global model_warmer_task
+    try:
+        logger.info("model_warmer_starting", status="warming_up_ml_models")
+        model_warmer_task = warm_models_background()
+        logger.info("model_warmer_started", status="background_thread_initiated")
+    except Exception as e:
+        logger.warning("model_warmer_failed", error=str(e), fallback="graceful_degradation")
 
 
 def get_client_ip(request: Request) -> str:

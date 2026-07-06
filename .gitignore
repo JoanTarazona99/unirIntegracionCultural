@@ -1,10 +1,154 @@
-install.sh
-.env.example
+# ====================================
+# Environment Variables
+# ====================================
 .env
-node_modules/
+.env.local
+.env.*.local
+
+# ====================================
+# Virtual Environments
+# ====================================
 .venv/
-*__pycache__/
-*.pyc  
+venv/
+venv311/
+env/
+ENV/
+.Python
+
+# ====================================
+# Python
+# ====================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ====================================
+# Testing & Coverage
+# ====================================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ====================================
+# IDEs & Editors
+# ====================================
 .vscode/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.AppleDouble
+.LSOverride
+*.sublime-workspace
+*.sublime-project
+.project
+.pydevproject
+.settings/
+*.iml
+
+# ====================================
+# OS Files
+# ====================================
+Thumbs.db
+.DS_Store
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# ====================================
+# Logs
+# ====================================
+*.log
+logs/
+*.log.*
+
+# ====================================
+# Database & Cache
+# ====================================
+*.db
+*.sqlite
+*.sqlite3
+redis_dump.rdb
+.cache/
+*.cache
+
+# ====================================
+# Project Specific
+# ====================================
+# Audio files (cache)
 *.mp3
+*.wav
+*.ogg
+data/tts_cache/
+data/audio/
+
+# Backup files
 *_BACKUP*.docx
+*_backup*.json
+*.bak
+
+# Temporary files
+*.tmp
+*.temp
+*.pid
+.tmp/
+
+# Telegram bot
+telegram_bot/.telegram_session
+telegram_bot/*.session
+
+# ====================================
+# Node (if used in frontend)
+# ====================================
+node_modules/
+npm-debug.log
+yarn-error.log
+.npm
+
+# ====================================
+# Documentation Build
+# ====================================
+site/
+docs/_build/
+
+# ====================================
+# IDE Session Files
+# ====================================
+.history/
+.ionide/
+.vscode-test/
+
+# ====================================
+# Keep example files
+# ====================================
+!.env.example
+!requirements*.txt

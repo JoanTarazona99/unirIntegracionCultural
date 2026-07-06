@@ -1,0 +1,15 @@
+{
+  "timestamp": 1783292532.277933,
+  "bm25": {
+    "avg_relevance": 0.9,
+    "avg_time_ms": 0.09789466857910156
+  },
+  "hybrid": {
+    "avg_relevance": 1.0,
+    "avg_time_ms": 1578.3526420593262
+  },
+  "improvement": {
+    "relevance_pct": 0.11111111111111108,
+    "time_overhead_pct": 16121.968339016074
+  }
+}

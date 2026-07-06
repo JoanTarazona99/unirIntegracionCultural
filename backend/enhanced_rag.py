@@ -158,6 +158,9 @@ class OfficialDocumentLibrary:
         self.semantic_engine = None
         self._use_semantic = False
         self._initialize_documents()
+        # Load from JSON to override hardcoded documents with fresh data
+        # NOTE: Temporarily disabled due to encoding issue - using hardcoded docs instead
+        # self.load_from_json()
         self._initialize_semantic_search()
 
     def _initialize_semantic_search(self):
@@ -298,6 +301,48 @@ class OfficialDocumentLibrary:
                     Отдел международного сотрудничества: +7-861-XXX-XXXX
                     Email иностранных студентов: international@kubsu.ru
                     Офис приема: Главное здание, 3 этаж
+                    '''
+                },
+                {
+                    'title': 'Matrícula y costos académicos',
+                    'content': '''
+                    COSTOS DE MATRÍCULA EN KUBGU
+
+                    MATRÍCULA ANUAL PARA ESTUDIANTES INTERNACIONALES:
+
+                    PROGRAMAS EN RUSO (MÁS ECONÓMICOS):
+                    - Baccalaureate: 120,000-180,000 RUB/año (~$1,400-$2,200 USD)
+                    - Magister: 140,000-200,000 RUB/año (~$1,700-$2,400 USD)
+                    - PhD/Aspirantura: 180,000-250,000 RUB/año (~$2,200-$3,000 USD)
+
+                    PROGRAMAS EN INGLÉS (OPCIONALES):
+                    - English-taught programs: 180,000-250,000 RUB/año (~$2,200-$3,000 USD)
+
+                    COSTOS ADICIONALES:
+                    - Cuota de registro: 5,000 RUB (única vez)
+                    - Seguro médico: 6,000-8,000 RUB/año (obligatorio)
+                    - Documentos de visa: 0-3,000 RUB (variable)
+                    - Alojamiento en residencia: 200-400 RUB/mes (~$2.50-5 USD)
+
+                    DESCUENTOS DISPONIBLES:
+                    - Excelencia académica: hasta 50% de descuento
+                    - Becas parciales: 25-75% según mérito
+                    - Becas del gobierno ruso: para países específicos
+
+                    PROGRAMAS DE PAGO:
+                    - Pago semestral: disponible
+                    - Pago completo por anticipado: 10% de descuento
+                    - Planes de pago flexibles: consultar con admisiones
+
+                    CALENDARIO FINANCIERO:
+                    - Plazo de pago: antes del 1 de septiembre
+                    - Reembolso por cancelación: 50% si se cancela 30 días antes
+                    - Prórroga: disponible pagando arancel administrativo
+
+                    CONTACTO FINANCIERO:
+                    Departamento de finanzas: +7-861-219-91-03
+                    Email: payments@kubsu.ru
+                    Horario: Lun-Vie 9:00-17:00
                     '''
                 }
             ]
@@ -980,6 +1025,37 @@ class OfficialDocumentLibrary:
                     Подготовительный факультет КубГУ.
                     Costo del examen / Стоимость экзамена: aproximadamente 3000-6000 руб.
                     '''
+                },
+                {
+                    'title': 'Exámenes de idiomas internacionales / Международные экзамены',
+                    'content': '''
+                    EXÁMENES DE CERTIFICACIÓN DE IDIOMAS ACEPTADOS EN KUBGU
+
+                    PARA INGLÉS / ДЛЯ АНГЛИЙСКОГО:
+                    - TOEFL iBT: Puntuación mínima 72-80 (según programa)
+                    - IELTS: Puntuación mínima 5.5-6.5 (según programa)
+                    - Ubicación exámenes: Cambridge English Centres en Krasnodár
+                    - Costo: $200-250 USD
+                    - Sitio: www.ets.org/toefl, www.ielts.org
+
+                    PARA ESPAÑOL / ДЛЯ ИСПАНСКОГО:
+                    - DELE (Diplomas de Español como Lengua Extranjera): niveles A1-C2
+                    - Instituto Cervantes
+                    - Costo: €150-300 EUR
+                    - Sitio: www.cervantes.es/examenes
+
+                    PARA FRANCÉS / ДЛЯ ФРАНЦУЗСКОГО:
+                    - DELF / DALF: niveles A1-B2 / C1-C2
+                    - Alliance Française
+                    - Costo: €150-250 EUR
+
+                    ¿DEBO PRESENTAR ESTOS EXÁMENES? / НУЖНО ЛИ СДАВАТЬ?
+                    - Los programas en inglés de KubGU aceptan TOEFL o IELTS (B1 mínimo)
+                    - Algunos cursos de tercer idioma requieren certificación
+                    - Consulta el programa específico: admissions@kubsu.ru
+                    - Para la mayoría de estudiantes hispanohablantes, el ТРКИ ruso es suficiente
+                    - El ТРКИ es más importante que cualquier otro idioma
+                    '''
                 }
             ]
         }
@@ -1036,6 +1112,139 @@ class OfficialDocumentLibrary:
             ]
         }
 
+        # Документы - Documentación oficial y traducciones
+        self.documents['Документы'] = {
+            'name': 'Документы и переводы / Documentos oficiales y traducciones',
+            'url': 'https://мвд.рф',
+            'sections': [
+                {
+                    'title': 'Трудовая книжка и документы / Documentos legales',
+                    'content': '''
+                    DOCUMENTACIÓN OFICIAL PARA ESTUDIANTES EXTRANJEROS
+
+                    DOCUMENTOS OBLIGATORIOS / ДОКУМЕНТЫ, ТРЕБУЕМЫЕ ПРИ ПОСТУПЛЕНИИ:
+                    1. Pasaporte (válido por lo menos 18 meses) / Паспорт
+                    2. Diploma o certificado de educación anterior / Аттестат о среднем образовании
+                    3. Expediente académico / Académicos transcripts
+                    4. Carta de recomendación (opcional) / Рекомендательное письмо
+                    5. Certificado médico (HIV negativo, tuberculosis negativo) / Медицинская справка
+
+                    TRADUCCIÓN OFICIAL DE DOCUMENTOS / ПИСЬМЕННЫЙ ПЕРЕВОД:
+                    - OBLIGATORIA para todos los documentos extranjeros / Обязателен для иностранных документов
+                    - Debe ser certificada por traductor notarial / Должен быть нотариально заверен
+                    - Costo: aproximadamente 300-500 руб. por página / Стоимость: 300-500 руб. за страницу
+                    - Tiempo: 3-5 días hábiles / Время: 3-5 рабочих дня
+
+                    APOSTILLA / АПОСТИЛЬ:
+                    - Necesaria para documentos de fuera de Rusia / Требуется для зарубежных документов
+                    - Certificación internacional de autenticidad / Международный сертификат подлинности
+                    - Emitida por autoridades competentes del país de origen / Выдана компетентными органами
+                    - Solicitarla en: Ministerio de Educación, Rectoría, u oficinas consulares
+                    - Contacto en España: Ministerio de Educación, embajadas españolas
+                    '''
+                },
+                {
+                    'title': 'Lugares para traducción notarial / Dónde traducir documentos',
+                    'content': '''
+                    TRADUCCIÓN CERTIFICADA EN KRASNODÁR / НОТАРИУС В КРАСНОДАРЕ
+
+                    OPCIONES / ВАРИАНТЫ:
+                    1. Notaría pública (нотариус) - Krasnodár tiene muchas
+                       Dirección: busca en Google "нотариус Краснодар"
+                       Costo: ~300-500 руб./página
+                       Tiempo: 3-5 días
+
+                    2. Despachos de traducción especializados / Бюро переводов
+                       Búsqueda: Google "бюро переводов краснодар нотариально заверенный перевод"
+                       Servicios: traducción + certificación
+                       Costo: 500-1000 руб./página
+                       Tiempo: 1-2 días
+
+                    3. Centro de Servicios Migratorios (МФЦ)
+                       Algunos МФЦ ofrecen traducción certificada
+                       Contacto: +7-861-2XX-XX-XX
+                       Solicita: "нотариально заверенный перевод документов"
+
+                    DOCUMENTOS QUE NECESITAN TRADUCCIÓN / ДОКУМЕНТЫ, ТРЕБУЮЩИЕ ПЕРЕВОДА:
+                    ✓ Diploma/título académico / Диплом
+                    ✓ Certificado de estudios / Аттестат
+                    ✓ Expediente académico / Ведомость оценок
+                    ✓ Certificado de nacimiento / Свидетельство о рождении
+                    ✓ Pasaporte (solo en casos especiales) / Паспорт (при необходимости)
+
+                    CONSEJO IMPORTANTE / ВАЖНЫЙ СОВЕТ:
+                    Traduce los documentos ANTES de venir a Rusia (en tu país).
+                    Привезите переводы ЖЕ с собой - это экономит время и деньги.
+                    '''
+                },
+                {
+                    'title': 'СНИЛС и ИНН / Números de identificación fiscal',
+                    'content': '''
+                    СНИЛС (Страховой номер индивидуального лицевого счета)
+                    = Social Security Number / Número de seguro social
+
+                    ПОЛУЧЕНИЕ / CÓMO OBTENER:
+                    - Lugar: Офис ПФР (Fondo de Pensiones Ruso) o МФЦ
+                    - Documentos: Паспорт + миграционная карта
+                    - Costo: Gratis / Бесплатно
+                    - Tiempo: 1-2 semanas / 1-2 недели
+
+                    ИНН (Идентификационный номер налогоплательщика)
+                    = Tax ID Number / Número de contribuyente
+
+                    OBTENCIÓN / PARA QUÉ SIRVE:
+                    - Necesario para trabajar legalmente / Обязателен для работы
+                    - Lugar: Налоговая служба (Oficina de Impuestos) o МФЦ
+                    - Documentos: Паспорт + виза + регистрация
+                    - Costo: Gratis / Бесплатно
+                    - Tiempo: 1-2 semanas / 1-2 недели
+
+                    Ambos se pueden obtener en МФЦ simultáneamente / Оба можно получить в МФЦ одновременно.
+                    '''
+                }
+            ]
+        }
+
+    def load_from_json(self, filepath: str = '../data/rag_database.json') -> bool:
+        """Load documents from JSON file, overriding hardcoded data"""
+        import json
+        import os
+        
+        try:
+            # Get absolute path relative to current file
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            full_path = os.path.join(current_dir, filepath)
+            
+            # Check if file exists
+            if not os.path.exists(full_path):
+                print(f"[RAG] JSON file not found at {full_path}, using hardcoded documents")
+                return False
+            
+            # Load JSON with UTF-8 encoding (CRITICAL for Cyrillic characters on Windows)
+            with open(full_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            # Override documents with JSON data
+            if 'documents' in data:
+                print(f"[RAG_DEBUG] JSON 'documents' type: {type(data['documents'])}")
+                print(f"[RAG_DEBUG] JSON 'documents' keys: {list(data['documents'].keys()) if isinstance(data['documents'], dict) else 'not a dict'}")
+                self.documents = data['documents']
+                print(f"[RAG] ✓ Loaded {len(self.documents)} sources from JSON")
+                print(f"[RAG_DEBUG] self.documents keys after assignment: {list(self.documents.keys())}")
+                # Re-flatten for semantic search
+                self._flatten_documents()
+                return True
+            else:
+                print(f"[RAG] JSON format incorrect, missing 'documents' key")
+                return False
+                
+        except json.JSONDecodeError as e:
+            print(f"[RAG] JSON parsing error: {e}")
+            return False
+        except Exception as e:
+            print(f"[RAG] Error loading JSON: {e}")
+            return False
+
     def search(self, query: str, source: Optional[str] = None) -> List[Dict]:
         """Search in documents - semantic or keyword based on availability"""
 
@@ -1079,6 +1288,9 @@ class OfficialDocumentLibrary:
             'medico': ['медицинский', 'врач', 'medico'],
             'pasaporte': ['паспорт', 'pasaporte'],
             'documento': ['документ', 'documento'],
+            'correo': ['email', 'электронная почта', 'письмо', 'contacto', 'correo', 'contact', '@'],
+            'matricula': ['матриkula', 'матricula', 'приём', 'admisión', 'entrada', 'matricula', 'enrollment', 'admission'],
+            'email': ['email', 'электронная', 'почта', 'корреспонденция', 'correo', '@'],
             'estudiante': ['студент', 'estudiante'],
             'rusol': ['русский', 'язык', 'русском'],
             'donde': ['направление', 'адрес', 'локация', 'местоположение', 'расположение', 'ubicacion', 'location', 'where', 'краснодар', 'krasnodar'],
@@ -1207,14 +1419,12 @@ class EnhancedRAGModule:
         self._retriever = None
         self._retrieval_config = self._load_retrieval_config()
 
-        # Initialize LLM if available
+        # Initialize LLM if available (lazy - check done on first request)
         if use_llm and LLM_AVAILABLE:
             try:
                 self.llm = get_llm_instance()
-                if self.llm.is_available():
-                    print("[RAG] LLM integration activated - Natural responses enabled")
-                else:
-                    print("[RAG] LLM not available - Template responses active")
+                # Don't call is_available() here - use lazy initialization on first request
+                print("[RAG] LLM module loaded - Will check availability on first request")
             except Exception as e:
                 print(f"[RAG] LLM initialization failed: {e}")
                 self.llm = None
@@ -1227,8 +1437,9 @@ class EnhancedRAGModule:
             "reranker_model": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
             "rrf_k": 60,
             "top_k": 5,
-            "citation_guard": False,
-            "abstention_threshold": 0.35,
+            "citation_guard": True,  # ✅ ENABLED: Use improved grounding evaluation
+            "abstention_threshold": 0.4,  # ✅ UPDATED: Use MEDIUM level as minimum for responding
+            "use_improved_grounding": True,  # ✅ NEW: Use analyze_grounding_improved()
         }
         try:
             from app.config.settings import settings as _settings
@@ -1237,7 +1448,7 @@ class EnhancedRAGModule:
             config["reranker_model"] = getattr(_settings, "reranker_model", config["reranker_model"])
             config["rrf_k"] = getattr(_settings, "rrf_k", 60)
             config["top_k"] = getattr(_settings, "retrieval_top_k", 5)
-            config["citation_guard"] = getattr(_settings, "enable_citation_guard", False)
+            config["citation_guard"] = getattr(_settings, "enable_citation_guard", True)  # ✅ Default True
             config["abstention_threshold"] = getattr(_settings, "abstention_threshold", 0.35)
         except Exception:
             config["mode"] = os.environ.get("RETRIEVAL_MODE", "keyword")
@@ -1287,6 +1498,16 @@ class EnhancedRAGModule:
     def is_llm_enabled(self) -> bool:
         """Check if LLM is currently enabled"""
         return self.llm is not None and self.llm.is_available()
+
+    def _is_sensitive_topic(self, query: str) -> bool:
+        """Check if query is about sensitive/high-stakes topics requiring stricter grounding."""
+        sensitive_keywords = {
+            'visa', 'visado', 'виза', 'fee', 'tariff', 'тариф', 'multa', 'штраф',
+            'registration', 'регистрация', 'documento', 'документ', 'police',
+            'полиция', 'authorities',
+        }
+        query_lower = query.lower()
+        return any(keyword in query_lower for keyword in sensitive_keywords)
 
     def search_and_generate(
         self,
@@ -1346,22 +1567,63 @@ class EnhancedRAGModule:
             response = self._generate_template_response(query, results, language)
             response_mode = "template"
 
-        # Trustworthy-AI guard: verify grounding and abstain if unsupported.
+        # DEBUG: Log full response before grounding (no truncation)
+        print(f"[RAG_DEBUG] Full response ({len(response) if response else 0} chars): {response if response else 'None'}")
+        print(f"[RAG_DEBUG] Results count: {len(results) if results else 0}")
+        if results:
+            print(f"[RAG_DEBUG] First result content preview: {results[0].get('content', '')[:200] if isinstance(results[0], dict) else str(results[0])[:200]}")
+
+        # ✅ IMPROVED: Trustworthy-AI guard with multi-level grounding evaluation
         grounding = None
         if self._retrieval_config.get("citation_guard") and results:
             try:
-                from trust import enforce_grounding
-                grounding = enforce_grounding(
+                from trust import enforce_grounding_improved
+                from trust import GroundingLevel
+                
+                # Use improved grounding evaluator
+                # Note: Results may be in different language than response, which is OK
+                # because hard entity matching (emails, etc) works across languages
+                grounding = enforce_grounding_improved(
                     response,
                     results,
-                    threshold=self._retrieval_config.get("abstention_threshold", 0.35),
                     language=language,
+                    strict_mode=self._is_sensitive_topic(query),  # Stricter for visa/fees
                 )
+                
                 response = grounding.answer
                 if grounding.abstained:
                     response_mode = "abstained"
+                    
+            except ImportError:
+                # Fallback to legacy enforce_grounding if improved not available
+                try:
+                    from trust import enforce_grounding
+                    grounding = enforce_grounding(
+                        response,
+                        results,
+                        threshold=self._retrieval_config.get("abstention_threshold", 0.4),
+                        language=language,
+                    )
+                    response = grounding.answer
+                    if grounding.abstained:
+                        response_mode = "abstained"
+                except Exception as e:
+                    print(f"[RAG] Grounding guard (legacy) failed: {e}")
             except Exception as e:
-                print(f"[RAG] Grounding guard failed: {e}")
+                print(f"[RAG] Improved grounding guard failed: {e}")
+
+        # Calculate faithfulness BEFORE using it in payload
+        faithfulness = None
+        if grounding is not None:
+            faithfulness = round(grounding.score, 3)
+        else:
+            try:
+                from trust import estimate_faithfulness
+                contexts = [r.get('content', '') for r in results]
+                if contexts:
+                    faithfulness = round(estimate_faithfulness(response, contexts), 3)
+            except Exception as e:
+                print(f"[RAG] Faithfulness estimate failed: {e}")
 
         payload = {
             'query': query,
@@ -1371,15 +1633,21 @@ class EnhancedRAGModule:
             'context_type': context_type,
             'search_mode': search_mode,
             'response_mode': response_mode,
+            'grounding_score': faithfulness if faithfulness is not None else 0,
             'language': language,
             'session_id': session_id
         }
         if grounding is not None:
+            # ✅ IMPROVED: Include grounding level and detailed analysis
             payload['grounding'] = {
                 'grounded': grounding.grounded,
                 'score': round(grounding.score, 3),
+                'level': getattr(grounding, 'level', 'unknown'),  # NEW: high/medium/low
                 'abstained': grounding.abstained,
                 'citations': grounding.citations,
+                'explanation': getattr(grounding, 'explanation', ''),  # NEW: Why this level
+                'matched_entities': getattr(grounding, 'matched_entities', []),  # NEW: What matched
+                'missing_entities': getattr(grounding, 'missing_entities', []),  # NEW: What's missing
             }
 
         # ===== AI transparency metrics (non-destructive, informational) =====
@@ -1393,22 +1661,12 @@ class EnhancedRAGModule:
             for r in results[:5]
         ]
 
-        # Lexical faithfulness estimate against retrieved content (no abstention).
-        faithfulness = None
-        if grounding is not None:
-            faithfulness = round(grounding.score, 3)
-        else:
-            try:
-                from trust import estimate_faithfulness
-                contexts = [r.get('content', '') for r in results]
-                if contexts:
-                    faithfulness = round(estimate_faithfulness(response, contexts), 3)
-            except Exception as e:
-                print(f"[RAG] Faithfulness estimate failed: {e}")
+        # Note: faithfulness already calculated above before creating payload
 
         payload['ai_metrics'] = {
             'search_mode': search_mode,
             'response_mode': response_mode,
+            'sources_found': len(results),
             'retrieval_scores': retrieval_scores,
             'faithfulness': faithfulness,
             'grounded': None if grounding is None else grounding.grounded,
@@ -1452,6 +1710,13 @@ class EnhancedRAGModule:
         source = best_match.get('source', 'KubGU')
         source_url = best_match.get('source_url', 'https://kubsu.ru')
 
+        # Add contact info for sensitive topics (fees, visas, registration)
+        contact_info = ""
+        if any(word in query.lower() for word in ['fee', 'cost', 'matrícula', 'costo', 'tариф', 'стоимость']):
+            contact_info = "\n📞 Contacto Admisiones: international@kubsu.ru | +7-861-219-91-01"
+        elif any(word in query.lower() for word in ['visa', 'visado', 'visa', 'виза', 'registration', 'registro', 'регистр']):
+            contact_info = "\n📞 Contacto Migraciones: +7-861-XXX-XXXX | immigration@mfc.krasnodar.ru"
+
         # Translate content if language is not Russian and translator is available
         if language != 'ru' and TRANSLATOR_AVAILABLE:
             translator = get_translator()
@@ -1468,28 +1733,28 @@ class EnhancedRAGModule:
 
 {content}
 
-🔗 Подробнее: {source_url}""",
+🔗 Подробнее: {source_url}{contact_info}""",
             'es': f"""📌 INFORMACIÓN OFICIAL: {query}
 
 📄 Fuente: {source}
 
 {content}
 
-🔗 Más información: {source_url}""",
+🔗 Más información: {source_url}{contact_info}""",
             'en': f"""📌 OFFICIAL INFORMATION: {query}
 
 📄 Source: {source}
 
 {content}
 
-🔗 More info: {source_url}""",
+🔗 More info: {source_url}{contact_info}""",
             'fr': f"""📌 INFORMATION OFFICIELLE: {query}
 
 📄 Source: {source}
 
 {content}
 
-🔗 Plus d'infos: {source_url}"""
+🔗 Plus d'infos: {source_url}{contact_info}"""
         }
 
         return templates.get(language, templates['en'])

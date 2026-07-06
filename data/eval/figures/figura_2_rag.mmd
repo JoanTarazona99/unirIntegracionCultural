@@ -1,0 +1,49 @@
+
+graph LR
+    Q["🔍 Consulta del Usuario"]
+    
+    subgraph "📊 Recuperación"
+        PREPROC["Preprocesamiento<br/>Normalización"]
+        EXPAND["Expansión de Consulta<br/>Sinónimos RU/ES/EN"]
+        
+        subgraph "🔎 Búsqueda Paralela"
+            BM25["BM25<br/>(léxico)"]
+            DENSE["Dense Search<br/>paraphrase-multilingual-<br/>MiniLM-L12-v2<br/>(384-dim)"]
+        end
+        
+        RRF["RRF Fusion<br/>(rank combination)"]
+        RERANK["Cross-Encoder<br/>Reranking<br/>(precisión)"]
+    end
+    
+    subgraph "🎯 Generación"
+        CONTEXT["Preparar Contexto<br/>+ Perfil Usuario"]
+        PROMPT["Construcción de Prompt<br/>(inyección perfil)"]
+        GEN["Generación LLM<br/>Qwen2.5"]
+        FAITH["Control Faithfulness<br/>(umbral: 0.35)"]
+    end
+    
+    subgraph "📋 Salida"
+        RESPONSE["Respuesta en RU"]
+        TRANS_OUT["Traducción<br/>a idioma usuario"]
+        FINAL["Respuesta + Fuentes<br/>+ Confianza"]
+    end
+    
+    Q --> PREPROC
+    PREPROC --> EXPAND
+    EXPAND --> BM25
+    EXPAND --> DENSE
+    BM25 --> RRF
+    DENSE --> RRF
+    RRF --> RERANK
+    RERANK --> CONTEXT
+    CONTEXT --> PROMPT
+    PROMPT --> GEN
+    GEN --> FAITH
+    FAITH -->|Si confianza > 0.35| RESPONSE
+    FAITH -->|Si confianza ≤ 0.35| FINAL
+    RESPONSE --> TRANS_OUT
+    TRANS_OUT --> FINAL
+    
+    style RAG fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+    style RERANK fill:#ffe0b2,stroke:#ff9800,stroke-width:2px
+    style FAITH fill:#ffebee,stroke:#f44336,stroke-width:2px

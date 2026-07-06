@@ -12,9 +12,17 @@ Usage:
     print(settings.cors_allowed_origins)
 """
 
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
 from typing import List
+
+# Find .env file in project root or backend directory
+_root_dir = Path(__file__).parent.parent.parent  # Go up from app/config/settings.py to project root
+_env_file = _root_dir / ".env"
+if not _env_file.exists():
+    _env_file = Path(__file__).parent.parent / ".env"  # Fallback to backend/.env
 
 
 class Settings(BaseSettings):
@@ -28,7 +36,7 @@ class Settings(BaseSettings):
     """
     
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(_env_file),
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
@@ -164,7 +172,7 @@ class Settings(BaseSettings):
 
     # ==================== TRUSTWORTHY AI ====================
     enable_citation_guard: bool = Field(
-        default=False,
+        default=True,
         description="Require answers to be grounded in retrieved sources; abstain otherwise",
     )
     abstention_threshold: float = Field(
@@ -211,6 +219,12 @@ class Settings(BaseSettings):
     db_path: str = Field(
         default="./data/assistant.db",
         description="Path to SQLite database file (if using SQLite)"
+    )
+    
+    # ==================== EXTERNAL APIs ====================
+    google_ai_api_key: str = Field(
+        default="",
+        description="Google AI API key for Gemini (from Google AI Studio)"
     )
     
     # ==================== VALIDATORS ====================

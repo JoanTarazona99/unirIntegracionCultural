@@ -1,0 +1,56 @@
+
+graph TB
+    subgraph "🎤 Entrada de Voz"
+        USER["Usuario dice:<br/>¿Dónde está...?"]
+        MIC["Captura de Audio<br/>(micrófono)"]
+    end
+    
+    subgraph "🔊 STT (Speech-to-Text)"
+        WHISPER["Whisper<br/>(OpenAI)<br/>Soporte multilingüe"]
+        NORM["Normalización de Texto"]
+    end
+    
+    subgraph "🧠 Procesamiento (RAG)"
+        SEARCH["Búsqueda RAG Híbrida<br/>(ver Figura 2)"]
+        CONTEXT["Contexto del usuario"]
+        LLM["Generación LLM<br/>Qwen2.5"]
+    end
+    
+    subgraph "🌐 Traducción"
+        RUSO["Respuesta en RU"]
+        DETECT["Detectar idioma usuario"]
+        TRADUCIR["Traducción<br/>(Google Translate API)"]
+    end
+    
+    subgraph "🔊 TTS (Text-to-Speech)"
+        PRIMARY["Nivel 1:<br/>Web Speech API<br/>(browser nativo)"]
+        FALLBACK["Nivel 2 Fallback:<br/>gTTS Backend<br/>(si falla API)"]
+        AUDIO["Síntesis de Audio"]
+    end
+    
+    subgraph "🎵 Salida de Voz"
+        PLAY["Reproducción:<br/>altavoces del dispositivo"]
+        TEXT["Transcripción visible<br/>en pantalla"]
+    end
+    
+    USER --> MIC
+    MIC --> WHISPER
+    WHISPER --> NORM
+    NORM --> SEARCH
+    CONTEXT --> SEARCH
+    SEARCH --> LLM
+    LLM --> RUSO
+    RUSO --> DETECT
+    DETECT -->|Idioma ≠ RU| TRADUCIR
+    DETECT -->|Idioma = RU| PRIMARY
+    TRADUCIR --> PRIMARY
+    PRIMARY -->|Funciona| AUDIO
+    PRIMARY -->|Falla| FALLBACK
+    FALLBACK --> AUDIO
+    AUDIO --> PLAY
+    PLAY --> TEXT
+    
+    style WHISPER fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    style LLM fill:#e8f4f8,stroke:#0066cc,stroke-width:2px
+    style PRIMARY fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+    style FALLBACK fill:#ffebee,stroke:#f44336,stroke-width:2px

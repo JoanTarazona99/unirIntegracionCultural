@@ -86,15 +86,10 @@ class LLMModule:
     ]
 
     # System prompt for the KubGU assistant
-    DEFAULT_SYSTEM_PROMPT = """Ты - полезный ассистент для иностранных студентов Кубанского государственного университета (КубГУ).
-
-Твоя задача:
-- Помогать студентам с вопросами о регистрации, визах, общежитии, учебе
-- Отвечать на русском языке (или на языке запроса)
-- Быть дружелюбным и информативным
-- Использовать предоставленный контекст документов для точных ответов
-
-Если информации нет в контексте, честно скажи об этом и предложи обратиться в администрацию."""
+    DEFAULT_SYSTEM_PROMPT = """Ты - ассистент для студентов КубГУ.
+Отвечай КРАТКО: 2-3 предложения максимум.
+Отвечай ТОЛЬКО на вопрос, НЕ выписывай весь контекст.
+Используй точные данные из контекста."""
 
     def __init__(
         self,
@@ -359,7 +354,18 @@ class LLMModule:
                 'fr': 'Contexte des documents'
             }.get(language, 'Document context')
 
-            user_message = f"{query_label}: {query}\n\n{context_label}:\n{context_text}" if context_text else query
+            # Build user message with strict brevity instructions
+            if context_text:
+                brevity_instruction = {
+                    'ru': '🎯 ИНСТРУКЦИЯ: Ответь КРАТКО (2-3 предложения максимум). Не выписывай весь текст из контекста.',
+                    'es': '🎯 INSTRUCCIÓN: Responde BREVEMENTE (máximo 2-3 frases). NO copies todo el texto de abajo.',
+                    'en': '🎯 INSTRUCTION: Answer BRIEFLY (maximum 2-3 sentences). Do NOT copy the entire text below.',
+                    'fr': '🎯 INSTRUCTION: Répondez BRIÈVEMENT (maximum 2-3 phrases). NE copiez PAS tout le texte ci-dessous.'
+                }.get(language, '🎯 INSTRUCTION: Answer BRIEFLY. Extract only the relevant information.')
+                
+                user_message = f"{query_label}: {query}\n\n{brevity_instruction}\n\n{context_label}:\n{context_text}"
+            else:
+                user_message = query
             messages.append({"role": "user", "content": user_message})
 
             # Call Ollama via dedicated client (bypasses system proxy)
@@ -478,15 +484,25 @@ class LLMModule:
         return responses.get(language, responses['en'])
 
     def _build_context(self, context_docs: List[Dict]) -> str:
-        """Build context string from documents"""
+        """Build context string from documents - limited to TOP 3 most relevant"""
         if not context_docs:
             return ""
 
         context_parts = []
-        for i, doc in enumerate(context_docs[:3], 1):
+        # LIMIT: Use only top 3 most relevant documents for speed
+        # TRUNCATE: 1500 chars per doc to preserve complete information
+        max_docs = 3
+        max_chars_per_doc = 1500
+        
+        for i, doc in enumerate(context_docs[:max_docs], 1):
             source = doc.get('source', 'Unknown')
             title = doc.get('title', 'Untitled')
-            content = doc.get('content', '')[:500]  # Limit content length
+            content = doc.get('content', '')
+            
+            # Truncate if needed to preserve memory
+            if len(content) > max_chars_per_doc:
+                content = content[:max_chars_per_doc].rstrip() + "..."
+            
             context_parts.append(f"[{i}] {source} - {title}:\n{content}")
 
         return "\n\n".join(context_parts)

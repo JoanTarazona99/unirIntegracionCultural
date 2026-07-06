@@ -82,6 +82,7 @@ class AIMetrics(BaseModel):
     """
     search_mode: Optional[str] = None          # keyword | bm25 | dense | hybrid | hybrid_rerank
     response_mode: Optional[str] = None         # llm | template | abstained
+    sources_found: Optional[int] = None        # Number of sources found in RAG
     retrieval_scores: List[RetrievalScore] = []
     faithfulness: Optional[float] = None        # lexical grounding estimate [0,1]
     grounded: Optional[bool] = None

@@ -12,6 +12,7 @@ from typing import List, Optional
 
 from .base import BaseRetriever, RetrievalResult
 from .chunks import Chunk
+from .embedding_cache import EmbeddingCache
 
 try:
     import numpy as np
@@ -35,12 +36,14 @@ class DenseRetriever(BaseRetriever):
 
     name = "dense"
 
-    def __init__(self, model_name: str = "paraphrase-multilingual-MiniLM-L12-v2"):
+    def __init__(self, model_name: str = "paraphrase-multilingual-MiniLM-L12-v2", enable_cache: bool = True):
         self.model_name = model_name
         self._model = None
         self._chunks: List[Chunk] = []
         self._embeddings = None
         self._loaded = False
+        self.enable_cache = enable_cache
+        self.cache = EmbeddingCache(ttl=3600, max_size=10000) if enable_cache else None
 
     def is_available(self) -> bool:
         return _ST_AVAILABLE and _NUMPY_AVAILABLE
@@ -75,7 +78,17 @@ class DenseRetriever(BaseRetriever):
     def search(self, query: str, top_k: int = 5) -> List[RetrievalResult]:
         if self._embeddings is None or self._model is None or not self._chunks:
             return []
-        query_emb = self._model.encode([query], convert_to_numpy=True)[0]
+        
+        # Check cache first
+        if self.cache is not None:
+            cached_emb = self.cache.get(query)
+            if cached_emb is not None:
+                query_emb = cached_emb
+            else:
+                query_emb = self._model.encode([query], convert_to_numpy=True)[0]
+                self.cache.set(query, query_emb)
+        else:
+            query_emb = self._model.encode([query], convert_to_numpy=True)[0]
 
         # Cosine similarity.
         doc_norms = np.linalg.norm(self._embeddings, axis=1)

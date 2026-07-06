@@ -124,24 +124,41 @@ async def chat(
     conversation_service = Depends(get_conversation_service),
     cache_service = Depends(get_cache_service),
     database_service = Depends(get_database_service),
+    knowledge_agent = Depends(lambda: None),  # Optional dependency
     _: str = Depends(check_rate_limit)
 ):
-    """Chat principal con soporte multiidioma, RAG, historial y caché integrados.
+    """Chat principal con soporte multiidioma, RAG, historial, caché e integración web.
     
     Flujo:
     1. Generar cache key (hash de query + language)
     2. Intentar obtener del cache
     3. Si no está en cache: usar RAG para buscar
-    4. Guardar query + response en memoria de conversación
-    5. Guardar resultado en cache (TTL 1 hora)
-    6. **Queue** mensaje para persistencia en BD (background task, no bloquea respuesta)
-    7. Retornar respuesta con metadata
+    4. Si grounding score < threshold: intentar adquirir conocimiento de web
+    5. Guardar query + response en memoria de conversación
+    6. Guardar resultado en cache (TTL 1 hora)
+    7. Queue mensaje para persistencia en BD (background task)
+    8. Retornar respuesta con metadata
     
     Persistencia:
     - ConversationService: Primary (always available)
-    - DatabaseService: Optional background persistence (if enabled)
+    - DatabaseService: Optional background persistence
+    
+    Knowledge Acquisition:
+    - Si grounding bajo: búsqueda en Wikipedia, Google AI, DuckDuckGo
+    - Ingesta automática de documentos en RAG base
+    - Re-búsqueda con conocimiento expandido
     """
     try:
+        # Initialize knowledge agent for web search fallback
+        if knowledge_agent is None:
+            try:
+                from knowledge_acquisition import KnowledgeAcquisitionAgent
+                knowledge_agent = KnowledgeAcquisitionAgent()
+                logger.info("knowledge_acquisition_agent_initialized")
+            except Exception as e:
+                logger.warning(f"knowledge_acquisition_agent_init_failed: {str(e)}")
+                knowledge_agent = None
+        
         session_id = request.session_id or str(uuid.uuid4())
         target_lang = request.language
         _t_request_start = time.perf_counter()
@@ -158,7 +175,6 @@ async def chat(
         if cached_result:
             cached_result['cached'] = True
             cached_result['cache_key'] = cache_key
-            # Reflect near-zero latency for cache hits in the AI metrics panel.
             if isinstance(cached_result.get('ai_metrics'), dict):
                 total_ms = round((time.perf_counter() - _t_request_start) * 1000.0, 1)
                 latency = cached_result['ai_metrics'].get('latency_ms') or {}
@@ -168,7 +184,7 @@ async def chat(
             return cached_result
         
         # ============ RAG SEARCH ============
-        # If not cached, perform RAG search
+        logger.info("chat_rag_search_start", query=request.query, language=target_lang)
         rag_result = rag_service.search(
             query=request.query,
             language=target_lang,
@@ -177,6 +193,61 @@ async def chat(
         
         answer_translated = rag_result['response']
         answer_original = rag_result['response']
+        grounding_score = rag_result.get('grounding_score', 0)
+        
+        # ============ KNOWLEDGE ACQUISITION (LOW GROUNDING) ============
+        # If grounding is low and we have knowledge agent, try to acquire knowledge
+        if knowledge_agent and grounding_score < 0.4:
+            logger.info(
+                "chat_low_grounding_detected",
+                query=request.query,
+                grounding_score=grounding_score,
+                language=target_lang
+            )
+            
+            try:
+                print(f"\n[Chat] 🔍 Grounding score bajo ({grounding_score:.2f}), buscando en web...")
+                
+                # Attempt knowledge acquisition
+                new_result = await knowledge_agent.handle_low_grounding(
+                    query=request.query,
+                    draft_answer=answer_translated,
+                    retrieved_docs=rag_result.get('sources', []),
+                    evaluation={'score': grounding_score, 'missing_entities': []},
+                    rag_module=get_rag_service()  # Pass RAG module for retry
+                )
+                
+                # If acquisition successful, use new result
+                if new_result:
+                    rag_result = new_result
+                    answer_translated = new_result.get('response', answer_translated)
+                    grounding_score = new_result.get('grounding_score', grounding_score)
+                    
+                    logger.info(
+                        "chat_knowledge_acquisition_success",
+                        query=request.query,
+                        new_grounding_score=grounding_score,
+                        language=target_lang
+                    )
+                    print(f"[Chat] ✅ Conocimiento adquirido exitosamente, grounding mejorado a {grounding_score:.2f}")
+                else:
+                    logger.warning(
+                        "chat_knowledge_acquisition_failed",
+                        query=request.query,
+                        grounding_score=grounding_score,
+                        language=target_lang
+                    )
+                    print(f"[Chat] ⚠️ No se pudo adquirir conocimiento adicional")
+                    
+            except Exception as e:
+                logger.warning(
+                    "chat_knowledge_acquisition_error",
+                    query=request.query,
+                    error=str(e),
+                    language=target_lang
+                )
+                print(f"[Chat] ❌ Error en adquisición de conocimiento: {e}")
+                # Continue with original result, don't block response
         
         # ============ CONVERSATION MEMORY (Primary) ============
         # Store in conversation memory immediately (synchronous, reliable)
@@ -185,7 +256,6 @@ async def chat(
         
         # ============ DATABASE PERSISTENCE (Background Task) ============
         # Queue background task for async database persistence (non-blocking)
-        # This is guaranteed to complete before server shutdown
         if settings.enable_database:
             background_tasks.add_task(
                 _persist_chat_messages,
@@ -198,26 +268,23 @@ async def chat(
             logger.info("chat_persistence_queued_for_background", session_id=session_id)
         
         # ============ CONTEXT & TIPS ============
-        # Extract context and personalized tips from RAG sources
         context = []
         personalized_tips = []
         
         if rag_result.get('sources_found', 0) > 0:
-            for source in rag_result.get('sources', [])[:3]:  # Limit to 3 sources
+            for source in rag_result.get('sources', [])[:3]:
                 source_text = f"[{source.get('source', 'Unknown')}] {source.get('title', '')}"
                 content_text = source.get('content', '')[:200] + "..." if len(source.get('content', '')) > 200 else source.get('content', '')
                 
                 context.append(source_text)
                 personalized_tips.append(content_text)
         
-        # Default tips if none found
         if not personalized_tips:
             personalized_tips = [
                 "Consulte los documentos oficiales para más información"
             ]
         
         # ============ AI TRANSPARENCY METRICS ============
-        # Surface retrieval/trust/latency/token metrics computed by the RAG layer.
         ai_metrics = None
         raw_metrics = rag_result.get('ai_metrics')
         if raw_metrics:
@@ -229,6 +296,7 @@ async def chat(
                 ai_metrics = AIMetrics(
                     search_mode=raw_metrics.get('search_mode'),
                     response_mode=raw_metrics.get('response_mode'),
+                    sources_found=raw_metrics.get('sources_found'),
                     retrieval_scores=raw_metrics.get('retrieval_scores', []),
                     faithfulness=raw_metrics.get('faithfulness'),
                     grounded=raw_metrics.get('grounded'),
