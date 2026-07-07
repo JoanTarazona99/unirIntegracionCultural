@@ -306,5 +306,12 @@
     "info_type": "general",
     "source_url": "https://gemini.google.com",
     "success": true
+  },
+  {
+    "timestamp": "2026-07-07T00:07:16.547201",
+    "query": "¿Qué horarios tienen las residencias?",
+    "info_type": "general",
+    "source_url": "https://gemini.google.com",
+    "success": true
   }
 ]

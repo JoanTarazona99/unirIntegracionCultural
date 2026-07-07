@@ -1,0 +1,91 @@
+{
+  "run1": {
+    "timestamp": "2026-07-07T01:56:15.340409+00:00",
+    "event": "reindex_complete",
+    "category": "all",
+    "total_checked": 6,
+    "updated": 1,
+    "unchanged": 0,
+    "failed": 5,
+    "stale": 4,
+    "accepted_candidates": 0,
+    "rejected_candidates": 0,
+    "reindexed_sources": [
+      "LOCAL_STATIC"
+    ],
+    "versions_created": [
+      {
+        "source_id": "local_static_index",
+        "active_version": "20260707015615-a2a3a8918a"
+      }
+    ],
+    "duration_seconds": 15.329
+  },
+  "run2": {
+    "timestamp": "2026-07-07T01:56:30.535844+00:00",
+    "event": "reindex_complete",
+    "category": "all",
+    "total_checked": 6,
+    "updated": 0,
+    "unchanged": 1,
+    "failed": 5,
+    "stale": 4,
+    "accepted_candidates": 0,
+    "rejected_candidates": 0,
+    "reindexed_sources": [],
+    "versions_created": [],
+    "duration_seconds": 15.17
+  },
+  "run3_forced_update": {
+    "timestamp": "2026-07-07T01:56:33.123901+00:00",
+    "event": "reindex_complete",
+    "category": "stable",
+    "total_checked": 3,
+    "updated": 0,
+    "unchanged": 1,
+    "failed": 2,
+    "stale": 1,
+    "accepted_candidates": 0,
+    "rejected_candidates": 0,
+    "reindexed_sources": [],
+    "versions_created": [],
+    "duration_seconds": 2.562
+  },
+  "controlled_update_source_id": "local_refresh_probe",
+  "baseline_api_latency": {
+    "samples": 8,
+    "success": 8,
+    "errors": 0,
+    "avg_ms": 17.27,
+    "max_ms": 32.18,
+    "min_ms": 6.19
+  },
+  "versions_before": 0,
+  "versions_after": 1,
+  "new_versions_created": 1,
+  "inactive_sections_count": 0,
+  "active_sections_count": 0,
+  "chunks_for_target_source": 0,
+  "inactive_excluded_from_chunks": true,
+  "registry_source_count_before": 6,
+  "registry_source_count_after": 6,
+  "concurrent_runs": {
+    "runs": 2,
+    "json_parse_ok_after": true
+  },
+  "scheduler_leader_lock": {
+    "scheduler_a_leader": true,
+    "scheduler_b_leader": false,
+    "single_leader": true
+  },
+  "api_latency_during_refresh": {
+    "samples": 14,
+    "success": 14,
+    "errors": 0,
+    "avg_ms": 11.19,
+    "max_ms": 24.17,
+    "min_ms": 3.97,
+    "refresh_completed": true
+  },
+  "timestamp": 1783389439.3253162
+}

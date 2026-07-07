@@ -61,7 +61,7 @@ class Settings(BaseSettings):
         description="API host address"
     )
     api_port: int = Field(
-        default=8080,
+        default=8000,
         description="API port"
     )
     debug: bool = Field(
@@ -142,6 +142,52 @@ class Settings(BaseSettings):
     ollama_model: str = Field(
         default="qwen2.5:7b-instruct-q4_K_M",
         description="Ollama model name (qwen2.5:7b-instruct-q4_K_M, qwen3:8b-q4_K_M, etc)"
+    )
+
+    # ==================== KB REFRESH SCHEDULER ====================
+    enable_kb_scheduler: bool = Field(
+        default=True,
+        description="Enable periodic KB refresh scheduler"
+    )
+    kb_refresh_critical_hours: int = Field(
+        default=6,
+        description="Refresh interval for critical sources (hours)"
+    )
+    kb_refresh_faq_hours: int = Field(
+        default=24,
+        description="Refresh interval for FAQ/admission sources (hours)"
+    )
+    kb_refresh_stable_hours: int = Field(
+        default=168,
+        description="Refresh interval for stable service pages (hours)"
+    )
+    kb_refresh_candidate_hours: int = Field(
+        default=4,
+        description="Refresh interval for candidate source validation (hours)"
+    )
+    kb_refresh_max_failures: int = Field(
+        default=3,
+        description="Max consecutive failures before marking source stale"
+    )
+    kb_candidate_min_confidence: float = Field(
+        default=0.75,
+        description="Minimum confidence score for auto-accepting candidate sources"
+    )
+    kb_candidate_min_content_chars: int = Field(
+        default=200,
+        description="Minimum cleaned characters required to integrate source content"
+    )
+    kb_scheduler_distributed_lock: bool = Field(
+        default=False,
+        description="Enable distributed scheduler leader lock (Redis) for multi-host deployments"
+    )
+    kb_scheduler_lock_ttl_seconds: int = Field(
+        default=180,
+        description="TTL for distributed scheduler lock in seconds"
+    )
+    kb_scheduler_lock_key: str = Field(
+        default="kubgu:kb_scheduler:leader",
+        description="Redis key used for scheduler leader election lock"
     )
 
     # ==================== RETRIEVAL (RAG) ====================

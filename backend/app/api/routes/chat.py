@@ -34,6 +34,7 @@ from fastapi.responses import StreamingResponse
 from app.config.settings import settings
 from app.config.logging_config import get_logger
 import asyncio
+from knowledge_integrator import KnowledgeIntegrator
 
 logger = get_logger(__name__)
 
@@ -124,7 +125,6 @@ async def chat(
     conversation_service = Depends(get_conversation_service),
     cache_service = Depends(get_cache_service),
     database_service = Depends(get_database_service),
-    knowledge_agent = Depends(lambda: None),  # Optional dependency
     _: str = Depends(check_rate_limit)
 ):
     """Chat principal con soporte multiidioma, RAG, historial, caché e integración web.
@@ -149,15 +149,14 @@ async def chat(
     - Re-búsqueda con conocimiento expandido
     """
     try:
-        # Initialize knowledge agent for web search fallback
-        if knowledge_agent is None:
-            try:
-                from knowledge_acquisition import KnowledgeAcquisitionAgent
-                knowledge_agent = KnowledgeAcquisitionAgent()
-                logger.info("knowledge_acquisition_agent_initialized")
-            except Exception as e:
-                logger.warning(f"knowledge_acquisition_agent_init_failed: {str(e)}")
-                knowledge_agent = None
+        # Initialize knowledge agent for web search fallback (MANDATORY)
+        from knowledge_acquisition import KnowledgeAcquisitionAgent
+        try:
+            knowledge_agent = KnowledgeAcquisitionAgent()
+            print(f"[INIT] [OK] KnowledgeAcquisitionAgent initialized")
+        except Exception as e:
+            print(f"[INIT] [WARN] KnowledgeAcquisitionAgent init failed: {str(e)}")
+            knowledge_agent = None
         
         session_id = request.session_id or str(uuid.uuid4())
         target_lang = request.language
@@ -197,7 +196,11 @@ async def chat(
         
         # ============ KNOWLEDGE ACQUISITION (LOW GROUNDING) ============
         # If grounding is low and we have knowledge agent, try to acquire knowledge
+        has_agent = knowledge_agent is not None
+        print(f"[WEB_SEARCH] grounding_score={grounding_score:.2f}, has_agent={has_agent}, threshold=0.4")
+        
         if knowledge_agent and grounding_score < 0.4:
+            print(f"[WEB_SEARCH] CONDITION MET: Entering low-grounding fallback")
             logger.info(
                 "chat_low_grounding_detected",
                 query=request.query,
@@ -206,7 +209,7 @@ async def chat(
             )
             
             try:
-                print(f"\n[Chat] 🔍 Grounding score bajo ({grounding_score:.2f}), buscando en web...")
+                print(f"[WEB_SEARCH] Searching for additional knowledge...")
                 
                 # Attempt knowledge acquisition
                 new_result = await knowledge_agent.handle_low_grounding(
@@ -219,6 +222,7 @@ async def chat(
                 
                 # If acquisition successful, use new result
                 if new_result:
+                    print(f"[WEB_SEARCH] Success: Web search returned new result")
                     rag_result = new_result
                     answer_translated = new_result.get('response', answer_translated)
                     grounding_score = new_result.get('grounding_score', grounding_score)
@@ -246,8 +250,51 @@ async def chat(
                     error=str(e),
                     language=target_lang
                 )
-                print(f"[Chat] ❌ Error en adquisición de conocimiento: {e}")
+                print(f"[Chat] Error en adquisicion de conocimiento: {e}")
                 # Continue with original result, don't block response
+        else:
+            # Log why web search was NOT triggered
+            if not knowledge_agent:
+                print(f"[WEB_SEARCH] NOT TRIGGERED: knowledge_agent is None")
+            elif grounding_score >= 0.4:
+                print(f"[WEB_SEARCH] NOT TRIGGERED: grounding_score {grounding_score:.2f} >= threshold 0.4")
+            else:
+                print(f"[WEB_SEARCH] NOT TRIGGERED: unknown reason")
+        
+        # ============ AUTO-INTEGRATE WEB SOURCES INTO KB ============
+        # After knowledge acquisition, check if there are pending integrations
+        try:
+            integrator = KnowledgeIntegrator()
+            status = integrator.get_integration_status()
+            if status['pending_count'] > 0:
+                logger.info(
+                    "chat_auto_integration_start",
+                    pending_count=status['pending_count']
+                )
+                print(f"\n[Chat] 🔄 Auto-integrando {status['pending_count']} fuentes web a la KB...")
+                
+                # Run integration (adds new sections to enhanced_rag.py)
+                result = integrator.integrate_pending(auto_add=True)
+                
+                if result['integrated_count'] > 0:
+                    logger.info(
+                        "chat_auto_integration_success",
+                        integrated_count=result['integrated_count'],
+                        sections=str([e['section_name'] for e in result['integrated']])
+                    )
+                    print(f"[Chat] ✅ {result['integrated_count']} secciones integradas automáticamente")
+                    
+                if result['failed_count'] > 0:
+                    logger.warning(
+                        "chat_auto_integration_partial_failure",
+                        failed_count=result['failed_count']
+                    )
+        except Exception as e:
+            logger.warning(
+                "chat_auto_integration_error",
+                error=str(e)
+            )
+            print(f"[Chat] ⚠️ Error en auto-integración: {e}")
         
         # ============ CONVERSATION MEMORY (Primary) ============
         # Store in conversation memory immediately (synchronous, reliable)

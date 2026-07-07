@@ -100,6 +100,8 @@ def build_chunks_from_library(library) -> List[Chunk]:
     for source, doc in documents.items():
         url = doc.get("url")
         for idx, section in enumerate(doc.get("sections", [])):
+            if section.get("is_active") is False:
+                continue
             chunks.append(
                 Chunk(
                     id=f"{source}::{idx}",

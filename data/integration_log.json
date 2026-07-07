@@ -1,0 +1,43 @@
+[
+  {
+    "timestamp": "2026-07-07T00:49:07.160978",
+    "query": "Cuanto cuesta la matricula",
+    "source_url": "https://gemini.google.com",
+    "section_name": "Precios Ciudadanía Integrado",
+    "status": "integrated"
+  },
+  {
+    "timestamp": "2026-07-07T00:49:07.187349",
+    "query": "¿Cuál es la nota mínima de admisión requerida para mi carrera?",
+    "source_url": "https://kubsu.ru",
+    "section_name": "Criterios Admisión Integrado",
+    "status": "integrated"
+  },
+  {
+    "timestamp": "2026-07-07T01:56:15.263885+00:00",
+    "event": "source_updated",
+    "kind": "scheduled_refresh",
+    "source_id": "local_static_index",
+    "url": "http://127.0.0.1:8000/frontend/index.html",
+    "previous_version": null,
+    "active_version": "20260707015615-a2a3a8918a"
+  },
+  {
+    "timestamp": "2026-07-07T01:58:40.677353+00:00",
+    "event": "source_updated",
+    "kind": "scheduled_refresh",
+    "source_id": "local_refresh_probe",
+    "url": "http://127.0.0.1:8000/frontend/refresh_probe.html",
+    "previous_version": null,
+    "active_version": "20260707015840-8c0bee593c"
+  },
+  {
+    "timestamp": "2026-07-07T01:58:43.206129+00:00",
+    "event": "source_updated",
+    "kind": "scheduled_refresh",
+    "source_id": "local_refresh_probe",
+    "url": "http://127.0.0.1:8000/frontend/refresh_probe.html",
+    "previous_version": "20260707015840-8c0bee593c",
+    "active_version": "20260707015843-3b9df3639f"
+  }
+]

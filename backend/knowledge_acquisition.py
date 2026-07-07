@@ -692,6 +692,23 @@ class KnowledgeAcquisitionAgent:
             
             with open(self.acquisition_log_path, "w", encoding="utf-8") as f:
                 json.dump(logs, f, ensure_ascii=False, indent=2)
+
+            # Push discovered source to candidate queue for scheduled validation.
+            if success and source.get("url"):
+                try:
+                    from kb_refresh import KnowledgeBaseRefresher
+
+                    refresher = KnowledgeBaseRefresher(project_root=Path(__file__).resolve().parent.parent)
+                    refresher.enqueue_candidate_source(
+                        url=source.get("url"),
+                        domain=source.get("domain") or source.get("url", "").split("/")[2],
+                        source_type=info_type or "candidate",
+                        confidence=0.8,
+                        discovered_from=query,
+                        snippet=source.get("snippet", ""),
+                    )
+                except Exception as e:
+                    print(f"[KnowledgeAcquisition] Candidate enqueue skipped: {e}")
         except Exception as e:
             print(f"[KnowledgeAcquisition] Error logging attempt: {e}")
 
@@ -720,6 +737,77 @@ class KnowledgeAcquisitionAgent:
         print("[KnowledgeAcquisition] Retrying query with expanded knowledge base...")
         # Would call: return rag_module.query(query, language=language)
         return None
+
+    def handle_low_grounding_sync(
+        self,
+        query: str,
+        draft_answer: str,
+        retrieved_docs: List[Dict],
+        evaluation: Dict,
+        rag_module=None,
+    ) -> Optional[Dict]:
+        """
+        Synchronous handler for low-grounding scenarios (non-async version).
+        Used when called from non-async context (like enhanced_rag.search_and_generate).
+        Completely sync - no async operations.
+        
+        Args:
+            query: Original user query
+            draft_answer: Generated answer with low grounding
+            retrieved_docs: Original retrieved documents
+            evaluation: Grounding evaluation result
+            rag_module: The RAG module (optional)
+            
+        Returns:
+            Updated result dict or None if no enhancement found
+        """
+        grounding_score = evaluation.get("score", 0)
+        
+        print(f"[KnowledgeAcquisition] Detected low grounding: {grounding_score:.2f}")
+        
+        # Step 1: Detect missing info
+        info_type, search_terms = self.detect_missing_info(
+            query, draft_answer, evaluation.get("missing_entities", [])
+        )
+        
+        print(f"[KnowledgeAcquisition] Missing info type: {info_type}")
+        print(f"[KnowledgeAcquisition] Search terms: {search_terms}")
+        
+        # Step 2: Search using SYNCHRONOUS method
+        candidate_source = self.search_official_sources(search_terms)
+        
+        if not candidate_source:
+            print("[KnowledgeAcquisition] No candidate source found")
+            return None
+        
+        url = candidate_source.get("url")
+        print(f"[KnowledgeAcquisition] Found candidate: {url}")
+        
+        # Step 3: Fetch content from URL (if not a KB reference)
+        content = None
+        if candidate_source.get("source_type") != "knowledge_base_ref":
+            content = self._fetch_content_from_url(url)
+            if content:
+                print(f"[KnowledgeAcquisition] Successfully fetched content")
+            else:
+                print(f"[KnowledgeAcquisition] Could not fetch content, using snippet")
+                content = candidate_source.get("snippet", "")
+        
+        # Step 4: Build enhanced response
+        enhanced_response = f"{draft_answer}\n\n📌 Fuente adicional:\n{candidate_source.get('title', 'Source')}\n{content or candidate_source.get('snippet', '')}"
+        
+        # Log successful acquisition
+        self._log_acquisition_attempt(query, info_type, candidate_source, True)
+        
+        print(f"[KnowledgeAcquisition] ✅ Enhanced with web search")
+        
+        # Return enhanced result
+        return {
+            "response": enhanced_response,
+            "grounding_score": 0.6,
+            "sources": [candidate_source],
+            "acquisition_used": True,
+        }
 
 
 # Singleton instance

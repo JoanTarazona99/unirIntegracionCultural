@@ -1,0 +1,11 @@
+{
+  "source_id": "local_refresh_probe",
+  "url": "http://127.0.0.1:8000/frontend/refresh_probe.html",
+  "domain": "127.0.0.1",
+  "type": "service_page",
+  "category": "stable",
+  "version_id": "20260707015843-3b9df3639f",
+  "fingerprint": "3b9df3639f84ebf5078f0226a557c559a6fd2cb703006e047cb1489b80ee697e",
+  "checked_at": "2026-07-07T01:58:43.160758+00:00",
+  "content": "refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed refresh probe v3 changed"
+}

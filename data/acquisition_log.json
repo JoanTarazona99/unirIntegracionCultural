@@ -5,5 +5,19 @@
     "info_type": "general",
     "source_url": "https://gemini.google.com",
     "success": true
+  },
+  {
+    "timestamp": "2026-07-06T21:20:42.710300",
+    "query": "¿Cuál es la nota mínima de admisión requerida para mi carrera?",
+    "info_type": "general",
+    "source_url": "https://kubsu.ru",
+    "success": true
+  },
+  {
+    "timestamp": "2026-07-07T00:36:23.281110",
+    "query": "¿Qué normas específicas tienen las residencias (obshchezhitie) de la universidad (horarios de cierre, visitas, cocina)?",
+    "info_type": "general",
+    "source_url": "https://gemini.google.com",
+    "success": true
   }
 ]

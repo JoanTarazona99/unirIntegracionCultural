@@ -1,0 +1,86 @@
+[
+  {
+    "source_id": "mvd_foreigners",
+    "url": "https://xn--b1aew.xn--p1ai",
+    "domain": "gu-krasnodar.mvd.ru",
+    "type": "migration",
+    "category": "critical",
+    "confidence": 0.98,
+    "fallback_urls": [
+      "https://guvm.mvd.ru"
+    ],
+    "status": "unreachable",
+    "hash_current": "",
+    "last_checked": "2026-07-07T02:51:15.408858+00:00",
+    "last_updated": null,
+    "fail_count": 2,
+    "active_version": null,
+    "check_interval_hours": 6,
+    "target_source": "МВД РФ",
+    "target_section_title": "Actualizacion oficial: migracion",
+    "last_success_url": null
+  },
+  {
+    "source_id": "mfc_services",
+    "url": "https://mfc.gov.ru",
+    "domain": "mfc.gov.ru",
+    "type": "public_services",
+    "category": "stable",
+    "confidence": 0.95,
+    "fallback_urls": [
+      "https://www.gosuslugi.ru"
+    ],
+    "status": "unreachable",
+    "hash_current": "",
+    "last_checked": "2026-07-07T02:51:26.275159+00:00",
+    "last_updated": null,
+    "fail_count": 2,
+    "active_version": null,
+    "check_interval_hours": 168,
+    "target_source": "МФЦ",
+    "target_section_title": "Actualizacion oficial: MFC servicios",
+    "last_success_url": null
+  },
+  {
+    "source_id": "kubgu_faq",
+    "url": "https://kubsu.ru",
+    "domain": "kubsu.ru",
+    "type": "faq",
+    "category": "faq_admission",
+    "confidence": 0.95,
+    "fallback_urls": [
+      "https://kubsu.ru/ru"
+    ],
+    "status": "unreachable",
+    "hash_current": "",
+    "last_checked": "2026-07-07T02:51:37.139775+00:00",
+    "last_updated": null,
+    "fail_count": 1,
+    "active_version": null,
+    "check_interval_hours": 24,
+    "target_source": "FAQ",
+    "target_section_title": "Actualizacion oficial: FAQ KubGU",
+    "last_success_url": "https://kubsu.ru"
+  },
+  {
+    "source_id": "kubgu_admission",
+    "url": "https://kubsu.ru",
+    "domain": "kubsu.ru",
+    "type": "admission",
+    "category": "faq_admission",
+    "confidence": 0.97,
+    "fallback_urls": [
+      "https://kubsu.ru/ru"
+    ],
+    "status": "unreachable",
+    "hash_current": "",
+    "last_checked": "2026-07-07T02:51:37.992155+00:00",
+    "last_updated": null,
+    "fail_count": 1,
+    "active_version": null,
+    "check_interval_hours": 24,
+    "target_source": "КубГУ",
+    "target_section_title": "Actualizacion oficial: admision",
+    "last_success_url": "https://kubsu.ru"
+  }
+]

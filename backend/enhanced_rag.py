@@ -13,6 +13,7 @@ Features:
 import json
 import os
 import time
+from datetime import datetime
 import numpy as np
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Generator, AsyncGenerator
@@ -198,6 +199,8 @@ class OfficialDocumentLibrary:
         self.flat_documents = []
         for source_name, doc in self.documents.items():
             for section in doc.get('sections', []):
+                if section.get('is_active') is False:
+                    continue
                 self.flat_documents.append({
                     'source': source_name,
                     'source_url': doc.get('url'),
@@ -1405,6 +1408,51 @@ class OfficialDocumentLibrary:
         """Return current search mode"""
         return "semantic" if self._use_semantic else "keyword"
 
+    def upsert_refreshed_section(
+        self,
+        source_key: str,
+        section_title: str,
+        section_content: str,
+        refresh_section_id: str,
+        version_id: str,
+        source_url: Optional[str] = None,
+    ) -> None:
+        """Insert/update a refresh-managed section and mark previous version inactive."""
+        if source_key not in self.documents:
+            self.documents[source_key] = {
+                'name': source_key,
+                'url': source_url or '',
+                'sections': [],
+            }
+
+        doc = self.documents[source_key]
+        if source_url:
+            doc['url'] = source_url
+
+        sections = doc.setdefault('sections', [])
+        replacement = {
+            'title': section_title,
+            'content': section_content,
+            'refresh_section_id': refresh_section_id,
+            'version_id': version_id,
+            'updated_at': datetime.now().isoformat(),
+            'is_active': True,
+        }
+
+        replaced = False
+        for idx, section in enumerate(sections):
+            if section.get('refresh_section_id') == refresh_section_id:
+                section['is_active'] = False
+                section['superseded_by_version'] = version_id
+                sections.append(replacement)
+                replaced = True
+                break
+
+        if not replaced:
+            sections.append(replacement)
+
+        self._flatten_documents()
+
 
 class EnhancedRAGModule:
     """Módulo RAG mejorado con documentos reales, búsqueda semántica y LLM"""
@@ -1494,6 +1542,46 @@ class EnhancedRAGModule:
                     print(f"[RAG] Advanced retrieval failed ({mode}): {e}")
         # Legacy path.
         return self.document_library.search(query), self.document_library.get_search_mode()
+
+    def apply_refreshed_source(self, source: Dict, content: str, version_id: str) -> None:
+        """Apply a refreshed source payload into KB and invalidate stale retriever state."""
+        source_key = source.get('target_source') or source.get('source_id') or 'KB Refresh'
+        section_title = source.get('target_section_title') or 'Actualizacion periodica'
+        refresh_section_id = source.get('source_id') or source_key
+
+        self.document_library.upsert_refreshed_section(
+            source_key=source_key,
+            section_title=section_title,
+            section_content=content,
+            refresh_section_id=refresh_section_id,
+            version_id=version_id,
+            source_url=source.get('url'),
+        )
+
+        # Retriever and semantic index are rebuilt lazily only when needed.
+        self._retriever = None
+
+        if getattr(self.document_library, 'semantic_engine', None) and self.document_library._use_semantic:
+            try:
+                self.document_library.semantic_engine.build_index(self.document_library.flat_documents)
+            except Exception as e:
+                print(f"[RAG] Semantic reindex skipped after refresh: {e}")
+
+    def reindex_sources_incremental(self, changed_sources: List[str]) -> None:
+        """Incremental-triggered reindex: only executes when there are changed sources."""
+        if not changed_sources:
+            return
+
+        # BM25/dense/hybrid retriever is rebuilt lazily on next query.
+        self._retriever = None
+
+        # Keep semantic index synchronized with updated active sections.
+        if getattr(self.document_library, 'semantic_engine', None) and self.document_library._use_semantic:
+            try:
+                self.document_library._flatten_documents()
+                self.document_library.semantic_engine.build_index(self.document_library.flat_documents)
+            except Exception as e:
+                print(f"[RAG] Incremental semantic rebuild skipped: {e}")
 
     def is_llm_enabled(self) -> bool:
         """Check if LLM is currently enabled"""
@@ -1687,6 +1775,48 @@ class EnhancedRAGModule:
             },
             'query_expansion': [],
         }
+        
+        # ============ WEB SEARCH FALLBACK (LOW GROUNDING) ============
+        # If grounding score is low, try to acquire knowledge from web
+        grounding_score = faithfulness if faithfulness is not None else 0
+        if grounding_score < 0.4 and response_mode in ('abstained', 'llm'):
+            try:
+                from knowledge_acquisition import KnowledgeAcquisitionAgent
+                print(f"[WEB_SEARCH] grounding_score={grounding_score:.2f}, threshold=0.4")
+                print(f"[WEB_SEARCH] CONDITION MET: Attempting low-grounding fallback")
+                
+                knowledge_agent = KnowledgeAcquisitionAgent()
+                
+                # Try to acquire knowledge
+                new_result = knowledge_agent.handle_low_grounding_sync(
+                    query=query,
+                    draft_answer=response,
+                    retrieved_docs=results,
+                    evaluation={'score': grounding_score, 'missing_entities': []},
+                    rag_module=self
+                )
+                
+                # If acquisition successful, use new result
+                if new_result and new_result.get('response'):
+                    print(f"[WEB_SEARCH] Success: Web search returned enhanced result")
+                    response = new_result.get('response', response)
+                    grounding_score = new_result.get('grounding_score', grounding_score)
+                    payload['response'] = response
+                    payload['grounding_score'] = grounding_score
+                    payload['response_mode'] = 'web_enhanced'
+                    payload['ai_metrics']['faithfulness'] = grounding_score
+                    payload['ai_metrics']['response_mode'] = 'web_enhanced'
+                else:
+                    print(f"[WEB_SEARCH] No enhancement found")
+                    
+            except ImportError:
+                print(f"[WEB_SEARCH] KnowledgeAcquisitionAgent not available")
+            except AttributeError:
+                # handle_low_grounding_sync doesn't exist, try async version
+                print(f"[WEB_SEARCH] handle_low_grounding_sync not available (async version)")
+            except Exception as e:
+                print(f"[WEB_SEARCH] Error: {e}")
+        
         return payload
 
     def _generate_template_response(

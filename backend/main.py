@@ -4,6 +4,7 @@ import os
 import io
 import uuid
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -31,16 +32,67 @@ from personalization import get_conversation_memory, ConversationMemory, Persona
 from audio_module import AudioManager
 from cache_module import get_rag_cache, LRUCache, cache_rag_query, get_cached_rag_query
 from retrieval.model_warmer import warm_models_background
+from kb_refresh import KnowledgeBaseRefresher
+from kb_scheduler import KnowledgeRefreshScheduler
 
 # ==================== APPLICATION INITIALIZATION ====================
 configure_logging()
 logger = get_logger(__name__)
 
+# ==================== MODEL WARMING ====================
+# Pre-load ML models in background to eliminate cold-start latency
+model_warmer_task = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifecycle: startup/shutdown hooks without deprecated on_event."""
+    global model_warmer_task
+
+    # Startup: model warming
+    try:
+        logger.info("model_warmer_starting", status="warming_up_ml_models")
+        model_warmer_task = warm_models_background()
+        logger.info("model_warmer_started", status="background_thread_initiated")
+    except Exception as e:
+        logger.warning("model_warmer_failed", error=str(e), fallback="graceful_degradation")
+
+    # Startup: KB scheduler
+    if not settings.enable_kb_scheduler:
+        logger.info("kb_scheduler_disabled")
+    else:
+        try:
+            kb_scheduler.start()
+            if kb_scheduler.is_leader:
+                logger.info(
+                    "kb_scheduler_started",
+                    leader=True,
+                    critical_hours=settings.kb_refresh_critical_hours,
+                    faq_hours=settings.kb_refresh_faq_hours,
+                    stable_hours=settings.kb_refresh_stable_hours,
+                    candidate_hours=settings.kb_refresh_candidate_hours,
+                )
+            else:
+                logger.info("kb_scheduler_skipped", leader=False, reason="leader_exists")
+        except Exception as e:
+            logger.warning("kb_scheduler_start_failed", error=str(e))
+
+    try:
+        yield
+    finally:
+        # Shutdown: KB scheduler
+        try:
+            kb_scheduler.stop()
+            logger.info("kb_scheduler_stopped")
+        except Exception as e:
+            logger.warning("kb_scheduler_stop_failed", error=str(e))
+
 app = FastAPI(
     title=settings.app_name,
     description="Backend para soporte inteligente a estudiantes extranjeros",
     version=settings.app_version,
-    debug=settings.debug
+    debug=settings.debug,
+    lifespan=lifespan,
 )
 
 # Add logging middleware
@@ -56,6 +108,26 @@ logger.info(
 # Inicializar módulo RAG mejorado e traductor multiidioma
 rag_module = EnhancedRAGModule()
 translator = create_translator()
+
+# Initialize periodic KB refresh engine + scheduler
+kb_refresher = KnowledgeBaseRefresher(
+    project_root=Path(__file__).parent.parent,
+    rag_module=rag_module,
+    max_failures=settings.kb_refresh_max_failures,
+    min_candidate_confidence=settings.kb_candidate_min_confidence,
+    min_content_chars=settings.kb_candidate_min_content_chars,
+)
+kb_scheduler = KnowledgeRefreshScheduler(
+    kb_refresher,
+    critical_hours=settings.kb_refresh_critical_hours,
+    faq_admission_hours=settings.kb_refresh_faq_hours,
+    stable_hours=settings.kb_refresh_stable_hours,
+    candidate_hours=settings.kb_refresh_candidate_hours,
+    use_distributed_lock=settings.kb_scheduler_distributed_lock,
+    redis_url=settings.redis_url,
+    distributed_lock_key=settings.kb_scheduler_lock_key,
+    distributed_lock_ttl_seconds=settings.kb_scheduler_lock_ttl_seconds,
+)
 
 # Initialize conversation memory
 conversation_memory = get_conversation_memory(max_history=10)
@@ -176,21 +248,6 @@ logger.info(
     max_requests=settings.rate_limit_requests,
     window_seconds=settings.rate_limit_window
 )
-
-# ==================== MODEL WARMING ====================
-# Pre-load ML models in background to eliminate cold-start latency
-model_warmer_task = None
-
-@app.on_event("startup")
-async def startup_model_warmer():
-    """Warm up ML models (Dense embedder + Rerankers) on app startup"""
-    global model_warmer_task
-    try:
-        logger.info("model_warmer_starting", status="warming_up_ml_models")
-        model_warmer_task = warm_models_background()
-        logger.info("model_warmer_started", status="background_thread_initiated")
-    except Exception as e:
-        logger.warning("model_warmer_failed", error=str(e), fallback="graceful_degradation")
 
 
 def get_client_ip(request: Request) -> str:
