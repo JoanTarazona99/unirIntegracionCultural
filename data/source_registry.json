@@ -9,11 +9,11 @@
     "fallback_urls": [
       "https://guvm.mvd.ru"
     ],
-    "status": "unreachable",
+    "status": "stale",
     "hash_current": "",
-    "last_checked": "2026-07-07T02:51:15.408858+00:00",
+    "last_checked": "2026-07-07T21:52:10.542052+00:00",
     "last_updated": null,
-    "fail_count": 2,
+    "fail_count": 4,
     "active_version": null,
     "check_interval_hours": 6,
     "target_source": "МВД РФ",
