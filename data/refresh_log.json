@@ -1606,5 +1606,63 @@
     "reindexed_sources": [],
     "versions_created": [],
     "duration_seconds": 1.12
+  },
+  {
+    "timestamp": "2026-07-08T19:16:05.507293+00:00",
+    "event": "source_checked",
+    "source_id": "mvd_foreigners",
+    "url": "https://xn--b1aew.xn--p1ai",
+    "domain": "gu-krasnodar.mvd.ru",
+    "category": "critical",
+    "status": "stale",
+    "result": "failed",
+    "http_status": 0,
+    "checked_url": "https://xn--b1aew.xn--p1ai",
+    "error": "HTTPSConnectionPool(host='guvm.mvd.ru', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))",
+    "fail_count": 5
+  },
+  {
+    "timestamp": "2026-07-08T19:16:05.556204+00:00",
+    "event": "reindex_complete",
+    "category": "critical",
+    "total_checked": 1,
+    "updated": 0,
+    "unchanged": 0,
+    "failed": 1,
+    "stale": 1,
+    "accepted_candidates": 0,
+    "rejected_candidates": 0,
+    "reindexed_sources": [],
+    "versions_created": [],
+    "duration_seconds": 5.526
+  },
+  {
+    "timestamp": "2026-07-09T12:41:38.605080+00:00",
+    "event": "source_checked",
+    "source_id": "mvd_foreigners",
+    "url": "https://xn--b1aew.xn--p1ai",
+    "domain": "gu-krasnodar.mvd.ru",
+    "category": "critical",
+    "status": "stale",
+    "result": "failed",
+    "http_status": 0,
+    "checked_url": "https://xn--b1aew.xn--p1ai",
+    "error": "HTTPSConnectionPool(host='guvm.mvd.ru', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1032)')))",
+    "fail_count": 6
+  },
+  {
+    "timestamp": "2026-07-09T12:41:38.670150+00:00",
+    "event": "reindex_complete",
+    "category": "critical",
+    "total_checked": 1,
+    "updated": 0,
+    "unchanged": 0,
+    "failed": 1,
+    "stale": 1,
+    "accepted_candidates": 0,
+    "rejected_candidates": 0,
+    "reindexed_sources": [],
+    "versions_created": [],
+    "duration_seconds": 5.53
   }
 ]
