@@ -1,0 +1,3 @@
+{"id":"s001","question":"registration deadline","lang":"en","category":"migration","relevant_chunk_ids":["doc-a::0"]}
+{"id":"s002","question":"dormitory price","lang":"en","category":"housing","relevant_chunk_ids":["doc-b::0","doc-b::1"]}
+{"id":"s003","question":"unlabeled candidate","lang":"es","category":"other","relevant_chunk_ids":[]}

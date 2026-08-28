@@ -1,0 +1,23 @@
+{
+  "benchmark_version": "kubgu-retrieval-v1",
+  "benchmark_file": "benchmark.jsonl",
+  "sha256": "b69b4916f94411621cae4336e235e8221f3d0e677b86e3c5a1fd53fca7c7215d",
+  "schema": "kubgu-retrieval-jsonl-v1",
+  "total_queries": 36,
+  "languages": {
+    "es": 23,
+    "en": 9,
+    "ru": 4
+  },
+  "categories": {
+    "academic": 6,
+    "admin": 7,
+    "health": 3,
+    "housing": 4,
+    "language": 4,
+    "migration": 7,
+    "visa": 5
+  },
+  "relevance": "binary chunk identifiers",
+  "annotation_provenance": "not documented in repository"
+}

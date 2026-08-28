@@ -40,10 +40,8 @@ def precision_at_k(retrieved: Sequence[str], relevant: Iterable[str], k: int) ->
         return 0.0
     rel = _as_set(relevant)
     top = retrieved[:k]
-    if not top:
-        return 0.0
     hits = sum(1 for cid in top if cid in rel)
-    return hits / min(k, len(top))
+    return hits / k
 
 
 def mrr(retrieved: Sequence[str], relevant: Iterable[str]) -> float:

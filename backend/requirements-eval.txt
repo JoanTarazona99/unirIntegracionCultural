@@ -1,0 +1,5 @@
+# Minimal dependencies for deterministic, offline retrieval evaluation tests.
+numpy==1.24.3
+rank-bm25==0.2.2
+pytest==7.4.3
+pytest-cov==4.1.0
