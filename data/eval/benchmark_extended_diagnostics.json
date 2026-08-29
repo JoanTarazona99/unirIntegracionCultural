@@ -1,0 +1,42 @@
+{
+  "valid": true,
+  "errors": [],
+  "total_queries": 132,
+  "languages": {
+    "en": 44,
+    "es": 44,
+    "ru": 44
+  },
+  "categories": {
+    "admin": 21,
+    "communication": 6,
+    "cultural_adaptation": 6,
+    "documents": 9,
+    "education": 9,
+    "employment": 3,
+    "finance": 12,
+    "food": 3,
+    "health": 12,
+    "housing": 9,
+    "language": 9,
+    "legal_rights": 3,
+    "migration": 6,
+    "safety": 6,
+    "scholarships": 3,
+    "transport": 6,
+    "visa": 9
+  },
+  "unique_query_ids": 132,
+  "unique_query_texts": 132,
+  "referenced_fragments": 44,
+  "generator_version": "template-grounded-v2",
+  "seed": 42,
+  "source_count": 18,
+  "active_fragment_count": 44,
+  "language_targets_match": true,
+  "category_targets_match": true,
+  "human_review_required": true,
+  "annotation_status": "synthetic_needs_human_review",
+  "used_for_official_metrics": false,
+  "official_evaluation_eligible": false
+}
