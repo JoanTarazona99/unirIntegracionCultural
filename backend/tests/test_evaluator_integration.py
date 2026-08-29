@@ -77,6 +77,7 @@ def test_json_and_csv_serialization(tmp_path):
     report = {
         "run": {"run_id": "synthetic_run"},
         "results": [result],
+        "statistical_comparison": {"status": "not_computed"},
     }
     paths = write_results(report, tmp_path)
     payload = json.loads(Path(paths["json"]).read_text(encoding="utf-8"))
@@ -85,8 +86,16 @@ def test_json_and_csv_serialization(tmp_path):
         summary_rows = list(csv.DictReader(handle))
     with Path(paths["queries_csv"]).open(encoding="utf-8", newline="") as handle:
         query_rows = list(csv.DictReader(handle))
-    assert any(row["scope"] == "global" for row in summary_rows)
     assert summary_rows[0]["selected_query_count"] == "3"
     assert summary_rows[0]["evaluated_query_count"] == "2"
+    assert summary_rows[0]["requested_method"] == "simulated"
     assert len(query_rows) == 3
     assert query_rows[0]["retrieved_chunk_ids"] == '["doc-a::0"]'
+    with Path(paths["language_csv"]).open(encoding="utf-8", newline="") as handle:
+        language_rows = list(csv.DictReader(handle))
+    with Path(paths["category_csv"]).open(encoding="utf-8", newline="") as handle:
+        category_rows = list(csv.DictReader(handle))
+    bootstrap = json.loads(Path(paths["bootstrap_json"]).read_text(encoding="utf-8"))
+    assert {row["language"] for row in language_rows} == {"en"}
+    assert {row["category"] for row in category_rows} == {"housing", "migration"}
+    assert bootstrap == {"status": "not_computed"}
