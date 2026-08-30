@@ -11,6 +11,7 @@ from eval.retrieval_evaluation import (
     _activation_metadata,
     _build_verified_retriever,
     _enable_offline_mode,
+    _fallback_count,
     _finalize_method_result,
     _unavailable_reason,
     _validate_semantic_configuration,
@@ -86,20 +87,33 @@ def test_dense_preflight_failure_is_not_executed():
     assert result["effective_method"] == "none"
     assert result["dense_active"] is False
     assert result["models"]["dense"] == "dense-model"
+    assert result["fallback_count"] == 0
 
 
-def test_hybrid_with_inactive_dense_blocks_bm25_fallback():
+@pytest.mark.parametrize("method", ["hybrid", "hybrid_rerank"])
+def test_hybrid_with_inactive_dense_blocks_bm25_fallback(method):
     hybrid = SimpleNamespace(
         _dense_active=False,
         dense=SimpleNamespace(model_name="dense-model"),
         reranker=None,
     )
-    reason = _unavailable_reason("hybrid", hybrid, [])
-    metadata = _activation_metadata("hybrid", hybrid)
+    reason = _unavailable_reason(method, hybrid, [])
+    metadata = _activation_metadata(method, hybrid)
+    result = unavailable_method(method, reason, 3, activation=metadata)
 
     assert "reporting a BM25 fallback as hybrid is disabled" in reason
     assert metadata["effective_method"] == "bm25_fallback_blocked"
     assert metadata["dense_active"] is False
+    assert metadata["fallback_count"] == 1
+    assert result["status"] == "not_executed"
+    assert result["fallback_count"] == 1
+
+
+def test_fallback_count_is_zero_without_observed_activation_fallback():
+    assert _fallback_count("keyword", None) == 0
+    assert _fallback_count("bm25", None) == 0
+    assert _fallback_count("dense", SimpleNamespace(_embeddings=None)) == 0
+    assert _fallback_count("hybrid", SimpleNamespace(_dense_active=True)) == 0
 
 
 def test_strict_reranker_propagates_model_load_failure():
@@ -175,6 +189,50 @@ def test_hybrid_rerank_without_predictions_is_not_executed():
     assert result["status"] == "not_executed"
     assert result["effective_method"] == "hybrid_without_reranking_blocked"
     assert result["reranker_active"] is False
+    assert result["fallback_count"] == 0
+
+
+@pytest.mark.parametrize(
+    ("method", "retriever"),
+    [
+        ("keyword", SimpleNamespace()),
+        ("bm25", SimpleNamespace()),
+        ("dense", SimpleNamespace(_embeddings=object(), model_name="dense-model")),
+        (
+            "hybrid",
+            SimpleNamespace(
+                _dense_active=True,
+                dense=SimpleNamespace(model_name="dense-model"),
+                reranker=None,
+            ),
+        ),
+        (
+            "hybrid_rerank",
+            SimpleNamespace(
+                _dense_active=True,
+                dense=SimpleNamespace(model_name="dense-model"),
+                reranker=SimpleNamespace(
+                    model_name="reranker-model",
+                    _prediction_count=1,
+                    _loaded_models={"reranker-model"},
+                    _models_used={"reranker-model"},
+                    _last_error=None,
+                ),
+            ),
+        ),
+    ],
+)
+def test_completed_method_records_zero_fallback(method, retriever):
+    evaluated = {
+        "status": "completed",
+        "retrieval_error_count": 0,
+        "queries": [],
+    }
+
+    result = _finalize_method_result(method, retriever, evaluated, 2)
+
+    assert result["status"] == "completed"
+    assert result["fallback_count"] == 0
 
 
 def test_not_executed_activation_metadata_serializes(tmp_path):
@@ -189,6 +247,7 @@ def test_not_executed_activation_metadata_serializes(tmp_path):
             "reranker_used": [],
         },
         "reranker_prediction_count": 0,
+        "fallback_count": 1,
         "activation_error": "model unavailable",
     }
     result = unavailable_method(
@@ -209,6 +268,7 @@ def test_not_executed_activation_metadata_serializes(tmp_path):
     assert payload["effective_method"] == "bm25_fallback_blocked"
     assert payload["dense_active"] is False
     assert payload["reranker_active"] is False
+    assert payload["fallback_count"] == 1
     assert payload["models"]["dense"] == "dense-model"
     assert payload["errors"] == ["model unavailable"]
     summary = open(paths["summary_csv"], encoding="utf-8").read()

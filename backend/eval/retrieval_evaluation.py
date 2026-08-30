@@ -85,6 +85,15 @@ def _load_manifest(path: Path, benchmark: Path) -> dict:
     return payload
 
 
+def _fallback_count(method: str, retriever) -> int:
+    """Count evaluation-observed activation fallbacks for one method."""
+    return int(
+        method in {"hybrid", "hybrid_rerank"}
+        and retriever is not None
+        and not bool(getattr(retriever, "_dense_active", False))
+    )
+
+
 def _activation_metadata(method: str, retriever, *, completed: bool = False) -> dict:
     if method == "dense":
         dense = retriever
@@ -125,6 +134,7 @@ def _activation_metadata(method: str, retriever, *, completed: bool = False) -> 
         "reranker_prediction_count": getattr(
             reranker, "_prediction_count", 0
         ),
+        "fallback_count": _fallback_count(method, retriever),
         "activation_error": getattr(reranker, "_last_error", None),
     }
 
@@ -226,6 +236,7 @@ def run(args: argparse.Namespace) -> Tuple[dict, Optional[dict]]:
 
     results = []
     for method in args.methods:
+        retriever = None
         try:
             retriever, reason = _build_verified_retriever(
                 method, library, chunks, items
@@ -252,7 +263,10 @@ def run(args: argparse.Namespace) -> Tuple[dict, Optional[dict]]:
         except Exception as exc:  # noqa: BLE001 - preserve method failure in output
             results.append(
                 unavailable_method(
-                    method, f"{type(exc).__name__}: {exc}", len(items)
+                    method,
+                    f"{type(exc).__name__}: {exc}",
+                    len(items),
+                    activation=_activation_metadata(method, retriever),
                 )
             )
 
