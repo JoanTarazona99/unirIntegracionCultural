@@ -10,13 +10,101 @@ Features:
 - Conversation history per session
 """
 
+import hashlib
 import json
+import logging
 import os
 import time
 from datetime import datetime
 import numpy as np
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Generator, AsyncGenerator
+from urllib.parse import urlparse
+
+
+logger = logging.getLogger(__name__)
+
+
+def _sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _environment_flag(name: str, configured: bool = False) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return configured
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _development_environment() -> bool:
+    configured = getattr(globals().get("_settings"), "environment", "development")
+    return os.environ.get("ENVIRONMENT", configured).strip().lower() == "development"
+
+
+def _raw_query_logging_enabled() -> bool:
+    configured = getattr(globals().get("_settings"), "log_raw_queries", False)
+    return _development_environment() and _environment_flag("LOG_RAW_QUERIES", configured)
+
+
+def _raw_rag_payload_logging_enabled() -> bool:
+    configured = getattr(globals().get("_settings"), "log_raw_rag_payloads", False)
+    return _raw_query_logging_enabled() and _environment_flag(
+        "LOG_RAW_RAG_PAYLOADS", configured
+    )
+
+
+def _sanitized_url_metadata(value: object) -> Dict[str, str]:
+    if not isinstance(value, str) or not value:
+        return {}
+    parsed = urlparse(value)
+    return {
+        "url_hostname": parsed.hostname or "",
+        "url_path": parsed.path or "/",
+        "url_sha256": _sha256_text(value),
+    }
+
+
+def _log_rag_debug_payload(query: str, response: str, results: List[Dict]) -> None:
+    if not _environment_flag("RAG_DEBUG"):
+        return
+
+    raw_query_logged = _raw_query_logging_enabled()
+    raw_payload_logged = _raw_rag_payload_logging_enabled()
+    event = {
+        "query_sha256": _sha256_text(query),
+        "query_length": len(query),
+        "response_sha256": _sha256_text(response or ""),
+        "response_length": len(response or ""),
+        "result_count": len(results),
+        "chunk_count": len(results),
+        "source_count": len(results),
+        "source_id": (
+            results[0].get("source_id") or results[0].get("source")
+            if results and isinstance(results[0], dict)
+            else None
+        ),
+        "raw_payload_logged": raw_payload_logged,
+        "privacy_mode": (
+            "development_raw"
+            if raw_payload_logged
+            else "development_raw_query"
+            if raw_query_logged
+            else "redacted"
+        ),
+    }
+    if results and isinstance(results[0], dict):
+        source_url = results[0].get("source_url") or results[0].get("url")
+        event.update(_sanitized_url_metadata(source_url))
+    if raw_query_logged:
+        event["query"] = query
+    if raw_payload_logged:
+        event["response"] = response
+        event["chunks"] = [
+            result.get("content", "")
+            for result in results
+            if isinstance(result, dict)
+        ]
+    logger.debug("rag_debug_payload", extra={"rag_event": event})
 
 # Try to import LLM module
 LLM_AVAILABLE = False
@@ -1646,8 +1734,8 @@ class EnhancedRAGModule:
                 llm_ms = (time.perf_counter() - _t_llm_start) * 1000.0
                 llm_stats = dict(getattr(self.llm, "last_generation_stats", {}) or {})
                 response_mode = "llm"
-            except Exception as e:
-                print(f"[RAG] LLM generation failed: {e}")
+            except Exception as error:
+                print(f"[RAG] LLM generation failed: error_type={type(error).__name__}")
                 response = None
 
         # Fallback to template response
@@ -1655,11 +1743,7 @@ class EnhancedRAGModule:
             response = self._generate_template_response(query, results, language)
             response_mode = "template"
 
-        # DEBUG: Log full response before grounding (no truncation)
-        print(f"[RAG_DEBUG] Full response ({len(response) if response else 0} chars): {response if response else 'None'}")
-        print(f"[RAG_DEBUG] Results count: {len(results) if results else 0}")
-        if results:
-            print(f"[RAG_DEBUG] First result content preview: {results[0].get('content', '')[:200] if isinstance(results[0], dict) else str(results[0])[:200]}")
+        _log_rag_debug_payload(query, response, results)
 
         # ✅ IMPROVED: Trustworthy-AI guard with multi-level grounding evaluation
         grounding = None
