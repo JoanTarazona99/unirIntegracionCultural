@@ -7,11 +7,20 @@ is supported by retrieved official sources, and otherwise abstains with a safe
 fallback message pointing to the official source.
 """
 
-from .hallucination import estimate_faithfulness, sentence_support, GroundingLevel, analyze_grounding_improved
+from .hallucination import (
+    EvidenceAssessment,
+    GroundingLevel,
+    analyze_grounding_improved,
+    assess_evidence_sufficiency,
+    estimate_faithfulness,
+    sentence_support,
+)
 from .citation import GroundingResult, enforce_grounding, format_citations, enforce_grounding_improved
 
 __all__ = [
     "estimate_faithfulness",
+    "assess_evidence_sufficiency",
+    "EvidenceAssessment",
     "sentence_support",
     "GroundingResult",
     "enforce_grounding",

@@ -1576,6 +1576,9 @@ class EnhancedRAGModule:
             "citation_guard": True,  # ✅ ENABLED: Use improved grounding evaluation
             "abstention_threshold": 0.4,  # ✅ UPDATED: Use MEDIUM level as minimum for responding
             "use_improved_grounding": True,  # ✅ NEW: Use analyze_grounding_improved()
+            "enable_evidence_assessment": True,
+            "query_relevance_threshold": 0.5,
+            "query_entity_coverage_threshold": 1.0,
         }
         try:
             from app.config.settings import settings as _settings
@@ -1586,6 +1589,9 @@ class EnhancedRAGModule:
             config["top_k"] = getattr(_settings, "retrieval_top_k", 5)
             config["citation_guard"] = getattr(_settings, "enable_citation_guard", True)  # ✅ Default True
             config["abstention_threshold"] = getattr(_settings, "abstention_threshold", 0.35)
+            config["enable_evidence_assessment"] = getattr(_settings, "enable_evidence_assessment", True)
+            config["query_relevance_threshold"] = getattr(_settings, "query_relevance_threshold", 0.5)
+            config["query_entity_coverage_threshold"] = getattr(_settings, "query_entity_coverage_threshold", 1.0)
         except Exception:
             config["mode"] = os.environ.get("RETRIEVAL_MODE", "keyword")
         return config
@@ -1629,7 +1635,11 @@ class EnhancedRAGModule:
                 except Exception as e:
                     print(f"[RAG] Advanced retrieval failed ({mode}): {e}")
         # Legacy path.
-        return self.document_library.search(query), self.document_library.get_search_mode()
+        results = self.document_library.search(query)
+        search_mode = self.document_library.get_search_mode()
+        if results and all(result.get("search_mode") == "fallback" for result in results):
+            search_mode = "fallback"
+        return results, search_mode
 
     def apply_refreshed_source(self, source: Dict, content: str, version_id: str) -> None:
         """Apply a refreshed source payload into KB and invalidate stale retriever state."""
@@ -1715,6 +1725,47 @@ class EnhancedRAGModule:
         results, search_mode = self._retrieve(query)
         retrieval_ms = (time.perf_counter() - _t_retrieval_start) * 1000.0
 
+        evidence_assessment = None
+        evidence_gate_enabled = bool(
+            self._retrieval_config.get("citation_guard")
+            and self._retrieval_config.get("enable_evidence_assessment", True)
+        )
+        if evidence_gate_enabled:
+            try:
+                from trust import assess_evidence_sufficiency
+
+                evidence_assessment = assess_evidence_sufficiency(
+                    query,
+                    results,
+                    retrieval_top_k=self._retrieval_config.get("top_k", 5),
+                    retrieval_mode=search_mode,
+                    query_relevance_threshold=self._retrieval_config.get("query_relevance_threshold", 0.5),
+                    query_entity_coverage_threshold=self._retrieval_config.get("query_entity_coverage_threshold", 1.0),
+                )
+            except Exception as exc:
+                from trust import EvidenceAssessment
+
+                print(
+                    "[RAG] Evidence sufficiency assessment failed: "
+                    f"exception_type={type(exc).__name__}"
+                )
+                evidence_assessment = EvidenceAssessment(
+                    query_relevance=0.0,
+                    query_term_coverage=0.0,
+                    query_entity_coverage=0.0,
+                    requested_slot_coverage=False,
+                    retrieval_confidence=0.0,
+                    sufficient=False,
+                    reasons=["evidence_assessment_error"],
+                    query_terms=[],
+                    matched_terms=[],
+                    missing_terms=[],
+                    query_entities={},
+                    matched_entities={},
+                    missing_entities={},
+                )
+        evidence_sufficient = evidence_assessment is None or evidence_assessment.sufficient
+
         # Determine response mode
         response_mode = "template"
         response = None
@@ -1722,7 +1773,7 @@ class EnhancedRAGModule:
         llm_stats = {}
 
         # Try LLM first if available and enabled
-        if use_llm and self.is_llm_enabled():
+        if evidence_sufficient and use_llm and self.is_llm_enabled():
             try:
                 _t_llm_start = time.perf_counter()
                 response = self.llm.generate_response(
@@ -1739,15 +1790,39 @@ class EnhancedRAGModule:
                 response = None
 
         # Fallback to template response
-        if response is None:
+        if response is None and evidence_sufficient:
             response = self._generate_template_response(query, results, language)
             response_mode = "template"
+        elif response is None:
+            response = ""
+            response_mode = "abstained"
 
         _log_rag_debug_payload(query, response, results)
 
         # ✅ IMPROVED: Trustworthy-AI guard with multi-level grounding evaluation
         grounding = None
-        if self._retrieval_config.get("citation_guard") and results:
+        if self._retrieval_config.get("citation_guard"):
+            def grounding_error_result(exception: Exception):
+                from trust import GroundingResult
+
+                print(
+                    "[RAG] Grounding evaluation failed: "
+                    f"exception_type={type(exception).__name__}"
+                )
+                return GroundingResult(
+                    grounded=False,
+                    score=0.0,
+                    level="low",
+                    answer="",
+                    abstained=True,
+                    citations=[],
+                    explanation="grounding_evaluation_error",
+                    matched_entities=[],
+                    missing_entities=[],
+                    faithfulness_score=0.0,
+                    evidence_assessment=evidence_assessment,
+                )
+
             try:
                 from trust import enforce_grounding_improved
                 from trust import GroundingLevel
@@ -1758,6 +1833,13 @@ class EnhancedRAGModule:
                 grounding = enforce_grounding_improved(
                     response,
                     results,
+                    query=query,
+                    retrieval_top_k=self._retrieval_config.get("top_k", 5),
+                    retrieval_mode=search_mode,
+                    query_relevance_threshold=self._retrieval_config.get("query_relevance_threshold", 0.5),
+                    query_entity_coverage_threshold=self._retrieval_config.get("query_entity_coverage_threshold", 1.0),
+                    enable_evidence_assessment=evidence_gate_enabled,
+                    evidence_assessment=evidence_assessment,
                     language=language,
                     strict_mode=self._is_sensitive_topic(query),  # Stricter for visa/fees
                 )
@@ -1766,36 +1848,41 @@ class EnhancedRAGModule:
                 if grounding.abstained:
                     response_mode = "abstained"
                     
-            except ImportError:
-                # Fallback to legacy enforce_grounding if improved not available
+            except ImportError as improved_error:
                 try:
                     from trust import enforce_grounding
-                    grounding = enforce_grounding(
+                    enforce_grounding(
                         response,
                         results,
                         threshold=self._retrieval_config.get("abstention_threshold", 0.4),
                         language=language,
                     )
-                    response = grounding.answer
-                    if grounding.abstained:
-                        response_mode = "abstained"
-                except Exception as e:
-                    print(f"[RAG] Grounding guard (legacy) failed: {e}")
-            except Exception as e:
-                print(f"[RAG] Improved grounding guard failed: {e}")
+                except Exception as exc:
+                    grounding = grounding_error_result(exc)
+                else:
+                    grounding = grounding_error_result(improved_error)
+                response = grounding.answer
+                response_mode = "abstained"
+            except Exception as exc:
+                grounding = grounding_error_result(exc)
+                response = grounding.answer
+                response_mode = "abstained"
 
         # Calculate faithfulness BEFORE using it in payload
         faithfulness = None
+        grounding_score = None
         if grounding is not None:
-            faithfulness = round(grounding.score, 3)
+            faithfulness = round(grounding.faithfulness_score, 3)
+            grounding_score = round(grounding.score, 3)
         else:
             try:
                 from trust import estimate_faithfulness
                 contexts = [r.get('content', '') for r in results]
                 if contexts:
                     faithfulness = round(estimate_faithfulness(response, contexts), 3)
-            except Exception as e:
-                print(f"[RAG] Faithfulness estimate failed: {e}")
+                    grounding_score = faithfulness
+            except Exception as error:
+                print(f"[RAG] Faithfulness estimate failed: error_type={type(error).__name__}")
 
         payload = {
             'query': query,
@@ -1805,7 +1892,9 @@ class EnhancedRAGModule:
             'context_type': context_type,
             'search_mode': search_mode,
             'response_mode': response_mode,
-            'grounding_score': faithfulness if faithfulness is not None else 0,
+            'grounding_score': grounding_score if grounding_score is not None else 0,
+            'grounded': False if grounding is None else grounding.grounded,
+            'abstained': response_mode == 'abstained',
             'language': language,
             'session_id': session_id
         }
@@ -1820,7 +1909,26 @@ class EnhancedRAGModule:
                 'explanation': getattr(grounding, 'explanation', ''),  # NEW: Why this level
                 'matched_entities': getattr(grounding, 'matched_entities', []),  # NEW: What matched
                 'missing_entities': getattr(grounding, 'missing_entities', []),  # NEW: What's missing
+                'faithfulness_score': round(grounding.faithfulness_score, 3),
             }
+            if grounding.evidence_assessment is not None:
+                assessment = grounding.evidence_assessment
+                payload['grounding']['evidence_assessment'] = {
+                    'sufficient': assessment.sufficient,
+                    'score': round(assessment.score, 3),
+                    'query_relevance': round(assessment.query_relevance, 3),
+                    'query_term_coverage': round(assessment.query_term_coverage, 3),
+                    'query_entity_coverage': round(assessment.query_entity_coverage, 3),
+                    'requested_slot_coverage': assessment.requested_slot_coverage,
+                    'retrieval_confidence': round(assessment.retrieval_confidence, 3),
+                    'reasons': assessment.reasons,
+                    'query_terms': assessment.query_terms,
+                    'matched_terms': assessment.matched_terms,
+                    'missing_terms': assessment.missing_terms,
+                    'query_entities': assessment.query_entities,
+                    'matched_entities': assessment.matched_entities,
+                    'missing_entities': assessment.missing_entities,
+                }
 
         # ===== AI transparency metrics (non-destructive, informational) =====
         # Per-source retrieval scores.
@@ -1862,8 +1970,8 @@ class EnhancedRAGModule:
         
         # ============ WEB SEARCH FALLBACK (LOW GROUNDING) ============
         # If grounding score is low, try to acquire knowledge from web
-        grounding_score = faithfulness if faithfulness is not None else 0
-        if grounding_score < 0.4 and response_mode in ('abstained', 'llm'):
+        grounding_score = grounding_score if grounding_score is not None else 0
+        if (grounding_score < 0.4 and response_mode in ('abstained', 'llm') and evidence_sufficient and not (grounding is not None and grounding.explanation == 'grounding_evaluation_error')):
             try:
                 from knowledge_acquisition import KnowledgeAcquisitionAgent
                 print(f"[WEB_SEARCH] grounding_score={grounding_score:.2f}, threshold=0.4")

@@ -325,16 +325,123 @@ class TestEnhancedRAGModule:
             answer="Недостаточно проверенной информации.",
             grounded=False,
             score=0.10,
+            faithfulness_score=0.80,
             abstained=True,
             citations=[],
+            evidence_assessment=None,
         )
-        with patch("trust.enforce_grounding", return_value=abstained):
+        with patch("trust.enforce_grounding_improved", return_value=abstained):
             out = rag.search_and_generate("qwerty zxcvbnm", language="ru")
 
         assert out["response_mode"] == "abstained"
         assert out["response"] == "Недостаточно проверенной информации."
         assert out["grounding"]["abstained"] is True
         assert out["grounding"]["score"] < 0.35
+        assert out["ai_metrics"]["faithfulness"] == 0.80
+
+    def test_rag_fallback_retrieval_is_insufficient(self):
+        """El fallback legacy debe propagarse y cerrar la compuerta de evidencia."""
+        rag = EnhancedRAGModule(use_llm=False)
+
+        out = rag.search_and_generate("qwerty zxcvbnm", language="es")
+
+        assert out["search_mode"] == "fallback"
+        assert out["response_mode"] == "abstained"
+        assert out["grounding"]["abstained"] is True
+        assert out["grounding"]["evidence_assessment"]["sufficient"] is False
+        assert "fallback_retrieval" in out["grounding"]["evidence_assessment"]["reasons"]
+
+    def test_evidence_assessment_exception_abstains_fail_closed(self):
+        rag = EnhancedRAGModule(use_llm=False)
+
+        with patch(
+            "trust.assess_evidence_sufficiency",
+            side_effect=RuntimeError("controlled evidence failure"),
+        ), patch("knowledge_acquisition.KnowledgeAcquisitionAgent") as acquisition:
+            out = rag.search_and_generate("Регистрация иностранцев", language="ru")
+
+        assert out["response_mode"] == "abstained"
+        assert "недостаточно проверенной информации" in out["response"].lower()
+        assert out["abstained"] is True
+        assert out["grounded"] is False
+        assert out["grounding"]["grounded"] is False
+        assert out["grounding_score"] == 0
+        assert out["grounding"]["evidence_assessment"]["score"] == 0
+        assert out["grounding"]["evidence_assessment"]["requested_slot_coverage"] is False
+        assert out["grounding"]["evidence_assessment"]["reasons"] == [
+            "evidence_assessment_error"
+        ]
+        acquisition.assert_not_called()
+
+    def test_improved_grounding_exception_abstains_fail_closed(self):
+        rag = EnhancedRAGModule(use_llm=False)
+
+        with patch(
+            "trust.enforce_grounding_improved",
+            side_effect=RuntimeError("controlled grounding failure"),
+        ), patch("knowledge_acquisition.KnowledgeAcquisitionAgent") as acquisition:
+            out = rag.search_and_generate("Общежитие", language="ru")
+
+        assert out["response_mode"] == "abstained"
+        assert out["response"] == ""
+        assert out["abstained"] is True
+        assert out["grounded"] is False
+        assert out["grounding"]["grounded"] is False
+        assert out["grounding"]["abstained"] is True
+        assert out["grounding"]["score"] == 0
+        assert out["grounding"]["level"] == "low"
+        assert out["grounding"]["explanation"] == "grounding_evaluation_error"
+        assert out["grounding_score"] == 0
+        acquisition.assert_not_called()
+
+    def test_legacy_grounding_exception_abstains_fail_closed(self):
+        rag = EnhancedRAGModule(use_llm=False)
+
+        with patch(
+            "trust.enforce_grounding_improved",
+            side_effect=ImportError("controlled improved guard absence"),
+        ), patch(
+            "trust.enforce_grounding",
+            side_effect=RuntimeError("controlled legacy guard failure"),
+        ), patch("knowledge_acquisition.KnowledgeAcquisitionAgent") as acquisition:
+            out = rag.search_and_generate("Общежитие", language="ru")
+
+        assert out["response_mode"] == "abstained"
+        assert out["response"] == ""
+        assert out["abstained"] is True
+        assert out["grounded"] is False
+        assert out["grounding"]["grounded"] is False
+        assert out["grounding"]["abstained"] is True
+        assert out["grounding_score"] == 0
+        acquisition.assert_not_called()
+
+    def test_legacy_grounding_result_cannot_permit_failed_improved_guard(self):
+        rag = EnhancedRAGModule(use_llm=False)
+        permissive_legacy_result = SimpleNamespace(
+            answer="usable but unverified answer",
+            grounded=True,
+            score=1.0,
+            faithfulness_score=1.0,
+            abstained=False,
+            citations=[],
+            evidence_assessment=None,
+        )
+
+        with patch(
+            "trust.enforce_grounding_improved",
+            side_effect=ImportError("controlled improved guard absence"),
+        ), patch(
+            "trust.enforce_grounding",
+            return_value=permissive_legacy_result,
+        ):
+            out = rag.search_and_generate("Общежитие", language="ru")
+
+        assert out["response"] == ""
+        assert out["response_mode"] == "abstained"
+        assert out["abstained"] is True
+        assert out["grounded"] is False
+        assert out["grounding_score"] == 0
+        assert out["grounding"]["explanation"] == "grounding_evaluation_error"
 
     def test_rag_fallback_mode_without_llm(self):
         """Sin LLM disponible, la respuesta se genera en modo template.
