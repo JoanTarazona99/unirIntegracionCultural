@@ -121,6 +121,8 @@ data/audio/
 *.temp
 *.pid
 .tmp/
+.github/agents/
+.neural_extended_114_20260830_v1.staging/
 
 # Telegram bot
 telegram_bot/.telegram_session
