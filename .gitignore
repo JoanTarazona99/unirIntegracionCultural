@@ -110,6 +110,7 @@ redis_dump.rdb
 *.ogg
 data/tts_cache/
 data/audio/
+data/kb_scheduler.leader.lock
 
 # Backup files
 *_BACKUP*.docx
@@ -154,3 +155,4 @@ docs/_build/
 # ====================================
 !.env.example
 !requirements*.txt
+artifacts/
