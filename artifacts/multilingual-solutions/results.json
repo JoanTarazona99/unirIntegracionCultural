@@ -1,0 +1,291 @@
+{
+  "protocol": {
+    "state_root": "C:\\xampp\\htdocs\\proyectos\\unirIntegracionCultural\\artifacts\\real-source-tests\\spbu-20260901\\state",
+    "rehydrated_chunks": 45,
+    "spbu_chunks": 1,
+    "network_allowed": false,
+    "benchmarks_executed": false
+  },
+  "existing_alias_configuration": "none for SPbU/UNAM/UBA",
+  "experiment_1_explicit_alias_queries_keyword": [
+    {
+      "query": "¿Qué programas ofrece SpbU?",
+      "sources_found": 1,
+      "top_sources": [
+        "https://kubsu.ru/faq"
+      ],
+      "relevance": [
+        0.30000000000000004
+      ],
+      "search_mode": "keyword",
+      "response_mode": "abstained",
+      "grounding_level": "low",
+      "grounding_score": 0.25,
+      "spbu_retrieved": false
+    },
+    {
+      "query": "¿Qué programas ofrece СПБГУ?",
+      "sources_found": 1,
+      "top_sources": [
+        "https://kubsu.ru/faq"
+      ],
+      "relevance": [
+        0.30000000000000004
+      ],
+      "search_mode": "keyword",
+      "response_mode": "abstained",
+      "grounding_level": "low",
+      "grounding_score": 0.174,
+      "spbu_retrieved": false
+    },
+    {
+      "query": "What programs does SpbU offer?",
+      "sources_found": 1,
+      "top_sources": [
+        "https://kubsu.ru"
+      ],
+      "relevance": [
+        0.3
+      ],
+      "search_mode": "fallback",
+      "response_mode": "abstained",
+      "grounding_level": "low",
+      "grounding_score": 0.25,
+      "spbu_retrieved": false
+    },
+    {
+      "query": "SpbU programs admission",
+      "sources_found": 1,
+      "top_sources": [
+        "https://kubsu.ru"
+      ],
+      "relevance": [
+        0.3
+      ],
+      "search_mode": "fallback",
+      "response_mode": "abstained",
+      "grounding_level": "low",
+      "grounding_score": 0.25,
+      "spbu_retrieved": false
+    }
+  ],
+  "experiment_2_manual_expanded_queries_keyword": [
+    {
+      "query": "программы образование СПБГУ курсы",
+      "sources_found": 1,
+      "top_sources": [
+        "https://spbu.ru"
+      ],
+      "relevance": [
+        0.4
+      ],
+      "search_mode": "keyword",
+      "response_mode": "template",
+      "grounding_level": "high",
+      "grounding_score": 0.932,
+      "spbu_retrieved": true
+    },
+    {
+      "query": "programas educación SpbU cursos",
+      "sources_found": 1,
+      "top_sources": [
+        "https://kubsu.ru"
+      ],
+      "relevance": [
+        0.3
+      ],
+      "search_mode": "fallback",
+      "response_mode": "abstained",
+      "grounding_level": "low",
+      "grounding_score": 0.25,
+      "spbu_retrieved": false
+    },
+    {
+      "query": "programs education SpbU courses",
+      "sources_found": 1,
+      "top_sources": [
+        "https://kubsu.ru"
+      ],
+      "relevance": [
+        0.3
+      ],
+      "search_mode": "fallback",
+      "response_mode": "abstained",
+      "grounding_level": "low",
+      "grounding_score": 0.25,
+      "spbu_retrieved": false
+    }
+  ],
+  "controlled_components": {
+    "original_query": "¿Qué programas ofrece SpbU?",
+    "legacy_tokens": [
+      "¿qué",
+      "programas",
+      "ofrece",
+      "spbu?"
+    ],
+    "unicode_tokens": [
+      "qué",
+      "programas",
+      "ofrece",
+      "spbu"
+    ],
+    "normalized_query": "qué programas ofrece spbu",
+    "expanded_query": "qué programas ofrece spbu программы образование курсы предлагает спбгу санкт петербургский университет",
+    "baseline_bm25": [
+      {
+        "rank": 1,
+        "source": "FAQ",
+        "source_url": "https://kubsu.ru/faq",
+        "score": 1.0,
+        "chunk_id": "FAQ::4"
+      },
+      {
+        "rank": 2,
+        "source": "КубГУ",
+        "source_url": "https://kubsu.ru",
+        "score": 0.9283148863502312,
+        "chunk_id": "КубГУ::4"
+      },
+      {
+        "rank": 3,
+        "source": "Документы",
+        "source_url": "https://мвд.рф",
+        "score": 0.31400496164278596,
+        "chunk_id": "Документы::2"
+      },
+      {
+        "rank": 4,
+        "source": "Русский язык",
+        "source_url": "https://kubsu.ru",
+        "score": 0.0,
+        "chunk_id": "Русский язык::1"
+      }
+    ],
+    "alias_metadata_bm25": [
+      {
+        "rank": 1,
+        "source": "FAQ",
+        "source_url": "https://kubsu.ru/faq",
+        "score": 1.0,
+        "chunk_id": "FAQ::4"
+      },
+      {
+        "rank": 2,
+        "source": "КубГУ",
+        "source_url": "https://kubsu.ru",
+        "score": 0.9617664233828236,
+        "chunk_id": "КубГУ::4"
+      },
+      {
+        "rank": 3,
+        "source": "Документы",
+        "source_url": "https://мвд.рф",
+        "score": 0.6317282279016357,
+        "chunk_id": "Документы::2"
+      },
+      {
+        "rank": 4,
+        "source": "Русский язык",
+        "source_url": "https://kubsu.ru",
+        "score": 0.4630809393001212,
+        "chunk_id": "Русский язык::1"
+      },
+      {
+        "rank": 5,
+        "source": "Saint Petersburg State University",
+        "source_url": "https://spbu.ru",
+        "score": 0.0,
+        "chunk_id": "Saint Petersburg State University::0"
+      }
+    ],
+    "query_expansion_bm25": [
+      {
+        "rank": 1,
+        "source": "Saint Petersburg State University",
+        "source_url": "https://spbu.ru",
+        "score": 1.0,
+        "chunk_id": "Saint Petersburg State University::0"
+      },
+      {
+        "rank": 2,
+        "source": "FAQ",
+        "source_url": "https://kubsu.ru/faq",
+        "score": 0.055844609474571406,
+        "chunk_id": "FAQ::4"
+      },
+      {
+        "rank": 3,
+        "source": "КубГУ",
+        "source_url": "https://kubsu.ru",
+        "score": 0.04773528163159438,
+        "chunk_id": "КубГУ::4"
+      },
+      {
+        "rank": 4,
+        "source": "Госуслуги",
+        "source_url": "https://www.gosuslugi.ru",
+        "score": 0.03887971780098317,
+        "chunk_id": "Госуслуги::2"
+      },
+      {
+        "rank": 5,
+        "source": "КубГУ",
+        "source_url": "https://kubsu.ru",
+        "score": 0.0,
+        "chunk_id": "КубГУ::0"
+      }
+    ],
+    "alias_and_query_expansion_bm25": [
+      {
+        "rank": 1,
+        "source": "Saint Petersburg State University",
+        "source_url": "https://spbu.ru",
+        "score": 1.0,
+        "chunk_id": "Saint Petersburg State University::0"
+      },
+      {
+        "rank": 2,
+        "source": "FAQ",
+        "source_url": "https://kubsu.ru/faq",
+        "score": 0.04819853128476599,
+        "chunk_id": "FAQ::4"
+      },
+      {
+        "rank": 3,
+        "source": "КубГУ",
+        "source_url": "https://kubsu.ru",
+        "score": 0.04124773101361459,
+        "chunk_id": "КубГУ::4"
+      },
+      {
+        "rank": 4,
+        "source": "Госуслуги",
+        "source_url": "https://www.gosuslugi.ru",
+        "score": 0.033565718485209006,
+        "chunk_id": "Госуслуги::2"
+      },
+      {
+        "rank": 5,
+        "source": "КубГУ",
+        "source_url": "https://kubsu.ru",
+        "score": 0.0,
+        "chunk_id": "КубГУ::0"
+      }
+    ],
+    "normalized_keyword": [
+      {
+        "source": "FAQ",
+        "source_url": "https://kubsu.ru/faq",
+        "relevance": 0.30000000000000004,
+        "search_mode": "keyword"
+      }
+    ]
+  },
+  "dense": {
+    "available": false,
+    "torch": "2.0.1+cpu",
+    "sentence_transformers": "5.6.0",
+    "transformers": "4.57.6"
+  }
+}

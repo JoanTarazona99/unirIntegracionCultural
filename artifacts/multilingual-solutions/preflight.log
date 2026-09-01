@@ -1,0 +1,5 @@
+repository_root=C:/xampp/htdocs/proyectos/unirIntegracionCultural
+branch=feature/real-source-testing
+working_tree=clean
+head=0dda598 diagnosis(multilingual): retrieval cross-lingual analysis
+diff_check=clean
