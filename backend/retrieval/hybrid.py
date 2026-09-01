@@ -106,7 +106,19 @@ class HybridRetriever(BaseRetriever):
             )
 
         fused_results = [
-            RetrievalResult(chunk=self._chunks_by_id[cid], score=score)
+            RetrievalResult(
+                chunk=self._chunks_by_id[cid],
+                score=score,
+                trace={
+                    "fusion": "rrf",
+                    "rrf_k": self.rrf_k,
+                    "rrf_score": score,
+                    "sparse_query_trace": next(
+                        (result.trace for result in sparse_results if result.chunk.id == cid),
+                        {},
+                    ),
+                },
+            )
             for cid, score in fused
             if cid in self._chunks_by_id
         ]

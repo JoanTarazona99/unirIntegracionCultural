@@ -439,6 +439,7 @@ class KnowledgeBaseRefresher:
         return [
             {
                 "source_id": "mvd_foreigners",
+                "aliases": ["МВД РФ", "Russian Ministry of Internal Affairs", "Ministerio del Interior de Rusia"],
                 "url": "https://xn--b1aew.xn--p1ai",
                 "domain": "gu-krasnodar.mvd.ru",
                 "type": "migration",
@@ -457,6 +458,7 @@ class KnowledgeBaseRefresher:
             },
             {
                 "source_id": "mfc_services",
+                "aliases": ["МФЦ", "MFC", "Multifunctional Center", "Centro multifuncional"],
                 "url": "https://mfc.gov.ru",
                 "domain": "mfc.gov.ru",
                 "type": "public_services",
@@ -475,6 +477,7 @@ class KnowledgeBaseRefresher:
             },
             {
                 "source_id": "kubgu_faq",
+                "aliases": ["КубГУ", "KubGU", "Kuban State University", "Universidad Estatal de Kubán"],
                 "url": "https://kubsu.ru",
                 "domain": "kubsu.ru",
                 "type": "faq",
@@ -493,6 +496,7 @@ class KnowledgeBaseRefresher:
             },
             {
                 "source_id": "kubgu_admission",
+                "aliases": ["КубГУ", "KubGU", "Kuban State University", "Universidad Estatal de Kubán"],
                 "url": "https://kubsu.ru",
                 "domain": "kubsu.ru",
                 "type": "admission",
@@ -1310,8 +1314,22 @@ class KnowledgeBaseRefresher:
 
                 candidate_id = candidate.get("id") or hashlib.sha1(url.encode("utf-8")).hexdigest()[:12]
                 if source is None:
+                    candidate_metadata = candidate.get("metadata", {})
+                    metadata_aliases = (
+                        candidate_metadata.get("aliases", [])
+                        if isinstance(candidate_metadata, dict)
+                        else []
+                    )
+                    configured_aliases = candidate.get("aliases", metadata_aliases)
+                    if not isinstance(configured_aliases, list):
+                        configured_aliases = []
                     source = {
                         "source_id": f"candidate_{candidate_id}",
+                        "aliases": [
+                            alias.strip()
+                            for alias in configured_aliases
+                            if isinstance(alias, str) and alias.strip()
+                        ],
                         "url": url,
                         "domain": domain,
                         "type": candidate.get("type") or "candidate",

@@ -40,7 +40,7 @@ def build_retriever(
             raise ValueError("keyword mode requires the document library instance")
         retriever: BaseRetriever = KeywordBaselineRetriever(library)
     elif mode == "bm25":
-        retriever = BM25Retriever()
+        retriever = BM25Retriever(rrf_k=rrf_k)
     elif mode == "dense":
         retriever = DenseRetriever(model_name=dense_model)
     elif mode in ("hybrid", "hybrid_rerank"):
@@ -51,7 +51,7 @@ def build_retriever(
                 strict=strict_reranker,
             )
         retriever = HybridRetriever(
-            sparse=BM25Retriever(),
+            sparse=BM25Retriever(rrf_k=rrf_k),
             dense=DenseRetriever(model_name=dense_model),
             reranker=reranker,
             rrf_k=rrf_k,

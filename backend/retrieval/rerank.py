@@ -181,7 +181,17 @@ class CrossEncoderReranker:
         
         # Create reranked results
         reranked = [
-            RetrievalResult(chunk=r.chunk, score=score)
+            RetrievalResult(
+                chunk=r.chunk,
+                score=score,
+                trace={
+                    **r.trace,
+                    "rerank": {
+                        "model": model_to_use,
+                        "score": score,
+                    },
+                },
+            )
             for r, score in zip(results, norm)
         ]
         

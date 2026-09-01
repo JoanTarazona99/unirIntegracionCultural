@@ -10,10 +10,12 @@ queries still retrieve Russian source chunks.
 
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
-from .base import BaseRetriever, RetrievalResult, minmax_normalize
+from .base import BaseRetriever, RetrievalResult
 from .chunks import Chunk, tokenize
+from .expansion import DEFAULT_EXPANSION_VERSION, LEXICAL_EXPANSIONS, expand_query
+from .fusion import reciprocal_rank_fusion
 
 try:
     from rank_bm25 import BM25Okapi
@@ -24,51 +26,17 @@ except ImportError:  # pragma: no cover - optional dependency
     _BM25_AVAILABLE = False
 
 
-# Minimal cross-lingual domain expansion. This replaces the ad-hoc keyword map
-# in enhanced_rag.py with a documented, retrieval-scoped table. Keys are ES/EN
-# stems, values are Russian domain synonyms added to the query token stream.
 DOMAIN_EXPANSION: Dict[str, List[str]] = {
-    "registro": ["регистрация", "регистрации"],
-    "registration": ["регистрация", "регистрации"],
-    "visa": ["виза", "визы", "визовый"],
-    "migracion": ["миграция", "миграционная", "миграционной"],
-    "migration": ["миграция", "миграционная"],
-    "dormitorio": ["общежитие", "общежития"],
-    "dormitory": ["общежитие"],
-    "vivienda": ["проживание", "жилье"],
-    "housing": ["проживание", "жилье"],
-    "profesor": ["преподаватель"],
-    "clase": ["урок", "занятие"],
-    "examen": ["экзамен", "экзамены"],
-    "exam": ["экзамен"],
-    "poliza": ["полис", "страхование"],
-    "seguro": ["страхование", "полис"],
-    "insurance": ["страхование", "полис"],
-    "medico": ["медицинский", "врач"],
-    "medical": ["медицинский"],
-    "pasaporte": ["паспорт"],
-    "passport": ["паспорт"],
-    "documento": ["документ", "документы"],
-    "document": ["документ", "документы"],
-    "estudiante": ["студент", "студентов"],
-    "student": ["студент", "студентов"],
-    "ruso": ["русский", "язык"],
-    "russian": ["русский", "язык"],
-    "mfc": ["мфц"],
-    "costo": ["стоимость", "цена"],
-    "cost": ["стоимость", "цена"],
-    "price": ["стоимость", "цена"],
+    term: translations
+    for language_table in LEXICAL_EXPANSIONS[DEFAULT_EXPANSION_VERSION].values()
+    for term, translations in language_table.items()
 }
+DOMAIN_EXPANSION["mfc"] = ["мфц"]
 
 
 def expand_query_tokens(tokens: List[str]) -> List[str]:
     """Append Russian domain synonyms for known ES/EN query stems."""
-    expanded = list(tokens)
-    for token in tokens:
-        synonyms = DOMAIN_EXPANSION.get(token)
-        if synonyms:
-            expanded.extend(tokenize(" ".join(synonyms)))
-    return expanded
+    return tokenize(expand_query(" ".join(tokens), "auto", "ru"))
 
 
 class BM25Retriever(BaseRetriever):
@@ -76,10 +44,19 @@ class BM25Retriever(BaseRetriever):
 
     name = "bm25"
 
-    def __init__(self, use_query_expansion: bool = True):
+    def __init__(
+        self,
+        use_query_expansion: bool = True,
+        rrf_k: int = 60,
+        expansion_version: str = DEFAULT_EXPANSION_VERSION,
+        candidate_multiplier: int = 1,
+    ):
         self._chunks: List[Chunk] = []
         self._bm25 = None
         self._use_query_expansion = use_query_expansion
+        self._rrf_k = rrf_k
+        self._expansion_version = expansion_version
+        self._candidate_multiplier = candidate_multiplier
 
     def is_available(self) -> bool:
         return _BM25_AVAILABLE
@@ -96,25 +73,77 @@ class BM25Retriever(BaseRetriever):
             corpus_tokens = [[""]]
         self._bm25 = BM25Okapi(corpus_tokens)
 
-    def search(self, query: str, top_k: int = 5) -> List[RetrievalResult]:
-        if self._bm25 is None or not self._chunks:
-            return []
+    def _rank(self, query: str, top_k: int) -> List[Tuple[int, float]]:
         tokens = tokenize(query)
-        if self._use_query_expansion:
-            tokens = expand_query_tokens(tokens)
         if not tokens:
             return []
-
         raw_scores = list(self._bm25.get_scores(tokens))
         ranked = sorted(
             range(len(raw_scores)), key=lambda i: raw_scores[i], reverse=True
         )
         ranked = [i for i in ranked if raw_scores[i] > 0][:top_k]
-        if not ranked:
+        return [(idx, raw_scores[idx]) for idx in ranked]
+
+    def search(self, query: str, top_k: int = 5) -> List[RetrievalResult]:
+        if self._bm25 is None or not self._chunks:
             return []
 
-        norm = minmax_normalize([raw_scores[i] for i in ranked])
-        return [
-            RetrievalResult(chunk=self._chunks[idx], score=score)
-            for idx, score in zip(ranked, norm)
-        ]
+        candidate_k = max(top_k * self._candidate_multiplier, top_k)
+        original = self._rank(query, candidate_k)
+        expanded_query = (
+            expand_query(
+                query,
+                "auto",
+                "ru",
+                version=self._expansion_version,
+            )
+            if self._use_query_expansion
+            else query
+        )
+        rankings = [[self._chunks[idx].id for idx, _ in original]]
+        expanded: List[Tuple[int, float]] = []
+        if expanded_query != query:
+            original_token_count = len(tokenize(query))
+            translated_query = " ".join(tokenize(expanded_query)[original_token_count:])
+            expanded = self._rank(translated_query, candidate_k)
+            rankings.append([self._chunks[idx].id for idx, _ in expanded])
+        if not any(rankings):
+            return []
+
+        fused = reciprocal_rank_fusion(rankings, k=self._rrf_k)
+        chunks_by_id = {chunk.id: chunk for chunk in self._chunks}
+        original_ranks = {
+            self._chunks[idx].id: rank
+            for rank, (idx, _) in enumerate(original, start=1)
+        }
+        expanded_ranks = {
+            self._chunks[idx].id: rank
+            for rank, (idx, _) in enumerate(expanded, start=1)
+        }
+        results: List[RetrievalResult] = []
+        for chunk_id, score in fused[:top_k]:
+            query_hits = []
+            if chunk_id in original_ranks:
+                query_hits.append({
+                    "variant": "original",
+                    "query": query,
+                    "rank": original_ranks[chunk_id],
+                })
+            if chunk_id in expanded_ranks:
+                query_hits.append({
+                    "variant": "expanded",
+                    "query": translated_query,
+                    "rank": expanded_ranks[chunk_id],
+                })
+            results.append(RetrievalResult(
+                chunk=chunks_by_id[chunk_id],
+                score=score,
+                trace={
+                    "fusion": "rrf",
+                    "rrf_k": self._rrf_k,
+                    "rrf_score": score,
+                    "expansion_version": self._expansion_version,
+                    "query_hits": query_hits,
+                },
+            ))
+        return results

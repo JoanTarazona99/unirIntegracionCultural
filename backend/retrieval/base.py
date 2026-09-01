@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import List, Tuple
+from dataclasses import dataclass, field
+from typing import Dict, List, Tuple
 
 from .chunks import Chunk
 
@@ -14,6 +14,7 @@ class RetrievalResult:
 
     chunk: Chunk
     score: float
+    trace: Dict = field(default_factory=dict)
 
 
 class BaseRetriever:

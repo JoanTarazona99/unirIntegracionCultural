@@ -14,6 +14,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import time
 import uuid
 from datetime import datetime
@@ -199,7 +200,8 @@ class SemanticSearchEngine:
 
             for doc in documents:
                 # Combine title and content for embedding
-                text = f"{doc.get('title', '')} {doc.get('content', '')}"
+                aliases = " ".join(doc.get('aliases', []) or [])
+                text = f"{aliases} {doc.get('title', '')} {doc.get('content', '')}"
                 texts.append(text)
                 self.documents.append(doc)
 
@@ -290,6 +292,32 @@ class OfficialDocumentLibrary:
             return False
         parsed = urlparse(value)
         return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+    @staticmethod
+    def _source_aliases(source: Dict) -> List[str]:
+        """Return configured aliases plus stable source identity variants."""
+        raw_aliases = source.get("aliases", [])
+        if not isinstance(raw_aliases, list):
+            raw_aliases = []
+        parsed = urlparse(str(source.get("url") or ""))
+        hostname_alias = parsed.netloc.lower().removeprefix("www.").split(".")[0]
+        candidates = [
+            *raw_aliases,
+            source.get("target_source"),
+            source.get("source_id"),
+            hostname_alias,
+        ]
+        aliases: List[str] = []
+        seen = set()
+        for candidate in candidates:
+            if not isinstance(candidate, str) or not candidate.strip():
+                continue
+            normalized = candidate.strip()
+            key = normalized.casefold()
+            if key not in seen:
+                aliases.append(normalized)
+                seen.add(key)
+        return aliases
 
     def _rehydrate_active_sources(self) -> None:
         """Load active persisted versions without mutating the state repository."""
@@ -439,6 +467,7 @@ class OfficialDocumentLibrary:
                     refresh_section_id=source_id,
                     version_id=version_id,
                     source_url=source_url,
+                    aliases=self._source_aliases(source),
                     rebuild_flat_documents=False,
                 )
             except Exception as exc:
@@ -499,6 +528,7 @@ class OfficialDocumentLibrary:
                 self.flat_documents.append({
                     'source': source_name,
                     'source_url': doc.get('url'),
+                    'aliases': list(doc.get('aliases', []) or []),
                     'title': section.get('title'),
                     'content': section.get('content', '').strip(),
                     'chunk_id': section.get('chunk_id'),
@@ -1571,7 +1601,7 @@ class OfficialDocumentLibrary:
         """Fallback keyword-based search with synonym expansion"""
         results = []
         query_lower = query.lower()
-        query_words = set(query_lower.split())
+        query_words = set(re.findall(r"\w+", query_lower, re.UNICODE))
 
         # Keyword mapping (Spanish/Russian synonyms)
         keyword_mapping = {
@@ -1629,6 +1659,16 @@ class OfficialDocumentLibrary:
         # Search in all documents
         for source_name in self.documents.keys():
             doc = self.documents[source_name]
+            aliases = [
+                alias.lower()
+                for alias in doc.get('aliases', [])
+                if isinstance(alias, str)
+            ]
+            alias_words = {
+                word
+                for alias in aliases
+                for word in re.findall(r"\w+", alias, re.UNICODE)
+            }
 
             for section in doc.get('sections', []):
                 if section.get('is_active') is False:
@@ -1642,6 +1682,8 @@ class OfficialDocumentLibrary:
                 # PRIORITY BOOST: If query is about КубГУ location and section is about location/contacts
                 if is_kubgu_location_query and source_name == 'КубГУ' and ('расположение' in title or 'контактная' in title or 'адрес' in title):
                     match_score = 1.0  # Maximum priority for КубГУ location sections
+                elif query_words.intersection(alias_words):
+                    match_score = 0.9
                 elif query_lower in title:
                     match_score = 1.0
                 elif query_lower in content:
@@ -1717,6 +1759,7 @@ class OfficialDocumentLibrary:
         refresh_section_id: str,
         version_id: str,
         source_url: Optional[str] = None,
+        aliases: Optional[List[str]] = None,
         rebuild_flat_documents: bool = True,
     ) -> List[str]:
         """Insert/update a refresh-managed section and mark previous version inactive."""
@@ -1730,6 +1773,8 @@ class OfficialDocumentLibrary:
         doc = self.documents[source_key]
         if source_url:
             doc['url'] = source_url
+        if aliases is not None:
+            doc['aliases'] = list(aliases)
 
         sections = doc.setdefault('sections', [])
         chunk_id = f"refresh:{refresh_section_id}:{version_id}"
@@ -1851,7 +1896,12 @@ class EnhancedRAGModule:
                 try:
                     hits = retriever.search(query, top_k=self._retrieval_config["top_k"])
                     if hits:
-                        results = [h.chunk.to_result_dict(h.score, mode) for h in hits]
+                        results = []
+                        for hit in hits:
+                            result = hit.chunk.to_result_dict(hit.score, mode)
+                            if hit.trace:
+                                result["retrieval_trace"] = dict(hit.trace)
+                            results.append(result)
                         return results, mode
                 except Exception as e:
                     print(f"[RAG] Advanced retrieval failed ({mode}): {e}")
@@ -1875,6 +1925,7 @@ class EnhancedRAGModule:
             refresh_section_id=refresh_section_id,
             version_id=version_id,
             source_url=source.get('url'),
+            aliases=self.document_library._source_aliases(source),
         )
 
         # Retriever and semantic index are rebuilt lazily only when needed.

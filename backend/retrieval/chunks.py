@@ -38,8 +38,10 @@ class Chunk:
 
     @property
     def text(self) -> str:
-        """Concatenated title + content used for indexing and embeddings."""
-        return f"{self.title}\n{self.content}".strip()
+        """Concatenated aliases, title, and content used for retrieval indexing."""
+        aliases = self.metadata.get("aliases", [])
+        alias_text = " ".join(aliases) if isinstance(aliases, list) else ""
+        return f"{alias_text}\n{self.title}\n{self.content}".strip()
 
     def to_result_dict(self, relevance: float, search_mode: str) -> Dict:
         """Render as the dict shape expected by the rest of the RAG pipeline."""
@@ -51,6 +53,7 @@ class Chunk:
             "content": self.content.strip(),
             "relevance": float(relevance),
             "search_mode": search_mode,
+            "metadata": dict(self.metadata),
         }
 
 
@@ -69,6 +72,7 @@ def build_chunks_from_flat(flat_documents: List[Dict]) -> List[Chunk]:
                 title=doc.get("title", "") or "",
                 content=(doc.get("content", "") or "").strip(),
                 source_url=doc.get("source_url"),
+                metadata={"aliases": list(doc.get("aliases", []) or [])},
             )
         )
     return chunks
@@ -109,6 +113,7 @@ def build_chunks_from_library(library) -> List[Chunk]:
                     title=section.get("title", "") or "",
                     content=(section.get("content", "") or "").strip(),
                     source_url=url,
+                    metadata={"aliases": list(doc.get("aliases", []) or [])},
                 )
             )
     return chunks

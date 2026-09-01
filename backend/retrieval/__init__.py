@@ -16,6 +16,7 @@ from .sparse import BM25Retriever
 from .dense import DenseRetriever
 from .hybrid import HybridRetriever
 from .factory import build_retriever
+from .expansion import DEFAULT_EXPANSION_VERSION, expand_query
 
 __all__ = [
     "Chunk",
@@ -28,4 +29,6 @@ __all__ = [
     "DenseRetriever",
     "HybridRetriever",
     "build_retriever",
+    "DEFAULT_EXPANSION_VERSION",
+    "expand_query",
 ]
