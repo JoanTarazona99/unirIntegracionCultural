@@ -1,6 +1,7 @@
-"""
-Knowledge Integrator - Automatic KB enhancement from web sources
-Monitors acquisition_log.json and integrates successful web findings into the knowledge base
+"""Deprecated legacy knowledge integrator.
+
+Automatic incorporation is handled exclusively by the transactional acquisition
+pipeline. This module remains import-compatible but cannot modify source code.
 """
 
 import json
@@ -14,7 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class KnowledgeIntegrator:
-    """Automatically integrate web-acquired knowledge into the KB"""
+    """Read legacy integration status without incorporating acquired content."""
     
     def __init__(self, project_root: str = None):
         """Initialize integrator with paths"""
@@ -64,18 +65,23 @@ class KnowledgeIntegrator:
             logger.error(f"Error saving integration log: {e}")
     
     def get_pending_acquisitions(self) -> List[Dict]:
-        """Get successful acquisitions that haven't been integrated yet"""
+        """Return only complete indexed events not present in the legacy log."""
         acq_log = self.load_acquisition_log()
         integ_log = self.load_integration_log()
         
-        # Track which queries have been integrated
-        integrated_queries = {entry.get('query') for entry in integ_log}
+        integrated_versions = {
+            (entry.get('source_id'), entry.get('version_id'))
+            for entry in integ_log
+        }
         
-        # Return successful acquisitions not yet integrated
+        # Defense in depth: incomplete or rejected events are never eligible.
         pending = [
             entry for entry in acq_log 
-            if entry.get('success') is True 
-            and entry.get('query') not in integrated_queries
+            if entry.get('transaction_success') is True
+            and entry.get('status') == 'indexed'
+            and entry.get('source_id')
+            and entry.get('version_id')
+            and (entry.get('source_id'), entry.get('version_id')) not in integrated_versions
         ]
         
         return pending
@@ -329,110 +335,25 @@ class KnowledgeIntegrator:
         }
 '''
     
-    def integrate_pending(self, auto_add: bool = True) -> Dict:
-        """
-        Process pending acquisitions and integrate into KB
-        
-        Args:
-            auto_add: If True, add sections to enhanced_rag.py automatically
-        
-        Returns:
-            Dict with integration results
-        """
-        pending = self.get_pending_acquisitions()
-        
-        if not pending:
-            return {
-                'status': 'no_pending',
-                'message': 'No pending acquisitions to integrate',
-                'count': 0
-            }
-        
-        logger.info(f"Found {len(pending)} pending acquisitions for integration")
-        
-        integrated = []
-        failed = []
-        
-        for acquisition in pending:
-            try:
-                query = acquisition.get('query', '')
-                source_url = acquisition.get('source_url', '')
-                
-                # Create section code
-                result = self.create_section_from_query(query, source_url)
-                if not result:
-                    failed.append({
-                        'query': query,
-                        'reason': 'Could not classify query type'
-                    })
-                    continue
-                
-                section_name, section_code = result
-                
-                # Add to enhanced_rag.py if requested
-                if auto_add:
-                    self._add_section_to_rag(section_code)
-                
-                integrated.append({
-                    'timestamp': datetime.now().isoformat(),
-                    'query': query,
-                    'source_url': source_url,
-                    'section_name': section_name,
-                    'status': 'integrated'
-                })
-                
-                logger.info(f"✅ Integrated: {section_name} from query: {query}")
-                
-            except Exception as e:
-                failed.append({
-                    'query': acquisition.get('query'),
-                    'error': str(e)
-                })
-                logger.error(f"Failed to integrate {acquisition.get('query')}: {e}")
-        
-        # Update integration log
-        current_log = self.load_integration_log()
-        current_log.extend(integrated)
-        self._save_integration_log(current_log)
-        
-        result = {
-            'status': 'success',
-            'integrated_count': len(integrated),
-            'failed_count': len(failed),
-            'integrated': integrated,
-            'failed': failed
+    def integrate_pending(self, auto_add: bool = False) -> Dict:
+        """Refuse legacy integration; the transactional pipeline owns indexing."""
+        logger.warning(
+            "KnowledgeIntegrator is deprecated and disabled; "
+            "use KnowledgeBaseRefresher.acquire_refresh_and_index_candidate"
+        )
+        return {
+            'status': 'deprecated_disabled',
+            'message': 'Legacy integration is disabled; no source code was modified',
+            'integrated_count': 0,
+            'failed_count': 0,
+            'integrated': [],
+            'failed': [],
         }
-        
-        logger.info(f"Integration complete: {len(integrated)} integrated, {len(failed)} failed")
-        return result
     
     def _add_section_to_rag(self, section_code: str):
-        """Add section code to enhanced_rag.py before the load_from_json method"""
-        try:
-            with open(self.enhanced_rag_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # Find insertion point (before load_from_json method)
-            insertion_marker = '    def load_from_json'
-            
-            if insertion_marker not in content:
-                logger.warning("Could not find insertion point in enhanced_rag.py")
-                return False
-            
-            # Insert the new section
-            insertion_point = content.find(insertion_marker)
-            new_content = content[:insertion_point] + section_code + '\n\n        ' + content[insertion_point:]
-            
-            # Write back
-            with open(self.enhanced_rag_path, 'w', encoding='utf-8') as f:
-                f.write(new_content)
-            
-            logger.info(f"✅ Added section to enhanced_rag.py")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error adding section to enhanced_rag.py: {e}")
-            return False
+        """Refuse legacy source-code mutation."""
+        logger.warning("Legacy enhanced_rag.py mutation is disabled")
+        return False
     
     def get_integration_status(self) -> Dict:
         """Get status of integration process"""

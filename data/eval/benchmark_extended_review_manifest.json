@@ -1,0 +1,40 @@
+{
+  "review_version": "kubgu-human-review-template-v1",
+  "review_file": "benchmark_extended_review_template.jsonl",
+  "schema": "kubgu-benchmark-human-review-jsonl-v1",
+  "sha256": "077c8dc68a9840a6007c2d8cd5e6bb4f8d527324cbf7028af6fcf72542e23ac8",
+  "source_benchmark_file": "benchmark_extended.jsonl",
+  "source_benchmark_sha256": "13da665537e8348a45192819e3c9814c08215adac43d87e2bdd44e35650580ef",
+  "total_records": 132,
+  "review_status_counts": {
+    "pending": 132
+  },
+  "languages": {
+    "en": 44,
+    "es": 44,
+    "ru": 44
+  },
+  "categories": {
+    "admin": 21,
+    "communication": 6,
+    "cultural_adaptation": 6,
+    "documents": 9,
+    "education": 9,
+    "employment": 3,
+    "finance": 12,
+    "food": 3,
+    "health": 12,
+    "housing": 9,
+    "language": 9,
+    "legal_rights": 3,
+    "migration": 6,
+    "safety": 6,
+    "scholarships": 3,
+    "transport": 6,
+    "visa": 9
+  },
+  "annotation_status": "synthetic_needs_human_review",
+  "used_for_official_metrics": false,
+  "official_evaluation_eligible": false,
+  "official_metrics_notice": "This review template is not eligible for official evaluation metrics."
+}

@@ -30,12 +30,18 @@ NOTE (nombres reales vs. enunciado):
   (РЖД / аэропорт no están en enhanced_rag.py, sino en data/rag_database.json).
 """
 
+import hashlib
+import logging
+
 import pytest
 import numpy as np
 from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
 
 import enhanced_rag
+from app.domain.exceptions import RAGError
+from app.services import rag_service
+from app.services.rag_service import RAGService
 from enhanced_rag import (
     SemanticSearchEngine,
     OfficialDocumentLibrary,
@@ -314,21 +320,137 @@ class TestEnhancedRAGModule:
         rag = EnhancedRAGModule(use_llm=False)
         rag._retrieval_config["citation_guard"] = True
         rag._retrieval_config["abstention_threshold"] = 0.35
+        rag._retrieval_config["enable_external_search"] = False
 
         abstained = SimpleNamespace(
             answer="Недостаточно проверенной информации.",
             grounded=False,
             score=0.10,
+            faithfulness_score=0.80,
             abstained=True,
             citations=[],
+            evidence_assessment=None,
         )
-        with patch("trust.enforce_grounding", return_value=abstained):
+        with patch("trust.enforce_grounding_improved", return_value=abstained):
             out = rag.search_and_generate("qwerty zxcvbnm", language="ru")
 
         assert out["response_mode"] == "abstained"
         assert out["response"] == "Недостаточно проверенной информации."
         assert out["grounding"]["abstained"] is True
         assert out["grounding"]["score"] < 0.35
+        assert out["ai_metrics"]["faithfulness"] == 0.80
+
+    def test_rag_fallback_retrieval_is_insufficient(self):
+        """El fallback legacy debe propagarse y cerrar la compuerta de evidencia."""
+        rag = EnhancedRAGModule(use_llm=False)
+        rag._retrieval_config["enable_external_search"] = False
+
+        out = rag.search_and_generate("qwerty zxcvbnm", language="es")
+
+        assert out["search_mode"] == "fallback"
+        assert out["response_mode"] == "abstained"
+        assert out["grounding"]["abstained"] is True
+        assert out["grounding"]["evidence_assessment"]["sufficient"] is False
+        assert "fallback_retrieval" in out["grounding"]["evidence_assessment"]["reasons"]
+
+    def test_evidence_assessment_exception_abstains_fail_closed(self):
+        rag = EnhancedRAGModule(use_llm=False)
+        rag._retrieval_config["enable_external_search"] = False
+
+        with patch(
+            "trust.assess_evidence_sufficiency",
+            side_effect=RuntimeError("controlled evidence failure"),
+        ), patch("knowledge_acquisition.KnowledgeAcquisitionAgent") as acquisition:
+            out = rag.search_and_generate("Регистрация иностранцев", language="ru")
+
+        assert out["response_mode"] == "abstained"
+        assert "недостаточно проверенной информации" in out["response"].lower()
+        assert out["abstained"] is True
+        assert out["grounded"] is False
+        assert out["grounding"]["grounded"] is False
+        assert out["grounding_score"] == 0
+        assert out["grounding"]["evidence_assessment"]["score"] == 0
+        assert out["grounding"]["evidence_assessment"]["requested_slot_coverage"] is False
+        assert out["grounding"]["evidence_assessment"]["reasons"] == [
+            "evidence_assessment_error"
+        ]
+        assert out["external_search"]["activated"] is False
+        acquisition.assert_not_called()
+
+    def test_improved_grounding_exception_abstains_fail_closed(self):
+        rag = EnhancedRAGModule(use_llm=False)
+        rag._retrieval_config["enable_external_search"] = False
+
+        with patch(
+            "trust.enforce_grounding_improved",
+            side_effect=RuntimeError("controlled grounding failure"),
+        ), patch("knowledge_acquisition.KnowledgeAcquisitionAgent") as acquisition:
+            out = rag.search_and_generate("Общежитие", language="ru")
+
+        assert out["response_mode"] == "abstained"
+        assert out["response"] == ""
+        assert out["abstained"] is True
+        assert out["grounded"] is False
+        assert out["grounding"]["grounded"] is False
+        assert out["grounding"]["abstained"] is True
+        assert out["grounding"]["score"] == 0
+        assert out["grounding"]["level"] == "low"
+        assert out["grounding"]["explanation"] == "grounding_evaluation_error"
+        assert out["grounding_score"] == 0
+        assert out["external_search"]["activated"] is False
+        acquisition.assert_not_called()
+
+    def test_legacy_grounding_exception_abstains_fail_closed(self):
+        rag = EnhancedRAGModule(use_llm=False)
+        rag._retrieval_config["enable_external_search"] = False
+
+        with patch(
+            "trust.enforce_grounding_improved",
+            side_effect=ImportError("controlled improved guard absence"),
+        ), patch(
+            "trust.enforce_grounding",
+            side_effect=RuntimeError("controlled legacy guard failure"),
+        ), patch("knowledge_acquisition.KnowledgeAcquisitionAgent") as acquisition:
+            out = rag.search_and_generate("Общежитие", language="ru")
+
+        assert out["response_mode"] == "abstained"
+        assert out["response"] == ""
+        assert out["abstained"] is True
+        assert out["grounded"] is False
+        assert out["grounding"]["grounded"] is False
+        assert out["grounding"]["abstained"] is True
+        assert out["grounding_score"] == 0
+        assert out["external_search"]["activated"] is False
+        acquisition.assert_not_called()
+
+    def test_legacy_grounding_result_cannot_permit_failed_improved_guard(self):
+        rag = EnhancedRAGModule(use_llm=False)
+        rag._retrieval_config["enable_external_search"] = False
+        permissive_legacy_result = SimpleNamespace(
+            answer="usable but unverified answer",
+            grounded=True,
+            score=1.0,
+            faithfulness_score=1.0,
+            abstained=False,
+            citations=[],
+            evidence_assessment=None,
+        )
+
+        with patch(
+            "trust.enforce_grounding_improved",
+            side_effect=ImportError("controlled improved guard absence"),
+        ), patch(
+            "trust.enforce_grounding",
+            return_value=permissive_legacy_result,
+        ):
+            out = rag.search_and_generate("Общежитие", language="ru")
+
+        assert out["response"] == ""
+        assert out["response_mode"] == "abstained"
+        assert out["abstained"] is True
+        assert out["grounded"] is False
+        assert out["grounding_score"] == 0
+        assert out["grounding"]["explanation"] == "grounding_evaluation_error"
 
     def test_rag_fallback_mode_without_llm(self):
         """Sin LLM disponible, la respuesta se genera en modo template.
@@ -343,6 +465,184 @@ class TestEnhancedRAGModule:
             out = rag.search_and_generate("Общежитие", language="es")
         assert out["response_mode"] == "template"
         assert isinstance(out["response"], str) and out["response"].strip()
+
+
+class TestRAGPrivacy:
+    class _PayloadError(RuntimeError):
+        def __init__(self, response, context):
+            super().__init__("controlled RAG failure")
+            self.response = response
+            self.context = context
+
+    @staticmethod
+    def _clear_privacy_environment(monkeypatch):
+        for name in (
+            "ENVIRONMENT",
+            "LOG_RAW_QUERIES",
+            "LOG_RAW_RAG_PAYLOADS",
+            "RAG_DEBUG",
+        ):
+            monkeypatch.delenv(name, raising=False)
+
+    def test_rag_error_redacts_query_and_preserves_metadata(self, monkeypatch):
+        self._clear_privacy_environment(monkeypatch)
+        private_query = "consulta privada codigo QUERY-SECRET-2026"
+        module = MagicMock()
+        module.search_and_generate.side_effect = RuntimeError(private_query)
+        service = RAGService(module)
+
+        with patch.object(rag_service, "logger") as logger_spy, pytest.raises(RAGError) as raised:
+            service.search(private_query, correlation_id="corr-private")
+
+        serialized = repr(raised.value.to_dict()) + repr(logger_spy.error.call_args)
+        assert private_query not in serialized
+        assert private_query[:20] not in serialized
+        assert raised.value.context["query_sha256"] == hashlib.sha256(
+            private_query.encode("utf-8")
+        ).hexdigest()
+        assert raised.value.context["query_length"] == len(private_query)
+        assert raised.value.context["error_type"] == "RuntimeError"
+        assert raised.value.context["correlation_id"] == "corr-private"
+
+    def test_rag_error_redacts_response_and_context_with_hashes(self, monkeypatch):
+        self._clear_privacy_environment(monkeypatch)
+        private_response = "respuesta privada codigo RESPONSE-SECRET-2026"
+        private_context = {"chunk": "contenido privado CHUNK-SECRET-2026"}
+        module = MagicMock()
+        module.search_and_generate.side_effect = self._PayloadError(
+            private_response,
+            private_context,
+        )
+        service = RAGService(module)
+
+        with pytest.raises(RAGError) as raised:
+            service.search("consulta segura")
+
+        serialized = repr(raised.value.to_dict())
+        assert private_response not in serialized
+        assert private_context["chunk"] not in serialized
+        assert raised.value.context["response_sha256"] == hashlib.sha256(
+            private_response.encode("utf-8")
+        ).hexdigest()
+        assert raised.value.context["response_length"] == len(private_response)
+        assert raised.value.context["context_sha256"]
+        assert raised.value.context["context_length"] > 0
+
+    def test_rag_debug_redacts_response_chunks_and_sanitizes_url(
+        self,
+        monkeypatch,
+        caplog,
+        capsys,
+    ):
+        self._clear_privacy_environment(monkeypatch)
+        monkeypatch.setenv("RAG_DEBUG", "true")
+        private_query = "consulta privada QUERY-DEBUG-2026"
+        private_response = "respuesta privada RESPONSE-DEBUG-2026"
+        private_chunk = "contenido privado CHUNK-DEBUG-2026"
+        source_url = "https://user@example.org/admission/info?token=URL-SECRET#private"
+
+        with caplog.at_level(logging.DEBUG, logger="enhanced_rag"):
+            enhanced_rag._log_rag_debug_payload(
+                private_query,
+                private_response,
+                [{
+                    "source_id": "source-1",
+                    "source_url": source_url,
+                    "content": private_chunk,
+                }],
+            )
+
+        event = caplog.records[-1].rag_event
+        serialized = repr(event)
+        assert capsys.readouterr().out == ""
+        assert private_query not in serialized
+        assert private_response not in serialized
+        assert private_chunk not in serialized
+        assert "URL-SECRET" not in serialized
+        assert "#private" not in serialized
+        assert event["query_sha256"] == hashlib.sha256(
+            private_query.encode("utf-8")
+        ).hexdigest()
+        assert event["query_length"] == len(private_query)
+        assert event["response_sha256"] == hashlib.sha256(
+            private_response.encode("utf-8")
+        ).hexdigest()
+        assert event["response_length"] == len(private_response)
+        assert event["url_hostname"] == "example.org"
+        assert event["url_path"] == "/admission/info"
+        assert event["url_sha256"] == hashlib.sha256(source_url.encode("utf-8")).hexdigest()
+        assert event["raw_payload_logged"] is False
+        assert event["privacy_mode"] == "redacted"
+
+    def test_raw_query_flag_does_not_log_rag_payloads(self, monkeypatch):
+        self._clear_privacy_environment(monkeypatch)
+        monkeypatch.setenv("ENVIRONMENT", "development")
+        monkeypatch.setenv("LOG_RAW_QUERIES", "true")
+        monkeypatch.setenv("LOG_RAW_RAG_PAYLOADS", "false")
+        private_query = "consulta visible por opt-in"
+        private_response = "respuesta que debe permanecer privada"
+        private_chunk = "chunk que debe permanecer privado"
+        module = MagicMock()
+        module.search_and_generate.return_value = {
+            "response": private_response,
+            "sources_found": 1,
+            "sources": [{"content": private_chunk}],
+            "response_mode": "template",
+        }
+        service = RAGService(module)
+
+        with patch.object(rag_service, "logger") as logger_spy:
+            service.search(private_query)
+
+        success_log = logger_spy.info.call_args_list[-1].kwargs
+        assert success_log["query"] == private_query
+        assert private_response not in repr(success_log)
+        assert private_chunk not in repr(success_log)
+        assert success_log["response_sha256"] == hashlib.sha256(
+            private_response.encode("utf-8")
+        ).hexdigest()
+        assert success_log["raw_payload_logged"] is False
+
+    def test_both_raw_flags_require_explicit_development_fixture(
+        self,
+        monkeypatch,
+        caplog,
+    ):
+        self._clear_privacy_environment(monkeypatch)
+        monkeypatch.setenv("ENVIRONMENT", "development")
+        monkeypatch.setenv("RAG_DEBUG", "true")
+        monkeypatch.setenv("LOG_RAW_QUERIES", "true")
+        monkeypatch.setenv("LOG_RAW_RAG_PAYLOADS", "true")
+        private_query = "consulta raw de desarrollo"
+        private_response = "respuesta raw de desarrollo"
+        private_chunk = "chunk raw de desarrollo"
+
+        with caplog.at_level(logging.DEBUG, logger="enhanced_rag"):
+            enhanced_rag._log_rag_debug_payload(
+                private_query,
+                private_response,
+                [{"source_id": "source-dev", "content": private_chunk}],
+            )
+
+        event = caplog.records[-1].rag_event
+        assert event["query"] == private_query
+        assert event["response"] == private_response
+        assert event["chunks"] == [private_chunk]
+        assert event["raw_payload_logged"] is True
+        assert event["privacy_mode"] == "development_raw"
+
+        monkeypatch.setenv("ENVIRONMENT", "production")
+        with caplog.at_level(logging.DEBUG, logger="enhanced_rag"):
+            enhanced_rag._log_rag_debug_payload(
+                private_query,
+                private_response,
+                [{"source_id": "source-prod", "content": private_chunk}],
+            )
+        production_event = caplog.records[-1].rag_event
+        assert "query" not in production_event
+        assert "response" not in production_event
+        assert "chunks" not in production_event
+        assert production_event["raw_payload_logged"] is False
 
 
 # ── GRUPO E: OfficialDocumentLibrary ──────────────────────────────────────

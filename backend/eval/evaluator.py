@@ -160,12 +160,32 @@ def evaluate_retriever(
     }
 
 
-def unavailable_method(method: str, reason: str, query_count: int) -> dict:
+def unavailable_method(
+    method: str,
+    reason: str,
+    query_count: int,
+    *,
+    activation: Mapping[str, Any] | None = None,
+    errors: Sequence[str] | None = None,
+) -> dict:
     """Represent a requested method that could not be evaluated honestly."""
-    return {
+    result = {
         "method": method,
+        "requested_method": method,
+        "effective_method": "none",
+        "dense_active": False,
+        "reranker_active": False,
+        "models": {
+            "dense": None,
+            "reranker_configured": None,
+            "reranker_loaded": [],
+            "reranker_used": [],
+        },
+        "reranker_prediction_count": 0,
+        "activation_error": None,
         "status": "not_executed",
         "reason": reason,
+        "errors": list(errors or [reason]),
         "query_count": query_count,
         "evaluated_query_count": 0,
         "aggregate": {},
@@ -173,16 +193,83 @@ def unavailable_method(method: str, reason: str, query_count: int) -> dict:
         "by_category": {},
         "queries": [],
     }
+    result.update(activation or {})
+    return result
+
+
+def _method_metadata(result: Mapping[str, Any]) -> dict:
+    models = result.get("models", {})
+    return {
+        "requested_method": result.get("requested_method", result["method"]),
+        "effective_method": result.get("effective_method", result["method"]),
+        "dense_active": result.get("dense_active", False),
+        "reranker_active": result.get("reranker_active", False),
+        "dense_model": models.get("dense"),
+        "reranker_configured": models.get("reranker_configured"),
+        "reranker_loaded": json.dumps(
+            models.get("reranker_loaded", []), ensure_ascii=False
+        ),
+        "reranker_used": json.dumps(
+            models.get("reranker_used", []), ensure_ascii=False
+        ),
+        "reranker_prediction_count": result.get("reranker_prediction_count", 0),
+        "retrieval_error_count": result.get("retrieval_error_count", 0),
+    }
+
+
+def _write_group_csv(
+    path: Path,
+    results: Sequence[Mapping[str, Any]],
+    metric_names: Sequence[str],
+    *,
+    scope: str,
+    group_key: str,
+) -> None:
+    fields = [
+        "method",
+        "requested_method",
+        "effective_method",
+        "status",
+        "dense_active",
+        "reranker_active",
+        "dense_model",
+        "reranker_configured",
+        "reranker_loaded",
+        "reranker_used",
+        "reranker_prediction_count",
+        "retrieval_error_count",
+        scope,
+        "query_count",
+    ]
+    fields.extend(metric_names)
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        for result in results:
+            metadata = _method_metadata(result)
+            for group_name, group in result.get(group_key, {}).items():
+                row = {
+                    "method": result["method"],
+                    "status": result["status"],
+                    scope: group_name,
+                    "query_count": group["query_count"],
+                    **metadata,
+                    **group["metrics"],
+                }
+                writer.writerow(row)
 
 
 def write_results(report: Mapping[str, Any], output_dir: str | Path) -> dict:
-    """Serialize a report to JSON plus aggregate and per-query CSV files."""
+    """Serialize a report and its global, grouped, query and bootstrap views."""
     destination = Path(output_dir)
     destination.mkdir(parents=True, exist_ok=True)
     run_id = str(report["run"]["run_id"])
     json_path = destination / f"{run_id}.json"
     summary_path = destination / f"{run_id}_summary.csv"
     queries_path = destination / f"{run_id}_queries.csv"
+    language_path = destination / f"{run_id}_by_language.csv"
+    category_path = destination / f"{run_id}_by_category.csv"
+    bootstrap_path = destination / f"{run_id}_bootstrap.json"
 
     with json_path.open("w", encoding="utf-8", newline="") as handle:
         json.dump(report, handle, ensure_ascii=False, indent=2)
@@ -196,9 +283,17 @@ def write_results(report: Mapping[str, Any], output_dir: str | Path) -> dict:
     )
     summary_fields = [
         "method",
+        "requested_method",
+        "effective_method",
         "status",
-        "scope",
-        "group",
+        "dense_active",
+        "reranker_active",
+        "dense_model",
+        "reranker_configured",
+        "reranker_loaded",
+        "reranker_used",
+        "reranker_prediction_count",
+        "retrieval_error_count",
         "selected_query_count",
         "evaluated_query_count",
     ]
@@ -207,37 +302,30 @@ def write_results(report: Mapping[str, Any], output_dir: str | Path) -> dict:
         writer = csv.DictWriter(handle, fieldnames=summary_fields)
         writer.writeheader()
         for result in report["results"]:
-            rows = [
-                (
-                    "global",
-                    "all",
-                    result.get("query_count", 0),
-                    result.get("evaluated_query_count", 0),
-                    result.get("aggregate", {}),
-                )
-            ]
-            for scope, key in (("language", "by_language"), ("category", "by_category")):
-                rows.extend(
-                    (
-                        scope,
-                        group_name,
-                        group["query_count"],
-                        group["query_count"],
-                        group["metrics"],
-                    )
-                    for group_name, group in result.get(key, {}).items()
-                )
-            for scope, group, selected_count, evaluated_count, metrics in rows:
-                row = {
-                    "method": result["method"],
-                    "status": result["status"],
-                    "scope": scope,
-                    "group": group,
-                    "selected_query_count": selected_count,
-                    "evaluated_query_count": evaluated_count,
-                }
-                row.update(metrics)
-                writer.writerow(row)
+            row = {
+                "method": result["method"],
+                "status": result["status"],
+                "selected_query_count": result.get("query_count", 0),
+                "evaluated_query_count": result.get("evaluated_query_count", 0),
+                **_method_metadata(result),
+                **result.get("aggregate", {}),
+            }
+            writer.writerow(row)
+
+    _write_group_csv(
+        language_path,
+        report["results"],
+        metric_names,
+        scope="language",
+        group_key="by_language",
+    )
+    _write_group_csv(
+        category_path,
+        report["results"],
+        metric_names,
+        scope="category",
+        group_key="by_category",
+    )
 
     query_fields = [
         "method",
@@ -275,8 +363,19 @@ def write_results(report: Mapping[str, Any], output_dir: str | Path) -> dict:
                 row.update(query["metrics"] or {})
                 writer.writerow(row)
 
+    with bootstrap_path.open("w", encoding="utf-8", newline="") as handle:
+        json.dump(
+            report.get("statistical_comparison", {}),
+            handle,
+            ensure_ascii=False,
+            indent=2,
+        )
+
     return {
         "json": str(json_path),
         "summary_csv": str(summary_path),
         "queries_csv": str(queries_path),
+        "language_csv": str(language_path),
+        "category_csv": str(category_path),
+        "bootstrap_json": str(bootstrap_path),
     }

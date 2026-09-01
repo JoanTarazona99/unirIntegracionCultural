@@ -34,13 +34,23 @@ DEFAULT_MANIFEST = _REPOSITORY_DIR / "data" / "eval" / "benchmark.manifest.json"
 DEFAULT_OUTPUT_DIR = _REPOSITORY_DIR / "data" / "eval" / "results"
 DEFAULT_METHODS = ["keyword", "bm25", "dense", "hybrid", "hybrid_rerank"]
 ALLOWED_METHODS = set(DEFAULT_METHODS)
+NEURAL_METHODS = {"dense", "hybrid", "hybrid_rerank"}
 
 
 def _enable_offline_mode() -> None:
-    os.environ["ENABLE_SEMANTIC_SEARCH"] = "0"
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
     os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+
+
+def _validate_semantic_configuration(methods: Sequence[str]) -> None:
+    requested_neural = sorted(set(methods) & NEURAL_METHODS)
+    if requested_neural and os.environ.get("ENABLE_SEMANTIC_SEARCH") != "1":
+        joined = ", ".join(requested_neural)
+        raise RuntimeError(
+            "ENABLE_SEMANTIC_SEARCH must be exactly '1' for neural retrieval "
+            f"methods: {joined}"
+        )
 
 
 def _git_commit() -> Optional[str]:
@@ -75,6 +85,60 @@ def _load_manifest(path: Path, benchmark: Path) -> dict:
     return payload
 
 
+def _fallback_count(method: str, retriever) -> int:
+    """Count evaluation-observed activation fallbacks for one method."""
+    return int(
+        method in {"hybrid", "hybrid_rerank"}
+        and retriever is not None
+        and not bool(getattr(retriever, "_dense_active", False))
+    )
+
+
+def _activation_metadata(method: str, retriever, *, completed: bool = False) -> dict:
+    if method == "dense":
+        dense = retriever
+        dense_active = getattr(dense, "_embeddings", None) is not None
+    elif method in {"hybrid", "hybrid_rerank"}:
+        dense = getattr(retriever, "dense", None)
+        dense_active = bool(getattr(retriever, "_dense_active", False))
+    else:
+        dense = None
+        dense_active = False
+
+    reranker = getattr(retriever, "reranker", None)
+    reranker_active = bool(
+        reranker is not None and getattr(reranker, "_prediction_count", 0) > 0
+    )
+    if completed:
+        effective_method = method
+    elif method in {"hybrid", "hybrid_rerank"} and not dense_active:
+        effective_method = "bm25_fallback_blocked"
+    elif method == "hybrid_rerank" and not reranker_active:
+        effective_method = "hybrid_without_reranking_blocked"
+    else:
+        effective_method = "none"
+
+    return {
+        "requested_method": method,
+        "effective_method": effective_method,
+        "dense_active": dense_active,
+        "reranker_active": reranker_active,
+        "models": {
+            "dense": getattr(dense, "model_name", None),
+            "reranker_configured": getattr(reranker, "model_name", None),
+            "reranker_loaded": sorted(
+                getattr(reranker, "_loaded_models", set())
+            ),
+            "reranker_used": sorted(getattr(reranker, "_models_used", set())),
+        },
+        "reranker_prediction_count": getattr(
+            reranker, "_prediction_count", 0
+        ),
+        "fallback_count": _fallback_count(method, retriever),
+        "activation_error": getattr(reranker, "_last_error", None),
+    }
+
+
 def _unavailable_reason(method: str, retriever, items) -> Optional[str]:
     if method == "dense" and getattr(retriever, "_embeddings", None) is None:
         return "dense embeddings were not built in offline mode"
@@ -89,16 +153,53 @@ def _unavailable_reason(method: str, retriever, items) -> Optional[str]:
             for item in items
         }
         for model_name in sorted(required_models):
-            if not reranker._ensure_model(model_name):
-                return f"cross-encoder model unavailable offline: {model_name}"
+            try:
+                if not reranker._ensure_model(model_name):
+                    return f"cross-encoder model unavailable offline: {model_name}"
+            except RuntimeError as exc:
+                return str(exc)
     return None
 
 
 def _build_verified_retriever(method: str, library, chunks, items) -> Tuple[object, Optional[str]]:
     from retrieval import build_retriever
 
-    retriever = build_retriever(method, chunks, library=library)
+    retriever = build_retriever(
+        method,
+        chunks,
+        library=library,
+        strict_reranker=(method == "hybrid_rerank"),
+    )
     return retriever, _unavailable_reason(method, retriever, items)
+
+
+def _finalize_method_result(method: str, retriever, result: dict, query_count: int) -> dict:
+    activation = _activation_metadata(method, retriever)
+    errors = sorted(
+        {
+            query["error"]
+            for query in result["queries"]
+            if query.get("error")
+        }
+    )
+    reason = None
+    if result["retrieval_error_count"]:
+        reason = "strict retrieval failed for one or more queries"
+    elif method == "hybrid_rerank" and not activation["reranker_active"]:
+        reason = "strict reranker completed no predictions"
+
+    if reason:
+        return unavailable_method(
+            method,
+            reason,
+            query_count,
+            activation=activation,
+            errors=errors or [reason],
+        )
+
+    result.update(_activation_metadata(method, retriever, completed=True))
+    result["errors"] = []
+    return result
 
 
 def _validate_gold_ids(items, chunks) -> None:
@@ -115,6 +216,7 @@ def _validate_gold_ids(items, chunks) -> None:
 def run(args: argparse.Namespace) -> Tuple[dict, Optional[dict]]:
     """Run the configured evaluation and optionally serialize its artifacts."""
     _enable_offline_mode()
+    _validate_semantic_configuration(args.methods)
     # Imports are deliberately delayed until offline flags are set.
     from enhanced_rag import OfficialDocumentLibrary
     from retrieval import build_chunks_from_library
@@ -134,18 +236,37 @@ def run(args: argparse.Namespace) -> Tuple[dict, Optional[dict]]:
 
     results = []
     for method in args.methods:
+        retriever = None
         try:
             retriever, reason = _build_verified_retriever(
                 method, library, chunks, items
             )
             if reason:
-                results.append(unavailable_method(method, reason, len(items)))
+                results.append(
+                    unavailable_method(
+                        method,
+                        reason,
+                        len(items),
+                        activation=_activation_metadata(method, retriever),
+                    )
+                )
             else:
-                results.append(evaluate_retriever(method, retriever, items, args.k))
+                result = evaluate_retriever(method, retriever, items, args.k)
+                results.append(
+                    _finalize_method_result(
+                        method,
+                        retriever,
+                        result,
+                        len(items),
+                    )
+                )
         except Exception as exc:  # noqa: BLE001 - preserve method failure in output
             results.append(
                 unavailable_method(
-                    method, f"{type(exc).__name__}: {exc}", len(items)
+                    method,
+                    f"{type(exc).__name__}: {exc}",
+                    len(items),
+                    activation=_activation_metadata(method, retriever),
                 )
             )
 

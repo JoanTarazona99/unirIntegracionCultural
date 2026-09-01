@@ -1,0 +1,47 @@
+{
+  "dataset_type": "synthetic_ai_reviewed_exploratory",
+  "total_records": 114,
+  "accepted_records": 15,
+  "revised_records": 99,
+  "pending_excluded": 18,
+  "rejected_excluded": 0,
+  "official_evaluation_eligible": false,
+  "used_for_official_metrics": false,
+  "human_review_completed": false,
+  "source_template": "data/eval/benchmark_extended_review_template.jsonl",
+  "source_template_sha256": "1061405d4c3c016c74c0990e7e7b4bd92274102c6962a328621e3b33415e1aa4",
+  "source_benchmark": "data/eval/benchmark_extended.jsonl",
+  "source_benchmark_sha256": "13da665537e8348a45192819e3c9814c08215adac43d87e2bdd44e35650580ef",
+  "source_statuses_included": [
+    "accepted",
+    "revised"
+  ],
+  "languages": {
+    "en": 38,
+    "es": 38,
+    "ru": 38
+  },
+  "reviewed_categories": {
+    "admin": 12,
+    "communication": 6,
+    "cultural_adaptation": 6,
+    "documents": 15,
+    "education": 9,
+    "finance": 6,
+    "food": 3,
+    "health": 6,
+    "housing": 9,
+    "language": 6,
+    "legal_rights": 3,
+    "migration": 12,
+    "safety": 6,
+    "scholarships": 3,
+    "transport": 6,
+    "visa": 6
+  },
+  "multi_fragment_records": 44,
+  "sha256": "2c07d9d53b3d4ebbf736cf8d97b3959fca94e8a189e9bd3a40ca775373a4a582",
+  "protocol_version": "v1",
+  "generated_at": "2026-08-29T23:19:59Z",
+  "warning": "Los qrels conservan origen sintético y fueron auditados con asistencia de IA; no constituyen anotaciones humanas ni un benchmark oficial."
+}

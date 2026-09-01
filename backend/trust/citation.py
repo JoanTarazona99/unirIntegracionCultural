@@ -17,7 +17,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
-from .hallucination import estimate_faithfulness, analyze_grounding_improved, GroundingLevel
+from .hallucination import (
+    EvidenceAssessment,
+    GroundingLevel,
+    analyze_grounding_improved,
+    assess_evidence_sufficiency,
+    estimate_faithfulness,
+)
 
 # Sensitive topics requiring stricter grounding thresholds (multi-language)
 # Includes various grammatical forms and variants
@@ -66,6 +72,8 @@ class GroundingResult:
     explanation: str = ""
     matched_entities: List[str] = field(default_factory=list)
     missing_entities: List[str] = field(default_factory=list)
+    faithfulness_score: float = 0.0
+    evidence_assessment: Optional[EvidenceAssessment] = None
 
 
 def format_citations(results: List[Dict], max_sources: int = 3) -> List[Dict]:
@@ -105,10 +113,27 @@ def _is_sensitive_topic(query: str) -> bool:
     return False
 
 
+def _format_abstention(citations: List[Dict], language: str) -> str:
+    source_labels = ", ".join(
+        f"{citation['source']}"
+        + (f" ({citation['url']})" if citation.get("url") else "")
+        for citation in citations
+    ) or "КубГУ / МВД РФ / МФЦ / Госуслуги"
+    template = _ABSTENTION_MESSAGES.get(language, _ABSTENTION_MESSAGES["es"])
+    return template.format(sources=source_labels)
+
+
 def enforce_grounding_improved(
     answer: str,
     results: List[Dict],
     *,
+    query: Optional[str] = None,
+    retrieval_top_k: int = 5,
+    retrieval_mode: str = "semantic",
+    query_relevance_threshold: float = 0.5,
+    query_entity_coverage_threshold: float = 1.0,
+    enable_evidence_assessment: bool = True,
+    evidence_assessment: Optional[EvidenceAssessment] = None,
     language: str = "es",
     strict_mode: bool = False,  # For sensitive topics
 ) -> GroundingResult:
@@ -132,8 +157,40 @@ def enforce_grounding_improved(
     contexts = [r.get("content", "") for r in results]
     citations = format_citations(results)
 
-    # Use improved analysis
+    if enable_evidence_assessment and query:
+        evidence_assessment = evidence_assessment or assess_evidence_sufficiency(
+            query,
+            results,
+            retrieval_top_k=retrieval_top_k,
+            retrieval_mode=retrieval_mode,
+            query_relevance_threshold=query_relevance_threshold,
+            query_entity_coverage_threshold=query_entity_coverage_threshold,
+        )
+
     analysis = analyze_grounding_improved(answer, contexts)
+
+    if evidence_assessment is not None and not evidence_assessment.sufficient:
+        final_score = min(analysis.score, evidence_assessment.score, 0.39)
+        return GroundingResult(
+            grounded=False,
+            score=final_score,
+            level=GroundingLevel.LOW.value,
+            answer=_format_abstention(citations, language),
+            abstained=True,
+            citations=citations,
+            explanation=(
+                "Retrieved evidence is insufficient for the query: "
+                + ", ".join(evidence_assessment.reasons)
+            ),
+            matched_entities=analysis.matched_entities,
+            missing_entities=analysis.missing_entities,
+            faithfulness_score=analysis.score,
+            evidence_assessment=evidence_assessment,
+        )
+
+    final_score = analysis.score
+    if evidence_assessment is not None:
+        final_score = min(final_score, evidence_assessment.score)
 
     # Determine thresholds
     is_sensitive = _is_sensitive_topic(answer) or strict_mode
@@ -156,11 +213,11 @@ def enforce_grounding_improved(
         medium_threshold = 0.4
 
     # Policy decision
-    if analysis.score >= high_threshold and citations:
+    if final_score >= high_threshold and citations:
         # HIGH: confident, respond normally
         return GroundingResult(
             grounded=True,
-            score=analysis.score,
+            score=final_score,
             level=GroundingLevel.HIGH.value,
             answer=answer,
             abstained=False,
@@ -168,13 +225,15 @@ def enforce_grounding_improved(
             explanation=analysis.explanation,
             matched_entities=analysis.matched_entities,
             missing_entities=analysis.missing_entities,
+            faithfulness_score=analysis.score,
+            evidence_assessment=evidence_assessment,
         )
-    elif analysis.score >= medium_threshold and citations:
+    elif final_score >= medium_threshold and citations:
         # MEDIUM: partial support, can respond with caution
         # Optionally append disclaimer (controlled by flag)
         return GroundingResult(
             grounded=True,
-            score=analysis.score,
+            score=final_score,
             level=GroundingLevel.MEDIUM.value,
             answer=answer,
             abstained=False,
@@ -182,26 +241,23 @@ def enforce_grounding_improved(
             explanation=analysis.explanation,
             matched_entities=analysis.matched_entities,
             missing_entities=analysis.missing_entities,
+            faithfulness_score=analysis.score,
+            evidence_assessment=evidence_assessment,
         )
     else:
         # LOW: insufficient support -> abstain
-        source_labels = ", ".join(
-            f"{c['source']}" + (f" ({c['url']})" if c.get("url") else "")
-            for c in citations
-        ) or "КубГУ / МВД РФ / МФЦ / Госуслуги"
-        template = _ABSTENTION_MESSAGES.get(language, _ABSTENTION_MESSAGES["es"])
-        fallback = template.format(sources=source_labels)
-
         return GroundingResult(
             grounded=False,
-            score=analysis.score,
+            score=final_score,
             level=GroundingLevel.LOW.value,
-            answer=fallback,
+            answer=_format_abstention(citations, language),
             abstained=True,
             citations=citations,
             explanation=analysis.explanation,
             matched_entities=analysis.matched_entities,
             missing_entities=analysis.missing_entities,
+            faithfulness_score=analysis.score,
+            evidence_assessment=evidence_assessment,
         )
 
 

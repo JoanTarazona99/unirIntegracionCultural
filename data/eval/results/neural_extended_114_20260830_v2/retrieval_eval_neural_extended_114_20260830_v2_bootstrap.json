@@ -1,0 +1,271 @@
+{
+  "run_id": "retrieval_eval_neural_extended_114_20260830_v2",
+  "dataset_metadata": {
+    "benchmark_path": "C:\\xampp\\htdocs\\proyectos\\unirIntegracionCultural\\data\\eval\\benchmark_extended_reviewed_114_b3.jsonl",
+    "manifest_path": "C:\\xampp\\htdocs\\proyectos\\unirIntegracionCultural\\data\\eval\\benchmark_extended_reviewed_114_b3.manifest.json",
+    "diagnostics_path": "C:\\xampp\\htdocs\\proyectos\\unirIntegracionCultural\\data\\eval\\benchmark_extended_reviewed_114_b3_diagnostics.json",
+    "benchmark_sha256": "8e2584735a7d62b249c7c2c2acdfd029a4f46fd55d5112805491f6712fc2bec5",
+    "dataset_flags": {
+      "evaluation_dataset_type": "synthetic_ai_reviewed_exploratory",
+      "used_for_official_metrics": false,
+      "official_evaluation_eligible": false,
+      "human_review_completed": false
+    },
+    "review_status_counts": {
+      "accepted": 15,
+      "revised": 99
+    },
+    "pending_excluded": 18,
+    "multi_fragment_records": 44,
+    "source_inputs": {
+      "reviewed_jsonl": {
+        "path": "data/eval/benchmark_extended_reviewed_114.jsonl",
+        "sha256": "2c07d9d53b3d4ebbf736cf8d97b3959fca94e8a189e9bd3a40ca775373a4a582"
+      },
+      "reviewed_manifest": {
+        "path": "data/eval/benchmark_extended_reviewed_114.manifest.json",
+        "sha256": "414aefdd24b40de41f169c1b819b3993da22b0dbe14fe6e40f3eca4a5a9347ed"
+      },
+      "reviewed_diagnostics": {
+        "path": "data/eval/benchmark_extended_reviewed_114_diagnostics.json",
+        "sha256": "a7502d0c702d654c6c6b5f7bea6f3400094bb435b41e1a6590a63a8051821b4a"
+      },
+      "active_inventory": {
+        "path": "data/eval/benchmark_extended.jsonl",
+        "sha256": "13da665537e8348a45192819e3c9814c08215adac43d87e2bdd44e35650580ef"
+      }
+    },
+    "adapter_version": "v1",
+    "warning": "Los registros y qrels conservan origen sintético y fueron revisados con asistencia de IA; este adaptador no los convierte en anotaciones humanas ni en un benchmark oficial."
+  },
+  "environment": {
+    "python_executable": "C:\\venvs\\unirIntegracionCultural\\venv-rag-eval-probe\\Scripts\\python.exe",
+    "expected_python_executable": "C:\\venvs\\unirIntegracionCultural\\venv-rag-eval-probe\\Scripts\\python.exe",
+    "offline_variables": {
+      "HF_HUB_OFFLINE": "1",
+      "TRANSFORMERS_OFFLINE": "1",
+      "HF_HUB_DISABLE_TELEMETRY": "1",
+      "TOKENIZERS_PARALLELISM": "false",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1"
+    }
+  },
+  "runtime_versions": {
+    "python": "3.11.5",
+    "torch": "2.4.1+cpu",
+    "sentence-transformers": "5.6.0",
+    "transformers": "4.57.6",
+    "huggingface-hub": "0.36.2",
+    "rank-bm25": "0.2.2"
+  },
+  "model_snapshots": {
+    "dense": {
+      "model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+      "commit": "e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+      "path": "C:\\Users\\Windows 11\\.cache\\huggingface\\hub\\models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2\\snapshots\\e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+      "exists": true
+    },
+    "rerank_multilingual": {
+      "model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "commit": "1427fd652930e4ba29e8149678df786c240d8825",
+      "path": "C:\\Users\\Windows 11\\.cache\\huggingface\\hub\\models--cross-encoder--mmarco-mMiniLMv2-L12-H384-v1\\snapshots\\1427fd652930e4ba29e8149678df786c240d8825",
+      "exists": true
+    },
+    "rerank_english": {
+      "model_id": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+      "commit": "7b0235231ca2674cb8ca8f022859a6eba2b1c968",
+      "path": "C:\\Users\\Windows 11\\.cache\\huggingface\\hub\\models--cross-encoder--ms-marco-MiniLM-L-12-v2\\snapshots\\7b0235231ca2674cb8ca8f022859a6eba2b1c968",
+      "exists": true
+    }
+  },
+  "offline_probe": {
+    "probe_version": "1.0",
+    "timestamp_utc": "2026-08-30T01:37:31+00:00",
+    "environment": {
+      "python_executable": "C:\\venvs\\unirIntegracionCultural\\venv-rag-eval-probe\\Scripts\\python.exe",
+      "expected_python_executable": "C:\\venvs\\unirIntegracionCultural\\venv-rag-eval-probe\\Scripts\\python.exe",
+      "offline_variables": {
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1",
+        "HF_HUB_DISABLE_TELEMETRY": "1",
+        "TOKENIZERS_PARALLELISM": "false",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1"
+      }
+    },
+    "versions": {
+      "python": "3.11.5",
+      "torch": "2.4.1+cpu",
+      "sentence-transformers": "5.6.0",
+      "transformers": "4.57.6",
+      "huggingface-hub": "0.36.2",
+      "rank-bm25": "0.2.2"
+    },
+    "snapshots": {
+      "dense": {
+        "model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        "commit": "e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+        "path": "C:\\Users\\Windows 11\\.cache\\huggingface\\hub\\models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2\\snapshots\\e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+        "exists": true
+      },
+      "rerank_multilingual": {
+        "model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "commit": "1427fd652930e4ba29e8149678df786c240d8825",
+        "path": "C:\\Users\\Windows 11\\.cache\\huggingface\\hub\\models--cross-encoder--mmarco-mMiniLMv2-L12-H384-v1\\snapshots\\1427fd652930e4ba29e8149678df786c240d8825",
+        "exists": true
+      },
+      "rerank_english": {
+        "model_id": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+        "commit": "7b0235231ca2674cb8ca8f022859a6eba2b1c968",
+        "path": "C:\\Users\\Windows 11\\.cache\\huggingface\\hub\\models--cross-encoder--ms-marco-MiniLM-L-12-v2\\snapshots\\7b0235231ca2674cb8ca8f022859a6eba2b1c968",
+        "exists": true
+      }
+    },
+    "results": [
+      {
+        "component": "dense",
+        "status": "ok",
+        "snapshot_commit": "e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+        "output_shape": [
+          1,
+          384
+        ],
+        "finite": true,
+        "network_attempts": 0,
+        "stderr": "",
+        "error": null,
+        "returncode": 0
+      },
+      {
+        "component": "rerank_multilingual",
+        "status": "ok",
+        "snapshot_commit": "1427fd652930e4ba29e8149678df786c240d8825",
+        "output_shape": [
+          1
+        ],
+        "finite": true,
+        "network_attempts": 0,
+        "stderr": "",
+        "error": null,
+        "returncode": 0
+      },
+      {
+        "component": "rerank_english",
+        "status": "ok",
+        "snapshot_commit": "7b0235231ca2674cb8ca8f022859a6eba2b1c968",
+        "output_shape": [
+          1
+        ],
+        "finite": true,
+        "network_attempts": 0,
+        "stderr": "",
+        "error": null,
+        "returncode": 0
+      }
+    ],
+    "total_network_attempts": 0,
+    "network_attempts_complete": true,
+    "offline_probe_ok": true,
+    "failures": []
+  },
+  "evaluation_controls": {
+    "method_count": 5,
+    "trace_count": 570,
+    "language_count_per_method": {
+      "es": 38,
+      "en": 38,
+      "ru": 38
+    },
+    "multi_fragment_count_per_method": 44,
+    "evaluation_network_attempts": 0,
+    "probe_network_attempts": 0,
+    "strict_reranker": true,
+    "fallback_count": 0
+  },
+  "method_activation": {
+    "keyword": {
+      "status": "completed",
+      "fallback_count": 0,
+      "dense_active": false,
+      "reranker_active": false,
+      "reranker_prediction_count": 0
+    },
+    "bm25": {
+      "status": "completed",
+      "fallback_count": 0,
+      "dense_active": false,
+      "reranker_active": false,
+      "reranker_prediction_count": 0
+    },
+    "dense": {
+      "status": "completed",
+      "fallback_count": 0,
+      "dense_active": true,
+      "reranker_active": false,
+      "reranker_prediction_count": 0
+    },
+    "hybrid": {
+      "status": "completed",
+      "fallback_count": 0,
+      "dense_active": true,
+      "reranker_active": false,
+      "reranker_prediction_count": 0
+    },
+    "hybrid_rerank": {
+      "status": "completed",
+      "fallback_count": 0,
+      "dense_active": true,
+      "reranker_active": true,
+      "reranker_prediction_count": 2280
+    }
+  },
+  "statistical_comparison": {
+    "status": "computed",
+    "baseline": "bm25",
+    "candidate": "hybrid_rerank",
+    "metrics": [
+      "MRR@5",
+      "nDCG@5"
+    ],
+    "paired_query_count": 114,
+    "samples": 10000,
+    "seed": 42,
+    "confidence": 0.95,
+    "p_value": "two_sided",
+    "comparisons": {
+      "MRR@5": {
+        "status": "computed",
+        "paired_query_count": 114,
+        "observed_difference": 0.19722222222222227,
+        "confidence": 0.95,
+        "confidence_interval": [
+          0.1185672514619883,
+          0.27690058479532165
+        ],
+        "p_value_two_sided": 0.0,
+        "samples": 10000,
+        "seed": 42
+      },
+      "nDCG@5": {
+        "status": "computed",
+        "paired_query_count": 114,
+        "observed_difference": 0.1910710366812788,
+        "confidence": 0.95,
+        "confidence_interval": [
+          0.12012308381259951,
+          0.26441398321259457
+        ],
+        "p_value_two_sided": 0.0,
+        "samples": 10000,
+        "seed": 42
+      }
+    },
+    "dense_comparison_performed": false,
+    "limitation": "Exploratory synthetic AI-reviewed dataset; no official or definitive inference."
+  },
+  "limitations": [
+    "Synthetic dataset reviewed with AI assistance; human review is not complete.",
+    "Exploratory results only; not eligible for official metrics or definitive claims.",
+    "Bootstrap compares BM25 only with hybrid_rerank, not with dense."
+  ]
+}

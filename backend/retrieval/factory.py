@@ -30,6 +30,7 @@ def build_retriever(
     dense_model: str = "paraphrase-multilingual-MiniLM-L12-v2",
     reranker_model: str = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
     rrf_k: int = 60,
+    strict_reranker: bool = False,
 ) -> BaseRetriever:
     """Construct and index a retriever for the requested mode."""
     mode = (mode or "bm25").strip().lower()
@@ -45,7 +46,10 @@ def build_retriever(
     elif mode in ("hybrid", "hybrid_rerank"):
         reranker: Optional[CrossEncoderReranker] = None
         if mode == "hybrid_rerank":
-            reranker = CrossEncoderReranker(model_name=reranker_model)
+            reranker = CrossEncoderReranker(
+                model_name=reranker_model,
+                strict=strict_reranker,
+            )
         retriever = HybridRetriever(
             sparse=BM25Retriever(),
             dense=DenseRetriever(model_name=dense_model),

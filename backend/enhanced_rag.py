@@ -10,13 +10,102 @@ Features:
 - Conversation history per session
 """
 
+import hashlib
 import json
+import logging
 import os
 import time
+import uuid
 from datetime import datetime
 import numpy as np
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Generator, AsyncGenerator
+from urllib.parse import urlparse
+
+
+logger = logging.getLogger(__name__)
+
+
+def _sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _environment_flag(name: str, configured: bool = False) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return configured
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _development_environment() -> bool:
+    configured = getattr(globals().get("_settings"), "environment", "development")
+    return os.environ.get("ENVIRONMENT", configured).strip().lower() == "development"
+
+
+def _raw_query_logging_enabled() -> bool:
+    configured = getattr(globals().get("_settings"), "log_raw_queries", False)
+    return _development_environment() and _environment_flag("LOG_RAW_QUERIES", configured)
+
+
+def _raw_rag_payload_logging_enabled() -> bool:
+    configured = getattr(globals().get("_settings"), "log_raw_rag_payloads", False)
+    return _raw_query_logging_enabled() and _environment_flag(
+        "LOG_RAW_RAG_PAYLOADS", configured
+    )
+
+
+def _sanitized_url_metadata(value: object) -> Dict[str, str]:
+    if not isinstance(value, str) or not value:
+        return {}
+    parsed = urlparse(value)
+    return {
+        "url_hostname": parsed.hostname or "",
+        "url_path": parsed.path or "/",
+        "url_sha256": _sha256_text(value),
+    }
+
+
+def _log_rag_debug_payload(query: str, response: str, results: List[Dict]) -> None:
+    if not _environment_flag("RAG_DEBUG"):
+        return
+
+    raw_query_logged = _raw_query_logging_enabled()
+    raw_payload_logged = _raw_rag_payload_logging_enabled()
+    event = {
+        "query_sha256": _sha256_text(query),
+        "query_length": len(query),
+        "response_sha256": _sha256_text(response or ""),
+        "response_length": len(response or ""),
+        "result_count": len(results),
+        "chunk_count": len(results),
+        "source_count": len(results),
+        "source_id": (
+            results[0].get("source_id") or results[0].get("source")
+            if results and isinstance(results[0], dict)
+            else None
+        ),
+        "raw_payload_logged": raw_payload_logged,
+        "privacy_mode": (
+            "development_raw"
+            if raw_payload_logged
+            else "development_raw_query"
+            if raw_query_logged
+            else "redacted"
+        ),
+    }
+    if results and isinstance(results[0], dict):
+        source_url = results[0].get("source_url") or results[0].get("url")
+        event.update(_sanitized_url_metadata(source_url))
+    if raw_query_logged:
+        event["query"] = query
+    if raw_payload_logged:
+        event["response"] = response
+        event["chunks"] = [
+            result.get("content", "")
+            for result in results
+            if isinstance(result, dict)
+        ]
+    logger.debug("rag_debug_payload", extra={"rag_event": event})
 
 # Try to import LLM module
 LLM_AVAILABLE = False
@@ -153,16 +242,222 @@ class SemanticSearchEngine:
 class OfficialDocumentLibrary:
     """Biblioteca de documentos oficiales para RAG"""
 
-    def __init__(self):
+    def __init__(self, project_root: Optional[Path] = None):
+        self.project_root = Path(project_root or Path(__file__).resolve().parent.parent)
+        self.state_data_dir = self.project_root / "data"
+        self.rehydration_events: List[Dict] = []
         self.documents = {}
         self.flat_documents = []  # Flattened for embedding
         self.semantic_engine = None
         self._use_semantic = False
         self._initialize_documents()
-        # Load from JSON to override hardcoded documents with fresh data
-        # NOTE: Temporarily disabled due to encoding issue - using hardcoded docs instead
-        # self.load_from_json()
+        self._rehydrate_active_sources()
+        self._flatten_documents()
         self._initialize_semantic_search()
+
+    def _record_rehydration_event(
+        self,
+        event: str,
+        *,
+        source_id: Optional[str] = None,
+        version_id: Optional[str] = None,
+        reason: str,
+        correlation_id: Optional[str] = None,
+    ) -> None:
+        entry = {
+            "event": event,
+            "source_id": source_id,
+            "version_id": version_id,
+            "reason": reason,
+            "correlation_id": correlation_id,
+        }
+        self.rehydration_events.append(entry)
+        log_method = logger.info if event == "source_rehydrated" else logger.warning
+        log_method("rag_source_rehydration", extra={"rag_event": entry})
+
+    @staticmethod
+    def _valid_state_identifier(value: object) -> bool:
+        return (
+            isinstance(value, str)
+            and bool(value.strip())
+            and value not in {".", ".."}
+            and Path(value).name == value
+        )
+
+    @staticmethod
+    def _valid_http_url(value: object) -> bool:
+        if not isinstance(value, str):
+            return False
+        parsed = urlparse(value)
+        return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+    def _rehydrate_active_sources(self) -> None:
+        """Load active persisted versions without mutating the state repository."""
+        registry_path = self.state_data_dir / "source_registry.json"
+        versions_root = self.state_data_dir / "kb_versions"
+        if not registry_path.exists():
+            self._record_rehydration_event(
+                "source_rehydration_skipped",
+                reason="registry_missing",
+            )
+            return
+
+        try:
+            registry = json.loads(registry_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            self._record_rehydration_event(
+                "source_rehydration_skipped",
+                reason="invalid_registry_json",
+            )
+            return
+
+        if not isinstance(registry, list):
+            self._record_rehydration_event(
+                "source_rehydration_skipped",
+                reason="invalid_registry_structure",
+            )
+            return
+
+        seen_source_ids = set()
+        for source in registry:
+            if not isinstance(source, dict) or source.get("status") != "active":
+                continue
+
+            source_id = source.get("source_id")
+            version_id = source.get("active_version")
+            correlation_id = source.get("correlation_id")
+            if not self._valid_state_identifier(source_id):
+                self._record_rehydration_event(
+                    "source_rehydration_skipped",
+                    source_id=source_id if isinstance(source_id, str) else None,
+                    version_id=version_id if isinstance(version_id, str) else None,
+                    reason="invalid_source_id",
+                    correlation_id=correlation_id,
+                )
+                continue
+            if source_id in seen_source_ids:
+                self._record_rehydration_event(
+                    "source_rehydration_skipped",
+                    source_id=source_id,
+                    version_id=version_id if isinstance(version_id, str) else None,
+                    reason="duplicate_registry_source",
+                    correlation_id=correlation_id,
+                )
+                continue
+            seen_source_ids.add(source_id)
+
+            if not self._valid_state_identifier(version_id):
+                self._record_rehydration_event(
+                    "source_rehydration_skipped",
+                    source_id=source_id,
+                    version_id=version_id if isinstance(version_id, str) else None,
+                    reason="active_version_missing_or_invalid",
+                    correlation_id=correlation_id,
+                )
+                continue
+
+            version_path = versions_root / source_id / f"{version_id}.json"
+            if not version_path.is_file():
+                self._record_rehydration_event(
+                    "source_rehydration_skipped",
+                    source_id=source_id,
+                    version_id=version_id,
+                    reason="version_file_missing",
+                    correlation_id=correlation_id,
+                )
+                continue
+
+            try:
+                version = json.loads(version_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                self._record_rehydration_event(
+                    "source_rehydration_skipped",
+                    source_id=source_id,
+                    version_id=version_id,
+                    reason="invalid_version_json",
+                    correlation_id=correlation_id,
+                )
+                continue
+
+            required_strings = ("source_id", "version_id", "url", "fingerprint", "content")
+            if not isinstance(version, dict) or any(
+                not isinstance(version.get(field), str) or not version[field].strip()
+                for field in required_strings
+            ):
+                self._record_rehydration_event(
+                    "source_rehydration_skipped",
+                    source_id=source_id,
+                    version_id=version_id,
+                    reason="invalid_version_structure",
+                    correlation_id=correlation_id,
+                )
+                continue
+            if version["source_id"] != source_id or version["version_id"] != version_id:
+                self._record_rehydration_event(
+                    "source_rehydration_skipped",
+                    source_id=source_id,
+                    version_id=version_id,
+                    reason="version_identity_mismatch",
+                    correlation_id=correlation_id,
+                )
+                continue
+
+            source_url = source.get("url")
+            if (
+                not self._valid_http_url(source_url)
+                or not self._valid_http_url(version["url"])
+                or version["url"] != source_url
+            ):
+                self._record_rehydration_event(
+                    "source_rehydration_skipped",
+                    source_id=source_id,
+                    version_id=version_id,
+                    reason="invalid_or_mismatched_url",
+                    correlation_id=correlation_id,
+                )
+                continue
+
+            computed_fingerprint = hashlib.sha256(version["content"].encode("utf-8")).hexdigest()
+            if (
+                version["fingerprint"] != computed_fingerprint
+                or source.get("hash_current") != computed_fingerprint
+            ):
+                self._record_rehydration_event(
+                    "source_rehydration_skipped",
+                    source_id=source_id,
+                    version_id=version_id,
+                    reason="fingerprint_mismatch",
+                    correlation_id=correlation_id,
+                )
+                continue
+
+            try:
+                self.upsert_refreshed_section(
+                    source_key=source.get("target_source") or source_id,
+                    section_title=source.get("target_section_title") or "Actualizacion periodica",
+                    section_content=version["content"],
+                    refresh_section_id=source_id,
+                    version_id=version_id,
+                    source_url=source_url,
+                    rebuild_flat_documents=False,
+                )
+            except Exception as exc:
+                self._record_rehydration_event(
+                    "source_rehydration_skipped",
+                    source_id=source_id,
+                    version_id=version_id,
+                    reason=f"apply_failed:{type(exc).__name__}",
+                    correlation_id=correlation_id,
+                )
+                continue
+
+            self._record_rehydration_event(
+                "source_rehydrated",
+                source_id=source_id,
+                version_id=version_id,
+                reason="active_version_loaded",
+                correlation_id=correlation_id,
+            )
 
     def _initialize_semantic_search(self):
         """Initialize semantic search if available"""
@@ -205,7 +500,9 @@ class OfficialDocumentLibrary:
                     'source': source_name,
                     'source_url': doc.get('url'),
                     'title': section.get('title'),
-                    'content': section.get('content', '').strip()
+                    'content': section.get('content', '').strip(),
+                    'chunk_id': section.get('chunk_id'),
+                    'version_id': section.get('version_id'),
                 })
         print(f"[RAG] Flattened {len(self.flat_documents)} document sections")
 
@@ -1334,6 +1631,8 @@ class OfficialDocumentLibrary:
             doc = self.documents[source_name]
 
             for section in doc.get('sections', []):
+                if section.get('is_active') is False:
+                    continue
                 title = section.get('title', '').lower()
                 content = section.get('content', '').lower()
 
@@ -1371,7 +1670,9 @@ class OfficialDocumentLibrary:
                         'title': section.get('title'),
                         'content': section.get('content').strip(),
                         'relevance': match_score,
-                        'search_mode': 'keyword'
+                        'search_mode': 'keyword',
+                        'chunk_id': section.get('chunk_id'),
+                        'version_id': section.get('version_id'),
                     })
 
         # Sort by relevance
@@ -1416,7 +1717,8 @@ class OfficialDocumentLibrary:
         refresh_section_id: str,
         version_id: str,
         source_url: Optional[str] = None,
-    ) -> None:
+        rebuild_flat_documents: bool = True,
+    ) -> List[str]:
         """Insert/update a refresh-managed section and mark previous version inactive."""
         if source_key not in self.documents:
             self.documents[source_key] = {
@@ -1430,11 +1732,13 @@ class OfficialDocumentLibrary:
             doc['url'] = source_url
 
         sections = doc.setdefault('sections', [])
+        chunk_id = f"refresh:{refresh_section_id}:{version_id}"
         replacement = {
             'title': section_title,
             'content': section_content,
             'refresh_section_id': refresh_section_id,
             'version_id': version_id,
+            'chunk_id': chunk_id,
             'updated_at': datetime.now().isoformat(),
             'is_active': True,
         }
@@ -1451,14 +1755,17 @@ class OfficialDocumentLibrary:
         if not replaced:
             sections.append(replacement)
 
-        self._flatten_documents()
+        if rebuild_flat_documents:
+            self._flatten_documents()
+        return [chunk_id]
 
 
 class EnhancedRAGModule:
     """Módulo RAG mejorado con documentos reales, búsqueda semántica y LLM"""
 
-    def __init__(self, use_llm: bool = True):
-        self.document_library = OfficialDocumentLibrary()
+    def __init__(self, use_llm: bool = True, project_root: Optional[Path] = None):
+        self.project_root = Path(project_root or Path(__file__).resolve().parent.parent)
+        self.document_library = OfficialDocumentLibrary(project_root=self.project_root)
         self.cache = {}
         self.llm = None
         self._use_llm = use_llm
@@ -1488,6 +1795,10 @@ class EnhancedRAGModule:
             "citation_guard": True,  # ✅ ENABLED: Use improved grounding evaluation
             "abstention_threshold": 0.4,  # ✅ UPDATED: Use MEDIUM level as minimum for responding
             "use_improved_grounding": True,  # ✅ NEW: Use analyze_grounding_improved()
+            "enable_evidence_assessment": True,
+            "enable_external_search": True,
+            "query_relevance_threshold": 0.5,
+            "query_entity_coverage_threshold": 1.0,
         }
         try:
             from app.config.settings import settings as _settings
@@ -1498,6 +1809,10 @@ class EnhancedRAGModule:
             config["top_k"] = getattr(_settings, "retrieval_top_k", 5)
             config["citation_guard"] = getattr(_settings, "enable_citation_guard", True)  # ✅ Default True
             config["abstention_threshold"] = getattr(_settings, "abstention_threshold", 0.35)
+            config["enable_evidence_assessment"] = getattr(_settings, "enable_evidence_assessment", True)
+            config["enable_external_search"] = getattr(_settings, "enable_external_search", True)
+            config["query_relevance_threshold"] = getattr(_settings, "query_relevance_threshold", 0.5)
+            config["query_entity_coverage_threshold"] = getattr(_settings, "query_entity_coverage_threshold", 1.0)
         except Exception:
             config["mode"] = os.environ.get("RETRIEVAL_MODE", "keyword")
         return config
@@ -1541,15 +1856,19 @@ class EnhancedRAGModule:
                 except Exception as e:
                     print(f"[RAG] Advanced retrieval failed ({mode}): {e}")
         # Legacy path.
-        return self.document_library.search(query), self.document_library.get_search_mode()
+        results = self.document_library.search(query)
+        search_mode = self.document_library.get_search_mode()
+        if results and all(result.get("search_mode") == "fallback" for result in results):
+            search_mode = "fallback"
+        return results, search_mode
 
-    def apply_refreshed_source(self, source: Dict, content: str, version_id: str) -> None:
+    def apply_refreshed_source(self, source: Dict, content: str, version_id: str) -> List[str]:
         """Apply a refreshed source payload into KB and invalidate stale retriever state."""
         source_key = source.get('target_source') or source.get('source_id') or 'KB Refresh'
         section_title = source.get('target_section_title') or 'Actualizacion periodica'
         refresh_section_id = source.get('source_id') or source_key
 
-        self.document_library.upsert_refreshed_section(
+        affected_chunk_ids = self.document_library.upsert_refreshed_section(
             source_key=source_key,
             section_title=section_title,
             section_content=content,
@@ -1564,8 +1883,12 @@ class EnhancedRAGModule:
         if getattr(self.document_library, 'semantic_engine', None) and self.document_library._use_semantic:
             try:
                 self.document_library.semantic_engine.build_index(self.document_library.flat_documents)
-            except Exception as e:
-                print(f"[RAG] Semantic reindex skipped after refresh: {e}")
+            except Exception as error:
+                print(
+                    "[RAG] Semantic reindex skipped after refresh: "
+                    f"error_type={type(error).__name__}"
+                )
+        return affected_chunk_ids
 
     def reindex_sources_incremental(self, changed_sources: List[str]) -> None:
         """Incremental-triggered reindex: only executes when there are changed sources."""
@@ -1580,8 +1903,11 @@ class EnhancedRAGModule:
             try:
                 self.document_library._flatten_documents()
                 self.document_library.semantic_engine.build_index(self.document_library.flat_documents)
-            except Exception as e:
-                print(f"[RAG] Incremental semantic rebuild skipped: {e}")
+            except Exception as error:
+                print(
+                    "[RAG] Incremental semantic rebuild skipped: "
+                    f"error_type={type(error).__name__}"
+                )
 
     def is_llm_enabled(self) -> bool:
         """Check if LLM is currently enabled"""
@@ -1603,7 +1929,9 @@ class EnhancedRAGModule:
         context_type: str = "general",
         language: str = "ru",
         session_id: str = None,
-        use_llm: bool = True
+        use_llm: bool = True,
+        correlation_id: str = None,
+        allow_external: bool = True,
     ) -> Dict:
         """
         Search documents and generate contextualized response
@@ -1617,15 +1945,60 @@ class EnhancedRAGModule:
             language: Response language (ru, es, en)
             session_id: Optional session ID for conversation history
             use_llm: Whether to use LLM (default True)
+            correlation_id: Request identifier propagated to acquisition events
+            allow_external: Whether this invocation may activate source acquisition
 
         Returns:
             Dict with response, sources, and metadata
         """
 
+        correlation_id = correlation_id or str(uuid.uuid4())
+
         # Search in document library (keyword baseline or advanced retrieval)
         _t_retrieval_start = time.perf_counter()
         results, search_mode = self._retrieve(query)
         retrieval_ms = (time.perf_counter() - _t_retrieval_start) * 1000.0
+
+        evidence_assessment = None
+        evidence_gate_enabled = bool(
+            self._retrieval_config.get("citation_guard")
+            and self._retrieval_config.get("enable_evidence_assessment", True)
+        )
+        if evidence_gate_enabled:
+            try:
+                from trust import assess_evidence_sufficiency
+
+                evidence_assessment = assess_evidence_sufficiency(
+                    query,
+                    results,
+                    retrieval_top_k=self._retrieval_config.get("top_k", 5),
+                    retrieval_mode=search_mode,
+                    query_relevance_threshold=self._retrieval_config.get("query_relevance_threshold", 0.5),
+                    query_entity_coverage_threshold=self._retrieval_config.get("query_entity_coverage_threshold", 1.0),
+                )
+            except Exception as exc:
+                from trust import EvidenceAssessment
+
+                print(
+                    "[RAG] Evidence sufficiency assessment failed: "
+                    f"exception_type={type(exc).__name__}"
+                )
+                evidence_assessment = EvidenceAssessment(
+                    query_relevance=0.0,
+                    query_term_coverage=0.0,
+                    query_entity_coverage=0.0,
+                    requested_slot_coverage=False,
+                    retrieval_confidence=0.0,
+                    sufficient=False,
+                    reasons=["evidence_assessment_error"],
+                    query_terms=[],
+                    matched_terms=[],
+                    missing_terms=[],
+                    query_entities={},
+                    matched_entities={},
+                    missing_entities={},
+                )
+        evidence_sufficient = evidence_assessment is None or evidence_assessment.sufficient
 
         # Determine response mode
         response_mode = "template"
@@ -1634,7 +2007,7 @@ class EnhancedRAGModule:
         llm_stats = {}
 
         # Try LLM first if available and enabled
-        if use_llm and self.is_llm_enabled():
+        if evidence_sufficient and use_llm and self.is_llm_enabled():
             try:
                 _t_llm_start = time.perf_counter()
                 response = self.llm.generate_response(
@@ -1646,24 +2019,44 @@ class EnhancedRAGModule:
                 llm_ms = (time.perf_counter() - _t_llm_start) * 1000.0
                 llm_stats = dict(getattr(self.llm, "last_generation_stats", {}) or {})
                 response_mode = "llm"
-            except Exception as e:
-                print(f"[RAG] LLM generation failed: {e}")
+            except Exception as error:
+                print(f"[RAG] LLM generation failed: error_type={type(error).__name__}")
                 response = None
 
         # Fallback to template response
-        if response is None:
+        if response is None and evidence_sufficient:
             response = self._generate_template_response(query, results, language)
             response_mode = "template"
+        elif response is None:
+            response = ""
+            response_mode = "abstained"
 
-        # DEBUG: Log full response before grounding (no truncation)
-        print(f"[RAG_DEBUG] Full response ({len(response) if response else 0} chars): {response if response else 'None'}")
-        print(f"[RAG_DEBUG] Results count: {len(results) if results else 0}")
-        if results:
-            print(f"[RAG_DEBUG] First result content preview: {results[0].get('content', '')[:200] if isinstance(results[0], dict) else str(results[0])[:200]}")
+        _log_rag_debug_payload(query, response, results)
 
         # ✅ IMPROVED: Trustworthy-AI guard with multi-level grounding evaluation
         grounding = None
-        if self._retrieval_config.get("citation_guard") and results:
+        if self._retrieval_config.get("citation_guard"):
+            def grounding_error_result(exception: Exception):
+                from trust import GroundingResult
+
+                print(
+                    "[RAG] Grounding evaluation failed: "
+                    f"exception_type={type(exception).__name__}"
+                )
+                return GroundingResult(
+                    grounded=False,
+                    score=0.0,
+                    level="low",
+                    answer="",
+                    abstained=True,
+                    citations=[],
+                    explanation="grounding_evaluation_error",
+                    matched_entities=[],
+                    missing_entities=[],
+                    faithfulness_score=0.0,
+                    evidence_assessment=evidence_assessment,
+                )
+
             try:
                 from trust import enforce_grounding_improved
                 from trust import GroundingLevel
@@ -1674,6 +2067,13 @@ class EnhancedRAGModule:
                 grounding = enforce_grounding_improved(
                     response,
                     results,
+                    query=query,
+                    retrieval_top_k=self._retrieval_config.get("top_k", 5),
+                    retrieval_mode=search_mode,
+                    query_relevance_threshold=self._retrieval_config.get("query_relevance_threshold", 0.5),
+                    query_entity_coverage_threshold=self._retrieval_config.get("query_entity_coverage_threshold", 1.0),
+                    enable_evidence_assessment=evidence_gate_enabled,
+                    evidence_assessment=evidence_assessment,
                     language=language,
                     strict_mode=self._is_sensitive_topic(query),  # Stricter for visa/fees
                 )
@@ -1682,36 +2082,41 @@ class EnhancedRAGModule:
                 if grounding.abstained:
                     response_mode = "abstained"
                     
-            except ImportError:
-                # Fallback to legacy enforce_grounding if improved not available
+            except ImportError as improved_error:
                 try:
                     from trust import enforce_grounding
-                    grounding = enforce_grounding(
+                    enforce_grounding(
                         response,
                         results,
                         threshold=self._retrieval_config.get("abstention_threshold", 0.4),
                         language=language,
                     )
-                    response = grounding.answer
-                    if grounding.abstained:
-                        response_mode = "abstained"
-                except Exception as e:
-                    print(f"[RAG] Grounding guard (legacy) failed: {e}")
-            except Exception as e:
-                print(f"[RAG] Improved grounding guard failed: {e}")
+                except Exception as exc:
+                    grounding = grounding_error_result(exc)
+                else:
+                    grounding = grounding_error_result(improved_error)
+                response = grounding.answer
+                response_mode = "abstained"
+            except Exception as exc:
+                grounding = grounding_error_result(exc)
+                response = grounding.answer
+                response_mode = "abstained"
 
         # Calculate faithfulness BEFORE using it in payload
         faithfulness = None
+        grounding_score = None
         if grounding is not None:
-            faithfulness = round(grounding.score, 3)
+            faithfulness = round(grounding.faithfulness_score, 3)
+            grounding_score = round(grounding.score, 3)
         else:
             try:
                 from trust import estimate_faithfulness
                 contexts = [r.get('content', '') for r in results]
                 if contexts:
                     faithfulness = round(estimate_faithfulness(response, contexts), 3)
-            except Exception as e:
-                print(f"[RAG] Faithfulness estimate failed: {e}")
+                    grounding_score = faithfulness
+            except Exception as error:
+                print(f"[RAG] Faithfulness estimate failed: error_type={type(error).__name__}")
 
         payload = {
             'query': query,
@@ -1721,9 +2126,12 @@ class EnhancedRAGModule:
             'context_type': context_type,
             'search_mode': search_mode,
             'response_mode': response_mode,
-            'grounding_score': faithfulness if faithfulness is not None else 0,
+            'grounding_score': grounding_score if grounding_score is not None else 0,
+            'grounded': False if grounding is None else grounding.grounded,
+            'abstained': response_mode == 'abstained',
             'language': language,
-            'session_id': session_id
+            'session_id': session_id,
+            'correlation_id': correlation_id,
         }
         if grounding is not None:
             # ✅ IMPROVED: Include grounding level and detailed analysis
@@ -1736,7 +2144,26 @@ class EnhancedRAGModule:
                 'explanation': getattr(grounding, 'explanation', ''),  # NEW: Why this level
                 'matched_entities': getattr(grounding, 'matched_entities', []),  # NEW: What matched
                 'missing_entities': getattr(grounding, 'missing_entities', []),  # NEW: What's missing
+                'faithfulness_score': round(grounding.faithfulness_score, 3),
             }
+            if grounding.evidence_assessment is not None:
+                assessment = grounding.evidence_assessment
+                payload['grounding']['evidence_assessment'] = {
+                    'sufficient': assessment.sufficient,
+                    'score': round(assessment.score, 3),
+                    'query_relevance': round(assessment.query_relevance, 3),
+                    'query_term_coverage': round(assessment.query_term_coverage, 3),
+                    'query_entity_coverage': round(assessment.query_entity_coverage, 3),
+                    'requested_slot_coverage': assessment.requested_slot_coverage,
+                    'retrieval_confidence': round(assessment.retrieval_confidence, 3),
+                    'reasons': assessment.reasons,
+                    'query_terms': assessment.query_terms,
+                    'matched_terms': assessment.matched_terms,
+                    'missing_terms': assessment.missing_terms,
+                    'query_entities': assessment.query_entities,
+                    'matched_entities': assessment.matched_entities,
+                    'missing_entities': assessment.missing_entities,
+                }
 
         # ===== AI transparency metrics (non-destructive, informational) =====
         # Per-source retrieval scores.
@@ -1776,46 +2203,112 @@ class EnhancedRAGModule:
             'query_expansion': [],
         }
         
-        # ============ WEB SEARCH FALLBACK (LOW GROUNDING) ============
-        # If grounding score is low, try to acquire knowledge from web
-        grounding_score = faithfulness if faithfulness is not None else 0
-        if grounding_score < 0.4 and response_mode in ('abstained', 'llm'):
+        # ============ CENTRALIZED EXTERNAL SOURCE ACQUISITION ============
+        grounding_score = grounding_score if grounding_score is not None else 0
+        grounding_result = payload.get('grounding') or {
+            'grounded': False,
+            'score': grounding_score,
+            'abstained': response_mode == 'abstained',
+        }
+        from source_acquisition_orchestrator import (
+            external_search_activation_reason,
+            should_activate_external_search,
+        )
+
+        activate_external_search = should_activate_external_search(
+            evidence_assessment,
+            grounding_result,
+            enable_external_search=(
+                allow_external
+                and self._retrieval_config.get("enable_external_search", True)
+            ),
+        )
+        activation_reason = external_search_activation_reason(
+            evidence_assessment,
+            grounding_result,
+        )
+        payload['external_search'] = {
+            'activated': activate_external_search,
+            'activation_count': 0,
+            'reason': activation_reason,
+            'correlation_id': correlation_id,
+            'candidate_discovered': False,
+        }
+        payload['evidence_before'] = (
+            payload.get('grounding', {}).get('evidence_assessment')
+        )
+        payload['grounding_before'] = payload.get('grounding') or grounding_result
+        payload['evidence_after'] = None
+        payload['grounding_after'] = None
+        payload['acquisition_attempted'] = activate_external_search
+        payload['acquisition_result'] = None
+        payload['post_acquisition_retrieval'] = False
+        payload['external_search_attempts'] = 0
+        payload['source_id'] = None
+        payload['version_id'] = None
+        payload['affected_chunk_ids'] = []
+
+        if activate_external_search:
+            payload['external_search']['activation_count'] = 1
+            payload['external_search_attempts'] = 1
             try:
                 from knowledge_acquisition import KnowledgeAcquisitionAgent
-                print(f"[WEB_SEARCH] grounding_score={grounding_score:.2f}, threshold=0.4")
-                print(f"[WEB_SEARCH] CONDITION MET: Attempting low-grounding fallback")
-                
                 knowledge_agent = KnowledgeAcquisitionAgent()
-                
-                # Try to acquire knowledge
                 new_result = knowledge_agent.handle_low_grounding_sync(
                     query=query,
                     draft_answer=response,
                     retrieved_docs=results,
                     evaluation={'score': grounding_score, 'missing_entities': []},
-                    rag_module=self
+                    rag_module=self,
+                    correlation_id=correlation_id,
+                    evidence_assessment=evidence_assessment,
+                    grounding_result=grounding_result,
+                    activation_reason=activation_reason,
                 )
-                
-                # If acquisition successful, use new result
-                if new_result and new_result.get('response'):
-                    print(f"[WEB_SEARCH] Success: Web search returned enhanced result")
-                    response = new_result.get('response', response)
-                    grounding_score = new_result.get('grounding_score', grounding_score)
-                    payload['response'] = response
-                    payload['grounding_score'] = grounding_score
-                    payload['response_mode'] = 'web_enhanced'
-                    payload['ai_metrics']['faithfulness'] = grounding_score
-                    payload['ai_metrics']['response_mode'] = 'web_enhanced'
-                else:
-                    print(f"[WEB_SEARCH] No enhancement found")
-                    
+                if new_result:
+                    payload['external_search']['candidate_discovered'] = True
+                    acquisition_result = new_result.get('acquisition_result') or {}
+                    payload['acquisition_result'] = acquisition_result
+                    payload['source_id'] = acquisition_result.get('source_id')
+                    payload['version_id'] = acquisition_result.get('version_id')
+                    payload['affected_chunk_ids'] = acquisition_result.get(
+                        'affected_chunk_ids', []
+                    )
+
+                    if acquisition_result.get('success'):
+                        post_payload = self.search_and_generate(
+                            query=query,
+                            context_type=context_type,
+                            language=language,
+                            session_id=session_id,
+                            use_llm=use_llm,
+                            correlation_id=correlation_id,
+                            allow_external=False,
+                        )
+                        post_payload['evidence_before'] = payload['evidence_before']
+                        post_payload['grounding_before'] = payload['grounding_before']
+                        post_payload['evidence_after'] = (
+                            post_payload.get('grounding', {}).get('evidence_assessment')
+                        )
+                        post_payload['grounding_after'] = post_payload.get('grounding')
+                        post_payload['acquisition_attempted'] = True
+                        post_payload['acquisition_result'] = acquisition_result
+                        post_payload['post_acquisition_retrieval'] = True
+                        post_payload['external_search_attempts'] = 1
+                        post_payload['source_id'] = acquisition_result.get('source_id')
+                        post_payload['version_id'] = acquisition_result.get('version_id')
+                        post_payload['affected_chunk_ids'] = acquisition_result.get(
+                            'affected_chunk_ids', []
+                        )
+                        post_payload['external_search'] = payload['external_search']
+                        post_payload['external_search']['retry_allow_external'] = False
+                        return post_payload
             except ImportError:
                 print(f"[WEB_SEARCH] KnowledgeAcquisitionAgent not available")
-            except AttributeError:
-                # handle_low_grounding_sync doesn't exist, try async version
-                print(f"[WEB_SEARCH] handle_low_grounding_sync not available (async version)")
-            except Exception as e:
-                print(f"[WEB_SEARCH] Error: {e}")
+            except Exception as error:
+                print(f"[WEB_SEARCH] Error: error_type={type(error).__name__}")
+                payload['external_search']['error'] = "acquisition_error"
+                payload['external_search']['error_type'] = type(error).__name__
         
         return payload
 

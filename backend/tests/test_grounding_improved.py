@@ -16,6 +16,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from trust.hallucination import (
+    assess_evidence_sufficiency,
     analyze_grounding_improved,
     GroundingLevel,
     _extract_numbers,
@@ -26,6 +27,205 @@ from trust.hallucination import (
     estimate_faithfulness,
 )
 from trust.citation import enforce_grounding_improved, _is_sensitive_topic
+
+
+class TestEvidenceSufficiency:
+    """Regression tests for query-to-evidence sufficiency."""
+
+    def test_irrelevant_copied_context_is_insufficient(self):
+        query = "¿Cuál es el código de confirmación de la sesión piloto del 15 de septiembre de 2026?"
+        results = [{
+            "content": "Los exámenes de idiomas A1-C2 incluyen TOEFL e IELTS en Krasnodar.",
+            "source": "FAQ",
+            "relevance": 0.4,
+        }]
+
+        assessment = assess_evidence_sufficiency(query, results, retrieval_mode="keyword")
+
+        assert assessment.sufficient is False
+        assert "requested_slot_not_covered" in assessment.reasons
+
+        copied_answer = results[0]["content"]
+        guarded = enforce_grounding_improved(
+            copied_answer,
+            results,
+            query=query,
+            retrieval_mode="keyword",
+        )
+        assert guarded.faithfulness_score > 0.9
+        assert guarded.score < 0.4
+        assert guarded.abstained is True
+        assert guarded.evidence_assessment.sufficient is False
+
+    def test_relevant_evidence_is_sufficient(self):
+        query = "¿Cuál es el código de confirmación de la sesión piloto del 15 de septiembre de 2026?"
+        results = [{
+            "content": (
+                "Para la sesión piloto del 15 de septiembre de 2026, el código "
+                "de confirmación es KUBGU-E2E-7429."
+            ),
+            "source": "Aviso controlado",
+            "relevance": 0.95,
+        }]
+
+        assessment = assess_evidence_sufficiency(query, results, retrieval_mode="semantic")
+
+        assert assessment.sufficient is True
+        assert assessment.query_relevance >= 0.5
+        assert assessment.requested_slot_coverage is True
+
+    def test_fallback_retrieval_is_always_insufficient(self):
+        results = [{
+            "content": "El requisito de visa es presentar el pasaporte.",
+            "source": "FAQ",
+            "relevance": 1.0,
+        }]
+
+        assessment = assess_evidence_sufficiency(
+            "¿Qué requisito de visa debo presentar?",
+            results,
+            retrieval_mode="fallback",
+        )
+
+        assert assessment.sufficient is False
+        assert assessment.retrieval_confidence == 0.0
+        assert "fallback_retrieval" in assessment.reasons
+
+    def test_missing_critical_query_entity_is_insufficient(self):
+        query = "¿Qué requisito corresponde al código KUBGU-E2E-7429 en KubGU?"
+        results = [{
+            "content": "KubGU publica los requisitos generales de orientación internacional.",
+            "source": "KubGU",
+            "relevance": 0.9,
+        }]
+
+        assessment = assess_evidence_sufficiency(query, results, retrieval_mode="semantic")
+
+        assert assessment.sufficient is False
+        assert "KUBGU-E2E-7429" in assessment.missing_entities["codes"]
+        assert "query_entity_coverage_below_threshold" in assessment.reasons
+
+    def test_spbu_purpose_of_stay_is_covered_despite_contextual_when(self):
+        query = (
+            "What purpose of stay should an international student indicate on "
+            "the migration card when entering Russia?"
+        )
+        results = [{
+            "content": (
+                "When entering Russia, an international student must fill out "
+                "the migration card with the stated purpose of stay being \"study\"."
+            ),
+            "source": "SPbU",
+            "relevance": 0.95,
+        }]
+
+        assessment = assess_evidence_sufficiency(query, results)
+
+        assert assessment.requested_slot == "purpose_of_stay"
+        assert assessment.requested_slot_coverage is True
+        assert assessment.sufficient is True
+
+    def test_real_date_question_without_date_is_insufficient(self):
+        results = [{
+            "content": "The migration registration deadline is described in the rules.",
+            "source": "Registration rules",
+            "relevance": 0.95,
+        }]
+
+        assessment = assess_evidence_sufficiency(
+            "When is the migration registration deadline?",
+            results,
+        )
+
+        assert assessment.requested_slot == "date"
+        assert assessment.requested_slot_coverage is False
+        assert assessment.sufficient is False
+        assert "requested_slot_not_covered" in assessment.reasons
+
+    def test_documents_question_with_contextual_when_is_covered(self):
+        results = [{
+            "content": (
+                "When arriving at the university, the required documents are "
+                "a passport and migration card."
+            ),
+            "source": "Arrival guide",
+            "relevance": 0.95,
+        }]
+
+        assessment = assess_evidence_sufficiency(
+            "What documents are required when arriving at the university?",
+            results,
+        )
+
+        assert assessment.requested_slot == "documents"
+        assert assessment.requested_slot_coverage is True
+        assert assessment.sufficient is True
+
+    def test_required_action_with_contextual_when_is_not_a_date(self):
+        results = [{
+            "content": (
+                "A student changing accommodation must notify the university "
+                "and update the migration registration."
+            ),
+            "source": "Accommodation guide",
+            "relevance": 0.95,
+        }]
+
+        assessment = assess_evidence_sufficiency(
+            "What should a student do when changing accommodation?",
+            results,
+        )
+
+        assert assessment.requested_slot == "required_action"
+        assert assessment.requested_slot_coverage is True
+        assert assessment.sufficient is True
+
+    def test_minimal_spbu_evidence_is_sufficient_offline(self):
+        source_url = "https://example.test/spbu-migration-registration"
+        source_content = (
+            "Upon arrival at the Russian border, foreign nationals must fill out "
+            "a migration card with the stated purpose of stay being study."
+        )
+        query = (
+            "What purpose of stay should an international student indicate on "
+            "the migration card when entering Russia?"
+        )
+        results = [{
+            "content": source_content,
+            "source": "SPbU: visa and registration requirements for international students",
+            "source_url": source_url,
+            "relevance": 0.9,
+        }]
+
+        assessment = assess_evidence_sufficiency(
+            query,
+            results,
+            retrieval_mode="keyword",
+        )
+        guarded = enforce_grounding_improved(
+            (
+                "Upon arrival at the Russian border, all foreign nationals must "
+                "fill out a migration card with the stated purpose of stay being study."
+            ),
+            results,
+            query=query,
+            retrieval_mode="keyword",
+            strict_mode=True,
+        )
+
+        assert assessment.requested_slot == "purpose_of_stay"
+        assert assessment.requested_slot_coverage is True
+        assert assessment.sufficient is True
+        assert guarded.grounded is True
+        assert guarded.abstained is False
+        assert results[0]["source_url"] == source_url
+
+
+def test_grounding_tests_do_not_read_runtime_artifact_paths():
+    test_source = Path(__file__).read_text(encoding="utf-8").replace("\\", "/")
+    forbidden_runtime_path = "".join(("arti", "facts", "/"))
+
+    assert forbidden_runtime_path not in test_source
 
 
 class TestHardEntityExtraction:

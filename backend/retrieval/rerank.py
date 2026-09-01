@@ -79,7 +79,12 @@ class CrossEncoderReranker:
     
     DEFAULT_MODEL = 'cross-encoder/mmarco-mMiniLMv2-L12-H384-v1'  # Multilingual fallback
 
-    def __init__(self, model_name: Optional[str] = None, auto_language: bool = True):
+    def __init__(
+        self,
+        model_name: Optional[str] = None,
+        auto_language: bool = True,
+        strict: bool = False,
+    ):
         """Initialize reranker.
         
         Args:
@@ -88,9 +93,14 @@ class CrossEncoderReranker:
         """
         self.model_name = model_name or self.DEFAULT_MODEL
         self.auto_language = auto_language
+        self.strict = strict
         self._model = None
         self._current_model = None
         self._detector = QueryLanguageDetector()
+        self._loaded_models = set()
+        self._models_used = set()
+        self._prediction_count = 0
+        self._last_error = None
 
     def is_available(self) -> bool:
         return _CE_AVAILABLE
@@ -115,10 +125,17 @@ class CrossEncoderReranker:
             warnings.filterwarnings("ignore")
             self._model = CrossEncoder(target_model)
             self._current_model = target_model
+            self._loaded_models.add(target_model)
+            self._last_error = None
             return True
-        except BaseException:  # noqa: BLE001
+        except BaseException as exc:  # noqa: BLE001
             self._model = None
             self._current_model = None
+            self._last_error = f"{type(exc).__name__}: {exc}"
+            if self.strict:
+                raise RuntimeError(
+                    f"Failed to load cross-encoder model '{target_model}'"
+                ) from exc
             return False
 
     def rerank(self, query: str, results: List[RetrievalResult], top_k: Optional[int] = None) -> List[RetrievalResult]:
@@ -132,24 +149,32 @@ class CrossEncoderReranker:
         Returns:
             Reranked results
         """
-        if not results or not self._ensure_model():
-            return results[:top_k] if top_k else results
-        
-        # Optionally select model by language
+        if not results:
+            return []
+
+        model_to_use = self.model_name
         if self.auto_language:
             lang = self._detector.detect(query)
             model_to_use = self.MODEL_VARIANTS.get(lang, self.DEFAULT_MODEL)
-            if not self._ensure_model(model_to_use):
-                model_to_use = self.model_name  # Fallback
-                self._ensure_model(model_to_use)
+        if not self._ensure_model(model_to_use):
+            return results[:top_k] if top_k else results
         
         # Prepare pairs
         pairs = [(query, r.chunk.text) for r in results]
         
         try:
             scores = list(self._model.predict(pairs))
-        except BaseException:  # noqa: BLE001
+        except BaseException as exc:  # noqa: BLE001
+            self._last_error = f"{type(exc).__name__}: {exc}"
+            if self.strict:
+                raise RuntimeError(
+                    f"Cross-encoder prediction failed for '{model_to_use}'"
+                ) from exc
             return results[:top_k] if top_k else results
+
+        self._models_used.add(model_to_use)
+        self._prediction_count += len(pairs)
+        self._last_error = None
         
         # Normalize scores
         norm = minmax_normalize([float(s) for s in scores])

@@ -225,6 +225,50 @@ class Settings(BaseSettings):
         default=0.35,
         description="Minimum grounding/faithfulness score below which the assistant abstains",
     )
+    query_relevance_threshold: float = Field(
+        default=0.5,
+        description=(
+            "Minimum query-to-document relevance for sufficient evidence; calibrate on "
+            "a separate development set, not FNT-E2E-001"
+        ),
+    )
+    query_entity_coverage_threshold: float = Field(
+        default=1.0,
+        description=(
+            "Minimum query entity coverage for sufficient evidence; calibrate on a "
+            "separate development set, not FNT-E2E-001"
+        ),
+    )
+    enable_evidence_assessment: bool = Field(
+        default=True,
+        description="Enable the pre-generation query-to-evidence sufficiency gate",
+    )
+    enable_external_search: bool = Field(
+        default=True,
+        description="Enable centralized external search when evidence is insufficient",
+    )
+    enable_public_source_acquisition: bool = Field(
+        default=False,
+        description="Enable explicitly allowlisted public source acquisition",
+    )
+    public_source_allowed_urls: List[str] = Field(
+        default_factory=list,
+        description="Exact HTTPS URLs permitted for public source acquisition",
+    )
+    public_source_allowed_hosts: List[str] = Field(
+        default_factory=list,
+        description="Exact hosts permitted for public source acquisition",
+    )
+    public_source_max_requests_per_run: int = Field(
+        default=1,
+        ge=1,
+        description="Maximum public transport requests for one correlation/run ID",
+    )
+    public_source_max_redirects: int = Field(
+        default=0,
+        ge=0,
+        description="Maximum explicitly allowlisted public redirects",
+    )
 
     @field_validator("retrieval_mode")
     @classmethod
@@ -236,6 +280,13 @@ class Settings(BaseSettings):
                 f"retrieval_mode must be one of {sorted(allowed)}, got '{value}'"
             )
         return normalized
+
+    @field_validator("query_relevance_threshold", "query_entity_coverage_threshold")
+    @classmethod
+    def _validate_unit_interval(cls, value: float) -> float:
+        if not 0.0 <= value <= 1.0:
+            raise ValueError("evidence thresholds must be between 0 and 1")
+        return value
 
     # ==================== TELEGRAM BOT ====================
     telegram_bot_token: str = Field(

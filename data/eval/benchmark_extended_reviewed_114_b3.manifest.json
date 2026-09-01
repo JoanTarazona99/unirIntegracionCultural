@@ -1,0 +1,64 @@
+{
+  "dataset_type": "synthetic_ai_reviewed_exploratory_b3_input",
+  "total_records": 114,
+  "accepted_records": 15,
+  "revised_records": 99,
+  "pending_excluded": 18,
+  "rejected_excluded": 0,
+  "languages": {
+    "en": 38,
+    "es": 38,
+    "ru": 38
+  },
+  "categories": {
+    "admin": 12,
+    "communication": 6,
+    "cultural_adaptation": 6,
+    "documents": 15,
+    "education": 9,
+    "finance": 6,
+    "food": 3,
+    "health": 6,
+    "housing": 9,
+    "language": 6,
+    "legal_rights": 3,
+    "migration": 12,
+    "safety": 6,
+    "scholarships": 3,
+    "transport": 6,
+    "visa": 6
+  },
+  "multi_fragment_records": 44,
+  "official_evaluation_eligible": false,
+  "used_for_official_metrics": false,
+  "human_review_completed": false,
+  "adapter_version": "v1",
+  "sha256": "8e2584735a7d62b249c7c2c2acdfd029a4f46fd55d5112805491f6712fc2bec5",
+  "source_inputs": {
+    "reviewed_jsonl": {
+      "path": "data/eval/benchmark_extended_reviewed_114.jsonl",
+      "sha256": "2c07d9d53b3d4ebbf736cf8d97b3959fca94e8a189e9bd3a40ca775373a4a582"
+    },
+    "reviewed_manifest": {
+      "path": "data/eval/benchmark_extended_reviewed_114.manifest.json",
+      "sha256": "414aefdd24b40de41f169c1b819b3993da22b0dbe14fe6e40f3eca4a5a9347ed"
+    },
+    "reviewed_diagnostics": {
+      "path": "data/eval/benchmark_extended_reviewed_114_diagnostics.json",
+      "sha256": "a7502d0c702d654c6c6b5f7bea6f3400094bb435b41e1a6590a63a8051821b4a"
+    },
+    "active_inventory": {
+      "path": "data/eval/benchmark_extended.jsonl",
+      "sha256": "13da665537e8348a45192819e3c9814c08215adac43d87e2bdd44e35650580ef"
+    }
+  },
+  "created_at": "2026-08-30T00:17:52Z",
+  "warning": "Los registros y qrels conservan origen sintético y fueron revisados con asistencia de IA; este adaptador no los convierte en anotaciones humanas ni en un benchmark oficial.",
+  "field_mapping": {
+    "id": "query_id",
+    "question": "reviewed_query_text",
+    "lang": "language",
+    "category": "reviewed_category",
+    "relevant_chunk_ids": "reviewed_relevant_fragments"
+  }
+}

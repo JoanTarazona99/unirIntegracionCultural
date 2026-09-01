@@ -1,0 +1,207 @@
+{
+  "valid": true,
+  "errors": [],
+  "total_records": 114,
+  "accepted_records": 15,
+  "revised_records": 99,
+  "pending_excluded": 18,
+  "rejected_excluded": 0,
+  "languages": {
+    "en": 38,
+    "es": 38,
+    "ru": 38
+  },
+  "reviewed_categories": {
+    "admin": 12,
+    "communication": 6,
+    "cultural_adaptation": 6,
+    "documents": 15,
+    "education": 9,
+    "finance": 6,
+    "food": 3,
+    "health": 6,
+    "housing": 9,
+    "language": 6,
+    "legal_rights": 3,
+    "migration": 12,
+    "safety": 6,
+    "scholarships": 3,
+    "transport": 6,
+    "visa": 6
+  },
+  "multi_fragment_records": 44,
+  "official_evaluation_eligible": false,
+  "used_for_official_metrics": false,
+  "human_review_completed": false,
+  "excluded_by_rule": {
+    "pending_status": 18,
+    "rejected_status": 0,
+    "review_status_not_included": 0,
+    "reviewed_query_text_missing": 0,
+    "reviewed_category_missing_or_invalid": 0,
+    "reviewed_relevant_fragments_missing": 0,
+    "semantic_validity_not_valid": 0,
+    "relevance_validity_not_eligible": 0,
+    "language_quality_not_eligible": 0,
+    "ambiguity_high_or_invalid": 0,
+    "reviewer_id_missing": 0,
+    "reviewed_at_missing_or_invalid": 0,
+    "reviewed_fragment_not_active": 0,
+    "synthetic_field_altered": 0,
+    "used_for_official_metrics_not_false": 0
+  },
+  "excluded_query_ids": [
+    "q010",
+    "q015",
+    "q018",
+    "q019",
+    "q021",
+    "q022",
+    "q054",
+    "q059",
+    "q062",
+    "q063",
+    "q065",
+    "q066",
+    "q098",
+    "q103",
+    "q106",
+    "q107",
+    "q109",
+    "q110"
+  ],
+  "excluded_records": [
+    {
+      "query_id": "q010",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q015",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q018",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q019",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q021",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q022",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q054",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q059",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q062",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q063",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q065",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q066",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q098",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q103",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q106",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q107",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q109",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    },
+    {
+      "query_id": "q110",
+      "source_review_status": "pending",
+      "reasons": [
+        "pending_status"
+      ]
+    }
+  ],
+  "ineligible_accepted_or_revised_query_ids": [],
+  "export_sha256": "2c07d9d53b3d4ebbf736cf8d97b3959fca94e8a189e9bd3a40ca775373a4a582",
+  "source_template_sha256": "1061405d4c3c016c74c0990e7e7b4bd92274102c6962a328621e3b33415e1aa4",
+  "protocol_version": "v1",
+  "generated_at": "2026-08-29T23:19:59Z",
+  "warning": "Los qrels conservan origen sintético y fueron auditados con asistencia de IA; no constituyen anotaciones humanas ni un benchmark oficial."
+}
