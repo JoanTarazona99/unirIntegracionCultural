@@ -1,0 +1,378 @@
+{
+  "state_root": "C:\\xampp\\htdocs\\proyectos\\unirIntegracionCultural\\artifacts\\real-source-tests\\spbu-20260901\\state",
+  "dense_snapshot": "C:\\Users\\Windows 11\\.cache\\huggingface\\hub\\models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2\\snapshots\\e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+  "dense_snapshot_exists": true,
+  "offline_model_loading": true,
+  "environment": {
+    "package_versions": {
+      "torch": "2.0.1+cpu",
+      "torchvision": "0.15.2+cpu",
+      "transformers": "4.57.6",
+      "sentence-transformers": "5.6.0",
+      "numpy": "1.24.3",
+      "rank-bm25": "0.2.2"
+    },
+    "sentence_transformers_import": {
+      "success": false,
+      "error_type": "AttributeError",
+      "error": "module 'torch' has no attribute 'compiler'"
+    }
+  },
+  "queries": [
+    {
+      "language": "es",
+      "query": "¿Qué programas ofrece SPbU?",
+      "legacy_keyword_tokens": [
+        "¿qué",
+        "programas",
+        "ofrece",
+        "spbu?"
+      ],
+      "unicode_tokens": [
+        "qué",
+        "programas",
+        "ofrece",
+        "spbu"
+      ],
+      "bm25_expanded_tokens": [
+        "qué",
+        "programas",
+        "ofrece",
+        "spbu"
+      ]
+    },
+    {
+      "language": "en",
+      "query": "What programs does SPbU offer?",
+      "legacy_keyword_tokens": [
+        "what",
+        "programs",
+        "does",
+        "spbu",
+        "offer?"
+      ],
+      "unicode_tokens": [
+        "what",
+        "programs",
+        "does",
+        "spbu",
+        "offer"
+      ],
+      "bm25_expanded_tokens": [
+        "what",
+        "programs",
+        "does",
+        "spbu",
+        "offer"
+      ]
+    },
+    {
+      "language": "ru",
+      "query": "Какие программы предлагает СПБГУ?",
+      "legacy_keyword_tokens": [
+        "какие",
+        "программы",
+        "предлагает",
+        "спбгу?"
+      ],
+      "unicode_tokens": [
+        "какие",
+        "программы",
+        "предлагает",
+        "спбгу"
+      ],
+      "bm25_expanded_tokens": [
+        "какие",
+        "программы",
+        "предлагает",
+        "спбгу"
+      ]
+    },
+    {
+      "language": "ru_technical",
+      "query": "программы дополнительное образование онлайн курсы",
+      "legacy_keyword_tokens": [
+        "программы",
+        "дополнительное",
+        "образование",
+        "онлайн",
+        "курсы"
+      ],
+      "unicode_tokens": [
+        "программы",
+        "дополнительное",
+        "образование",
+        "онлайн",
+        "курсы"
+      ],
+      "bm25_expanded_tokens": [
+        "программы",
+        "дополнительное",
+        "образование",
+        "онлайн",
+        "курсы"
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "requested_mode": "keyword",
+      "rehydrated_chunks": 45,
+      "results": [
+        {
+          "language": "es",
+          "query": "¿Qué programas ofrece SPbU?",
+          "effective_mode": "keyword",
+          "spbu_rank": null,
+          "top_results": [
+            {
+              "source": "FAQ",
+              "source_url": "https://kubsu.ru/faq",
+              "title": "¿Qué nivel de ruso necesito? Какой уровень русского языка нужен?",
+              "relevance": 0.30000000000000004,
+              "search_mode": "keyword",
+              "id": null
+            }
+          ]
+        },
+        {
+          "language": "en",
+          "query": "What programs does SPbU offer?",
+          "effective_mode": "fallback",
+          "spbu_rank": null,
+          "top_results": [
+            {
+              "source": "KubGU",
+              "source_url": "https://kubsu.ru",
+              "title": "Informacion General",
+              "relevance": 0.3,
+              "search_mode": "fallback",
+              "id": null
+            }
+          ]
+        },
+        {
+          "language": "ru",
+          "query": "Какие программы предлагает СПБГУ?",
+          "effective_mode": "fallback",
+          "spbu_rank": null,
+          "top_results": [
+            {
+              "source": "KubGU",
+              "source_url": "https://kubsu.ru",
+              "title": "Informacion General",
+              "relevance": 0.3,
+              "search_mode": "fallback",
+              "id": null
+            }
+          ]
+        },
+        {
+          "language": "ru_technical",
+          "query": "программы дополнительное образование онлайн курсы",
+          "effective_mode": "keyword",
+          "spbu_rank": 1,
+          "top_results": [
+            {
+              "source": "Saint Petersburg State University",
+              "source_url": "https://spbu.ru",
+              "title": "Saint Petersburg State University",
+              "relevance": 0.5,
+              "search_mode": "keyword",
+              "id": "refresh:candidate_spbu-home-20260901:20260901015559-d69ab6a55d"
+            }
+          ]
+        }
+      ],
+      "retriever_class": null,
+      "retriever_available": null,
+      "dense_model_loaded": false
+    },
+    {
+      "requested_mode": "bm25",
+      "rehydrated_chunks": 45,
+      "results": [
+        {
+          "language": "es",
+          "query": "¿Qué programas ofrece SPbU?",
+          "effective_mode": "bm25",
+          "spbu_rank": null,
+          "top_results": [
+            {
+              "source": "FAQ",
+              "source_url": "https://kubsu.ru/faq",
+              "title": "¿Qué nivel de ruso necesito? Какой уровень русского языка нужен?",
+              "relevance": 1.0,
+              "search_mode": "bm25",
+              "id": "FAQ::4"
+            },
+            {
+              "source": "КубГУ",
+              "source_url": "https://kubsu.ru",
+              "title": "Matrícula y costos académicos",
+              "relevance": 0.9283148863502312,
+              "search_mode": "bm25",
+              "id": "КубГУ::4"
+            },
+            {
+              "source": "Документы",
+              "source_url": "https://мвд.рф",
+              "title": "СНИЛС и ИНН / Números de identificación fiscal",
+              "relevance": 0.31400496164278596,
+              "search_mode": "bm25",
+              "id": "Документы::2"
+            },
+            {
+              "source": "Русский язык",
+              "source_url": "https://kubsu.ru",
+              "title": "Exámenes de idiomas internacionales / Международные экзамены",
+              "relevance": 0.0,
+              "search_mode": "bm25",
+              "id": "Русский язык::1"
+            }
+          ]
+        },
+        {
+          "language": "en",
+          "query": "What programs does SPbU offer?",
+          "effective_mode": "bm25",
+          "spbu_rank": null,
+          "top_results": [
+            {
+              "source": "КубГУ",
+              "source_url": "https://kubsu.ru",
+              "title": "Matrícula y costos académicos",
+              "relevance": 1.0,
+              "search_mode": "bm25",
+              "id": "КубГУ::4"
+            }
+          ]
+        },
+        {
+          "language": "ru",
+          "query": "Какие программы предлагает СПБГУ?",
+          "effective_mode": "bm25",
+          "spbu_rank": 1,
+          "top_results": [
+            {
+              "source": "Saint Petersburg State University",
+              "source_url": "https://spbu.ru",
+              "title": "Saint Petersburg State University",
+              "relevance": 1.0,
+              "search_mode": "bm25",
+              "id": "Saint Petersburg State University::0"
+            },
+            {
+              "source": "Госуслуги",
+              "source_url": "https://www.gosuslugi.ru",
+              "title": "Тип визы Student visa Тип студенческой визы",
+              "relevance": 0.0,
+              "search_mode": "bm25",
+              "id": "Госуслуги::2"
+            }
+          ]
+        },
+        {
+          "language": "ru_technical",
+          "query": "программы дополнительное образование онлайн курсы",
+          "effective_mode": "bm25",
+          "spbu_rank": 1,
+          "top_results": [
+            {
+              "source": "Saint Petersburg State University",
+              "source_url": "https://spbu.ru",
+              "title": "Saint Petersburg State University",
+              "relevance": 1.0,
+              "search_mode": "bm25",
+              "id": "Saint Petersburg State University::0"
+            },
+            {
+              "source": "Госуслуги",
+              "source_url": "https://www.gosuslugi.ru",
+              "title": "Тип визы Student visa Тип студенческой визы",
+              "relevance": 0.0,
+              "search_mode": "bm25",
+              "id": "Госуслуги::2"
+            }
+          ]
+        }
+      ],
+      "retriever_class": "BM25Retriever",
+      "retriever_available": true,
+      "dense_model_loaded": false
+    },
+    {
+      "requested_mode": "dense",
+      "rehydrated_chunks": 45,
+      "results": [
+        {
+          "language": "es",
+          "query": "¿Qué programas ofrece SPbU?",
+          "effective_mode": "keyword",
+          "spbu_rank": null,
+          "top_results": [
+            {
+              "source": "FAQ",
+              "source_url": "https://kubsu.ru/faq",
+              "title": "¿Qué nivel de ruso necesito? Какой уровень русского языка нужен?",
+              "relevance": 0.30000000000000004,
+              "search_mode": "keyword",
+              "id": null
+            }
+          ]
+        },
+        {
+          "language": "en",
+          "query": "What programs does SPbU offer?",
+          "effective_mode": "fallback",
+          "spbu_rank": null,
+          "top_results": [
+            {
+              "source": "KubGU",
+              "source_url": "https://kubsu.ru",
+              "title": "Informacion General",
+              "relevance": 0.3,
+              "search_mode": "fallback",
+              "id": null
+            }
+          ]
+        },
+        {
+          "language": "ru",
+          "query": "Какие программы предлагает СПБГУ?",
+          "effective_mode": "fallback",
+          "spbu_rank": null,
+          "top_results": [
+            {
+              "source": "KubGU",
+              "source_url": "https://kubsu.ru",
+              "title": "Informacion General",
+              "relevance": 0.3,
+              "search_mode": "fallback",
+              "id": null
+            }
+          ]
+        },
+        {
+          "language": "ru_technical",
+          "query": "программы дополнительное образование онлайн курсы",
+          "effective_mode": "keyword",
+          "spbu_rank": 1,
+          "top_results": [
+            {
+              "source": "Saint Petersburg State University",
+              "source_url": "https://spbu.ru",
+              "title": "Saint Petersburg State University",
+              "relevance": 0.5,
+              "search_mode": "keyword",
+              "id": "refresh:candidate_spbu-home-20260901:20260901015559-d69ab6a55d"
+            }
+          ]
+        }
+      ],
+      "retriever_class": "DenseRetriever",
+      "retriever_available": false,
+      "dense_model_loaded": false
+    }
+  ]
+}

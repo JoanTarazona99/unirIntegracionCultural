@@ -1,0 +1,62 @@
+rag_source_rehydration
+rag_source_rehydration
+rag_source_rehydration
+rag_source_rehydration
+Disabling PyTorch because PyTorch >= 2.1 is required but found 2.0.1+cpu
+None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+None of PyTorch, TensorFlow >= 2.0, or Flax have been found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+C:\xampp\htdocs\proyectos\unirIntegracionCultural\venv311\Lib\site-packages\torchvision\datapoints\__init__.py:12: UserWarning: The torchvision.datapoints and torchvision.transforms.v2 namespaces are still Beta. While we do not expect major breaking changes, some APIs may still change according to user feedback. Please submit any feedback you may have in this issue: https://github.com/pytorch/vision/issues/6753, and you can also check out https://github.com/pytorch/vision/issues/7319 to learn more about the APIs that we suspect might involve future changes. You can silence this warning by calling torchvision.disable_beta_transforms_warning().
+  warnings.warn(_BETA_TRANSFORMS_WARNING)
+C:\xampp\htdocs\proyectos\unirIntegracionCultural\venv311\Lib\site-packages\torchvision\transforms\v2\__init__.py:54: UserWarning: The torchvision.datapoints and torchvision.transforms.v2 namespaces are still Beta. While we do not expect major breaking changes, some APIs may still change according to user feedback. Please submit any feedback you may have in this issue: https://github.com/pytorch/vision/issues/6753, and you can also check out https://github.com/pytorch/vision/issues/7319 to learn more about the APIs that we suspect might involve future changes. You can silence this warning by calling torchvision.disable_beta_transforms_warning().
+  warnings.warn(_BETA_TRANSFORMS_WARNING)
+[LLM] ollama not available - Using template fallback
+[RAG] LLM module available - Natural language generation enabled
+[RAG] Translator available - Content translation enabled
+[RAG] Semantic search disabled (keyword fallback active). Set ENABLE_SEMANTIC_SEARCH=1 to enable.
+[RAG] Flattened 45 document sections
+[RAG] Using keyword search mode
+REHYDRATED_CHUNKS: 45
+
+español:
+  Query: ¿Qué programas ofrece SPbU?
+  Sources found: 1
+  Confidence: None
+  Grounding: None
+  Top sources: []
+  Actual sources: ['https://kubsu.ru/faq']
+  Search mode: keyword
+  Response mode: abstained
+  Grounding detail: {'grounded': False, 'score': 0.25, 'level': 'low', 'abstained': True, 'citations': [{'source': 'FAQ', 'title': '¿Qué nivel de ruso necesito? Какой уровень русского языка нужен?', 'url': 'https://kubsu.ru/faq'}], 'explanation': 'Retrieved evidence is insufficient for the query: query_relevance_below_threshold', 'matched_entities': [], 'missing_entities': [], 'faithfulness_score': 0.25, 'evidence_assessment': {'sufficient': False, 'score': 0.374, 'query_relevance': 0.0, 'query_term_coverage': 0.0, 'query_entity_coverage': 1.0, 'requested_slot_coverage': True, 'retrieval_confidence': 0.24, 'reasons': ['query_relevance_below_threshold'], 'query_terms': ['ofrece', 'programas', 'spbu'], 'matched_terms': [], 'missing_terms': ['ofrece', 'programas', 'spbu'], 'query_entities': {'dates': [], 'institutions': [], 'codes': []}, 'matched_entities': {'dates': [], 'institutions': [], 'codes': []}, 'missing_entities': {'dates': [], 'institutions': [], 'codes': []}}}
+
+inglés:
+  Query: What programs does SPbU offer?
+  Sources found: 1
+  Confidence: None
+  Grounding: None
+  Top sources: []
+  Actual sources: ['https://kubsu.ru']
+  Search mode: fallback
+  Response mode: abstained
+  Grounding detail: {'grounded': False, 'score': 0.25, 'level': 'low', 'abstained': True, 'citations': [{'source': 'KubGU', 'title': 'Informacion General', 'url': 'https://kubsu.ru'}], 'explanation': 'Retrieved evidence is insufficient for the query: fallback_retrieval', 'matched_entities': [], 'missing_entities': [], 'faithfulness_score': 0.25, 'evidence_assessment': {'sufficient': False, 'score': 0.9, 'query_relevance': 1.0, 'query_term_coverage': 1.0, 'query_entity_coverage': 1.0, 'requested_slot_coverage': True, 'retrieval_confidence': 0.0, 'reasons': ['fallback_retrieval'], 'query_terms': ['does', 'offer', 'programs', 'spbu'], 'matched_terms': ['does', 'offer', 'programs', 'spbu'], 'missing_terms': [], 'query_entities': {'dates': [], 'institutions': [], 'codes': []}, 'matched_entities': {'dates': [], 'institutions': [], 'codes': []}, 'missing_entities': {'dates': [], 'institutions': [], 'codes': []}}}
+
+ruso:
+  Query: Какие программы предлагает СПБГУ?
+  Sources found: 1
+  Confidence: None
+  Grounding: None
+  Top sources: []
+  Actual sources: ['https://kubsu.ru']
+  Search mode: fallback
+  Response mode: abstained
+  Grounding detail: {'grounded': False, 'score': 0.25, 'level': 'low', 'abstained': True, 'citations': [{'source': 'KubGU', 'title': 'Informacion General', 'url': 'https://kubsu.ru'}], 'explanation': 'Retrieved evidence is insufficient for the query: fallback_retrieval', 'matched_entities': [], 'missing_entities': [], 'faithfulness_score': 0.25, 'evidence_assessment': {'sufficient': False, 'score': 0.9, 'query_relevance': 1.0, 'query_term_coverage': 1.0, 'query_entity_coverage': 1.0, 'requested_slot_coverage': True, 'retrieval_confidence': 0.0, 'reasons': ['fallback_retrieval'], 'query_terms': ['предлагает', 'программы', 'спбгу'], 'matched_terms': ['предлагает', 'программы', 'спбгу'], 'missing_terms': [], 'query_entities': {'dates': [], 'institutions': ['СПБГУ'], 'codes': []}, 'matched_entities': {'dates': [], 'institutions': ['СПБГУ'], 'codes': []}, 'missing_entities': {'dates': [], 'institutions': [], 'codes': []}}}
+
+ruso técnico:
+  Query: программы дополнительное образование онлайн курсы
+  Sources found: 1
+  Confidence: None
+  Grounding: None
+  Top sources: []
+  Actual sources: ['https://spbu.ru']
+  Search mode: keyword
+  Response mode: template
+  Grounding detail: {'grounded': True, 'score': 0.94, 'level': 'high', 'abstained': False, 'citations': [{'source': 'Saint Petersburg State University', 'title': 'Saint Petersburg State University', 'url': 'https://spbu.ru'}], 'explanation': 'Response is well-supported by retrieved documents with matching entities.', 'matched_entities': ['email:671 27', 'email:2026 14', 'email:675 24', 'email:1 650', 'email:2026', 'email:672 3', 'email:2026 12', 'email:4 250', 'email:673 10', 'email:230 000', 'email:674 17', 'number:90,6', 'number:21', 'number:500', 'number:17', 'number:35', 'number:27', 'number:1', 'number:230', 'number:23', 'number:28', 'number:2026', 'number:9', 'number:29', 'number:10', 'number:14', 'number:31', 'number:12', 'number:24', 'number:650', 'number:674', 'number:720', 'number:250', 'number:672', 'number:26', 'number:671', 'number:4', 'number:15', 'number:5', 'number:673', 'number:3', 'number:000', 'number:30', 'number:19', 'number:7', 'number:6', 'number:675', 'date:август', 'date:сентябрь', 'currency: 23', 'currency: 1', 'currency: 35', 'currency: 230', 'currency: 28', 'currency: 5', 'currency: 12', 'currency: 6', 'currency: 26', 'currency: 90,6', 'currency: 9', 'currency: 650', 'currency: 720', 'currency: 673', 'currency: 15', 'currency: 7', 'currency: 4', 'currency: 10', 'currency: 674', 'currency: 3', 'currency: 675', 'currency: 17', 'currency: 27', 'currency: 31', 'currency: 672', 'currency: 29', 'currency: 21', 'currency: 000', 'currency: 30', 'currency: 2026', 'currency: 14', 'currency: 500', 'currency: 24', 'currency: 671', 'currency:19', 'currency: 250', 'duration:2026 год', 'term:бакалавриат', 'term:курс', 'term:университет', 'term:язык', 'term:магистратура'], 'missing_entities': [], 'faithfulness_score': 0.955, 'evidence_assessment': {'sufficient': True, 'score': 0.94, 'query_relevance': 1.0, 'query_term_coverage': 1.0, 'query_entity_coverage': 1.0, 'requested_slot_coverage': True, 'retrieval_confidence': 0.4, 'reasons': [], 'query_terms': ['дополнительное', 'курсы', 'образование', 'онлаин', 'программы'], 'matched_terms': ['дополнительное', 'курсы', 'образование', 'онлаин', 'программы'], 'missing_terms': [], 'query_entities': {'dates': [], 'institutions': [], 'codes': []}, 'matched_entities': {'dates': [], 'institutions': [], 'codes': []}, 'missing_entities': {'dates': [], 'institutions': [], 'codes': []}}}

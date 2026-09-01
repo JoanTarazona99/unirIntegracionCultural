@@ -1,0 +1,5 @@
+repository_root=C:/xampp/htdocs/proyectos/unirIntegracionCultural
+branch=feature/real-source-testing
+working_tree=clean
+head=64ca908 chore(agents): enable feature/real-source-testing branch for methodology-lead
+diff_check=clean
