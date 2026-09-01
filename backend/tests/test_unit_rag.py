@@ -320,6 +320,7 @@ class TestEnhancedRAGModule:
         rag = EnhancedRAGModule(use_llm=False)
         rag._retrieval_config["citation_guard"] = True
         rag._retrieval_config["abstention_threshold"] = 0.35
+        rag._retrieval_config["enable_external_search"] = False
 
         abstained = SimpleNamespace(
             answer="Недостаточно проверенной информации.",
@@ -342,6 +343,7 @@ class TestEnhancedRAGModule:
     def test_rag_fallback_retrieval_is_insufficient(self):
         """El fallback legacy debe propagarse y cerrar la compuerta de evidencia."""
         rag = EnhancedRAGModule(use_llm=False)
+        rag._retrieval_config["enable_external_search"] = False
 
         out = rag.search_and_generate("qwerty zxcvbnm", language="es")
 
@@ -353,6 +355,7 @@ class TestEnhancedRAGModule:
 
     def test_evidence_assessment_exception_abstains_fail_closed(self):
         rag = EnhancedRAGModule(use_llm=False)
+        rag._retrieval_config["enable_external_search"] = False
 
         with patch(
             "trust.assess_evidence_sufficiency",
@@ -371,10 +374,12 @@ class TestEnhancedRAGModule:
         assert out["grounding"]["evidence_assessment"]["reasons"] == [
             "evidence_assessment_error"
         ]
+        assert out["external_search"]["activated"] is False
         acquisition.assert_not_called()
 
     def test_improved_grounding_exception_abstains_fail_closed(self):
         rag = EnhancedRAGModule(use_llm=False)
+        rag._retrieval_config["enable_external_search"] = False
 
         with patch(
             "trust.enforce_grounding_improved",
@@ -392,10 +397,12 @@ class TestEnhancedRAGModule:
         assert out["grounding"]["level"] == "low"
         assert out["grounding"]["explanation"] == "grounding_evaluation_error"
         assert out["grounding_score"] == 0
+        assert out["external_search"]["activated"] is False
         acquisition.assert_not_called()
 
     def test_legacy_grounding_exception_abstains_fail_closed(self):
         rag = EnhancedRAGModule(use_llm=False)
+        rag._retrieval_config["enable_external_search"] = False
 
         with patch(
             "trust.enforce_grounding_improved",
@@ -413,10 +420,12 @@ class TestEnhancedRAGModule:
         assert out["grounding"]["grounded"] is False
         assert out["grounding"]["abstained"] is True
         assert out["grounding_score"] == 0
+        assert out["external_search"]["activated"] is False
         acquisition.assert_not_called()
 
     def test_legacy_grounding_result_cannot_permit_failed_improved_guard(self):
         rag = EnhancedRAGModule(use_llm=False)
+        rag._retrieval_config["enable_external_search"] = False
         permissive_legacy_result = SimpleNamespace(
             answer="usable but unverified answer",
             grounded=True,
