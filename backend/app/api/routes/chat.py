@@ -14,6 +14,7 @@ import uuid
 import hashlib
 import json
 import time
+from copy import deepcopy
 from fastapi import APIRouter, HTTPException, Request, Depends, BackgroundTasks
 from typing import AsyncGenerator
 
@@ -34,7 +35,6 @@ from fastapi.responses import StreamingResponse
 from app.config.settings import settings
 from app.config.logging_config import get_logger
 import asyncio
-from knowledge_integrator import KnowledgeIntegrator
 
 logger = get_logger(__name__)
 
@@ -133,7 +133,7 @@ async def chat(
     1. Generar cache key (hash de query + language)
     2. Intentar obtener del cache
     3. Si no está en cache: usar RAG para buscar
-    4. Si grounding score < threshold: intentar adquirir conocimiento de web
+    4. Delegar evaluación y adquisición externa al servicio RAG
     5. Guardar query + response en memoria de conversación
     6. Guardar resultado en cache (TTL 1 hora)
     7. Queue mensaje para persistencia en BD (background task)
@@ -149,16 +149,8 @@ async def chat(
     - Re-búsqueda con conocimiento expandido
     """
     try:
-        # Initialize knowledge agent for web search fallback (MANDATORY)
-        from knowledge_acquisition import KnowledgeAcquisitionAgent
-        try:
-            knowledge_agent = KnowledgeAcquisitionAgent()
-            print(f"[INIT] [OK] KnowledgeAcquisitionAgent initialized")
-        except Exception as e:
-            print(f"[INIT] [WARN] KnowledgeAcquisitionAgent init failed: {str(e)}")
-            knowledge_agent = None
-        
         session_id = request.session_id or str(uuid.uuid4())
+        correlation_id = http_request.scope.get("request_id") or str(uuid.uuid4())
         target_lang = request.language
         _t_request_start = time.perf_counter()
         
@@ -172,8 +164,11 @@ async def chat(
         # Try to get from cache
         cached_result = cache_service.get(cache_key)
         if cached_result:
+            cached_result = deepcopy(cached_result)
             cached_result['cached'] = True
             cached_result['cache_key'] = cache_key
+            cached_result['correlation_id'] = correlation_id
+            cached_result['request_id'] = correlation_id
             if isinstance(cached_result.get('ai_metrics'), dict):
                 total_ms = round((time.perf_counter() - _t_request_start) * 1000.0, 1)
                 latency = cached_result['ai_metrics'].get('latency_ms') or {}
@@ -183,119 +178,21 @@ async def chat(
             return cached_result
         
         # ============ RAG SEARCH ============
-        logger.info("chat_rag_search_start", query=request.query, language=target_lang)
+        logger.info(
+            "chat_rag_search_start",
+            query_sha256=hashlib.sha256(request.query.encode("utf-8")).hexdigest(),
+            query_length=len(request.query),
+            language=target_lang,
+        )
         rag_result = rag_service.search(
             query=request.query,
             language=target_lang,
-            context_type=f"chat_{target_lang}"
+            context_type=f"chat_{target_lang}",
+            correlation_id=correlation_id,
         )
         
         answer_translated = rag_result['response']
         answer_original = rag_result['response']
-        grounding_score = rag_result.get('grounding_score', 0)
-        
-        # ============ KNOWLEDGE ACQUISITION (LOW GROUNDING) ============
-        # If grounding is low and we have knowledge agent, try to acquire knowledge
-        has_agent = knowledge_agent is not None
-        print(f"[WEB_SEARCH] grounding_score={grounding_score:.2f}, has_agent={has_agent}, threshold=0.4")
-        
-        if knowledge_agent and grounding_score < 0.4:
-            print(f"[WEB_SEARCH] CONDITION MET: Entering low-grounding fallback")
-            logger.info(
-                "chat_low_grounding_detected",
-                query=request.query,
-                grounding_score=grounding_score,
-                language=target_lang
-            )
-            
-            try:
-                print(f"[WEB_SEARCH] Searching for additional knowledge...")
-                
-                # Attempt knowledge acquisition
-                new_result = await knowledge_agent.handle_low_grounding(
-                    query=request.query,
-                    draft_answer=answer_translated,
-                    retrieved_docs=rag_result.get('sources', []),
-                    evaluation={'score': grounding_score, 'missing_entities': []},
-                    rag_module=get_rag_service()  # Pass RAG module for retry
-                )
-                
-                # If acquisition successful, use new result
-                if new_result:
-                    print(f"[WEB_SEARCH] Success: Web search returned new result")
-                    rag_result = new_result
-                    answer_translated = new_result.get('response', answer_translated)
-                    grounding_score = new_result.get('grounding_score', grounding_score)
-                    
-                    logger.info(
-                        "chat_knowledge_acquisition_success",
-                        query=request.query,
-                        new_grounding_score=grounding_score,
-                        language=target_lang
-                    )
-                    print(f"[Chat] ✅ Conocimiento adquirido exitosamente, grounding mejorado a {grounding_score:.2f}")
-                else:
-                    logger.warning(
-                        "chat_knowledge_acquisition_failed",
-                        query=request.query,
-                        grounding_score=grounding_score,
-                        language=target_lang
-                    )
-                    print(f"[Chat] ⚠️ No se pudo adquirir conocimiento adicional")
-                    
-            except Exception as e:
-                logger.warning(
-                    "chat_knowledge_acquisition_error",
-                    query=request.query,
-                    error=str(e),
-                    language=target_lang
-                )
-                print(f"[Chat] Error en adquisicion de conocimiento: {e}")
-                # Continue with original result, don't block response
-        else:
-            # Log why web search was NOT triggered
-            if not knowledge_agent:
-                print(f"[WEB_SEARCH] NOT TRIGGERED: knowledge_agent is None")
-            elif grounding_score >= 0.4:
-                print(f"[WEB_SEARCH] NOT TRIGGERED: grounding_score {grounding_score:.2f} >= threshold 0.4")
-            else:
-                print(f"[WEB_SEARCH] NOT TRIGGERED: unknown reason")
-        
-        # ============ AUTO-INTEGRATE WEB SOURCES INTO KB ============
-        # After knowledge acquisition, check if there are pending integrations
-        try:
-            integrator = KnowledgeIntegrator()
-            status = integrator.get_integration_status()
-            if status['pending_count'] > 0:
-                logger.info(
-                    "chat_auto_integration_start",
-                    pending_count=status['pending_count']
-                )
-                print(f"\n[Chat] 🔄 Auto-integrando {status['pending_count']} fuentes web a la KB...")
-                
-                # Run integration (adds new sections to enhanced_rag.py)
-                result = integrator.integrate_pending(auto_add=True)
-                
-                if result['integrated_count'] > 0:
-                    logger.info(
-                        "chat_auto_integration_success",
-                        integrated_count=result['integrated_count'],
-                        sections=str([e['section_name'] for e in result['integrated']])
-                    )
-                    print(f"[Chat] ✅ {result['integrated_count']} secciones integradas automáticamente")
-                    
-                if result['failed_count'] > 0:
-                    logger.warning(
-                        "chat_auto_integration_partial_failure",
-                        failed_count=result['failed_count']
-                    )
-        except Exception as e:
-            logger.warning(
-                "chat_auto_integration_error",
-                error=str(e)
-            )
-            print(f"[Chat] ⚠️ Error en auto-integración: {e}")
-        
         # ============ CONVERSATION MEMORY (Primary) ============
         # Store in conversation memory immediately (synchronous, reliable)
         conversation_service.add_message(session_id, 'user', request.query)
@@ -369,6 +266,8 @@ async def chat(
             available_languages=['es', 'en', 'ru', 'fr'],
             search_mode=rag_result.get('search_mode', 'keyword'),
             session_id=session_id,
+            correlation_id=correlation_id,
+            request_id=correlation_id,
             cached=False,
             cache_key=cache_key,
             ai_metrics=ai_metrics

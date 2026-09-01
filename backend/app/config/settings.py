@@ -243,6 +243,32 @@ class Settings(BaseSettings):
         default=True,
         description="Enable the pre-generation query-to-evidence sufficiency gate",
     )
+    enable_external_search: bool = Field(
+        default=True,
+        description="Enable centralized external search when evidence is insufficient",
+    )
+    enable_public_source_acquisition: bool = Field(
+        default=False,
+        description="Enable explicitly allowlisted public source acquisition",
+    )
+    public_source_allowed_urls: List[str] = Field(
+        default_factory=list,
+        description="Exact HTTPS URLs permitted for public source acquisition",
+    )
+    public_source_allowed_hosts: List[str] = Field(
+        default_factory=list,
+        description="Exact hosts permitted for public source acquisition",
+    )
+    public_source_max_requests_per_run: int = Field(
+        default=1,
+        ge=1,
+        description="Maximum public transport requests for one correlation/run ID",
+    )
+    public_source_max_redirects: int = Field(
+        default=0,
+        ge=0,
+        description="Maximum explicitly allowlisted public redirects",
+    )
 
     @field_validator("retrieval_mode")
     @classmethod

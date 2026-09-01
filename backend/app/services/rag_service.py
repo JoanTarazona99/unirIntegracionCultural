@@ -11,6 +11,7 @@ TODO (Sprint 2): Add streaming support when conversation/cache layer is refactor
 import hashlib
 import json
 import os
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from app.config.logging_config import get_logger
@@ -89,15 +90,30 @@ class RAGService:
     - Streaming (requires conversation/cache refactor)
     """
     
-    def __init__(self, rag_module):
+    def __init__(
+        self,
+        rag_module=None,
+        *,
+        project_root: Optional[Path] = None,
+        use_llm: bool = True,
+    ):
         """Initialize with an EnhancedRAGModule instance.
         
         Args:
             rag_module: EnhancedRAGModule instance from main.py
+            project_root: Optional isolated state root used to create a new module
+            use_llm: Whether the newly created module should enable its LLM
             
         Raises:
             RAGError: If module is not initialized
         """
+        if rag_module is None and project_root is not None:
+            from enhanced_rag import EnhancedRAGModule
+
+            rag_module = EnhancedRAGModule(
+                use_llm=use_llm,
+                project_root=project_root,
+            )
         if rag_module is None:
             raise RAGError(
                 "RAG module not initialized",
@@ -142,7 +158,8 @@ class RAGService:
                 query=query,
                 context_type=context_type,
                 language=language,
-                session_id=session_id
+                session_id=session_id,
+                correlation_id=correlation_id,
             )
             
             response = result.get("response")

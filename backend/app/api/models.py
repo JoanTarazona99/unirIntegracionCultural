@@ -105,6 +105,8 @@ class ChatResponse(BaseModel):
     available_languages: List[str] = None
     search_mode: Optional[str] = None
     session_id: Optional[str] = None
+    correlation_id: Optional[str] = None
+    request_id: Optional[str] = None
     cached: bool = False
     cache_key: Optional[str] = None
     ai_metrics: Optional[AIMetrics] = None

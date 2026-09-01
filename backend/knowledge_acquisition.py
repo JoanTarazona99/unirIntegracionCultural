@@ -1,3 +1,5 @@
+
+from atomic_json import atomic_write_json
 """
 Agentic knowledge acquisition module for low-grounding scenarios.
 
@@ -17,7 +19,7 @@ import re
 import time
 import os
 import socket
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -39,6 +41,51 @@ from html.parser import HTMLParser
 from html.entities import name2codepoint
 
 
+def _json_safe(value):
+    """Convert dataclasses and nested values to JSON-compatible structures."""
+    if hasattr(value, "__dataclass_fields__"):
+        return {
+            field_name: _json_safe(getattr(value, field_name))
+            for field_name in value.__dataclass_fields__
+        }
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_json_safe(item) for item in value]
+    if hasattr(value, "value"):
+        return _json_safe(value.value)
+    return value
+
+
+def _query_trace_fields(query: str, query_language: Optional[str] = None) -> Dict:
+    query_text = str(query or "")
+    fields = {
+        "query_sha256": hashlib.sha256(query_text.encode("utf-8")).hexdigest(),
+        "query_length": len(query_text),
+    }
+    if query_language:
+        fields["query_language"] = query_language
+    if os.getenv("LOG_RAW_QUERIES", "false").strip().lower() in {"1", "true", "yes", "on"}:
+        fields["query"] = query_text
+    return fields
+
+
+def _acquisition_status(transaction) -> str:
+    if (
+        transaction.success
+        and transaction.source_id
+        and transaction.version_id
+        and transaction.status in {"indexed", "unchanged", "duplicate_content"}
+    ):
+        return "indexed"
+    if transaction.status == "rejected":
+        return "rejected"
+    reason = str(transaction.error or "")
+    if reason.startswith(("fetch_", "http_status_", "tls_")):
+        return "fetch_failed"
+    return "transaction_failed"
+
+
 @dataclass
 class AcquisitionResult:
     """Result of knowledge acquisition attempt."""
@@ -53,11 +100,31 @@ class AcquisitionResult:
 class KnowledgeAcquisitionAgent:
     """Agentic module for acquiring missing knowledge from official sources."""
 
-    def __init__(self, data_dir: str = "data", max_retries: int = 2):
+    def __init__(
+        self,
+        data_dir: str = "data",
+        max_retries: int = 2,
+        fetcher: Optional[Callable] = None,
+        project_root: Optional[Path] = None,
+        controlled_fixture: bool = False,
+    ):
         self.data_dir = Path(data_dir)
+        self.project_root = Path(
+            project_root
+            or (
+                Path(__file__).resolve().parent.parent
+                if self.data_dir == Path("data")
+                else self.data_dir.parent
+            )
+        )
         self.max_retries = max_retries
+        self.fetcher = fetcher
+        self.controlled_fixture = bool(controlled_fixture)
         self.rag_database_path = self.data_dir / "rag_database.json"
         self.acquisition_log_path = self.data_dir / "acquisition_log.json"
+        self.external_search_events_path = self.data_dir / "external_search_events.jsonl"
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        self._providers_invoked: List[str] = []
         
         # Official sources priority
         self.official_domains = [
@@ -131,9 +198,11 @@ class KnowledgeAcquisitionAgent:
         if not query_terms:
             return None
 
+        self._providers_invoked = []
         search_query = " ".join(query_terms[:3])
         
         # Try Google AI first (intelligent search)
+        self._providers_invoked.append("google_ai")
         print(f"[KnowledgeAcquisition] Searching with Google AI...")
         google_result = self._search_google(search_query)
         if google_result:
@@ -144,6 +213,7 @@ class KnowledgeAcquisitionAgent:
         # print(f"[KnowledgeAcquisition] Searching Wikipedia...")
 
         # Try DuckDuckGo for instant answers
+        self._providers_invoked.append("duckduckgo")
         print(f"[KnowledgeAcquisition] Searching DuckDuckGo...")
         ddg_result = self._search_duckduckgo(search_query)
         if ddg_result:
@@ -151,6 +221,7 @@ class KnowledgeAcquisitionAgent:
             return ddg_result
 
         # Fallback: return knowledge base awareness
+        self._providers_invoked.append("knowledge_base_fallback")
         print(f"[KnowledgeAcquisition] Using KB-aware fallback strategy...")
         
         # Check if this is about KubGU-related topics where we have data
@@ -439,8 +510,7 @@ class KnowledgeAcquisitionAgent:
         
         # Save updated database
         try:
-            with open(self.rag_database_path, "w", encoding="utf-8") as f:
-                json.dump(db, f, ensure_ascii=False, indent=2)
+            atomic_write_json(self.rag_database_path, db)
             return True
         except Exception as e:
             print(f"[KnowledgeAcquisition] Error saving document: {e}")
@@ -611,77 +681,53 @@ class KnowledgeAcquisitionAgent:
         Returns:
             Updated result dict with web search result or None if still low grounding
         """
-        grounding_score = evaluation.get("score", 0)
-        
-        print(f"[KnowledgeAcquisition] Detected low grounding: {grounding_score:.2f}")
-        
-        # Step 1: Detect missing info and generate search terms
-        info_type, search_terms = self.detect_missing_info(
-            query, draft_answer, evaluation.get("missing_entities", [])
+        return self.handle_low_grounding_sync(
+            query=query,
+            draft_answer=draft_answer,
+            retrieved_docs=retrieved_docs,
+            evaluation=evaluation,
+            rag_module=rag_module,
         )
-
-        print(f"[KnowledgeAcquisition] Missing info type: {info_type}")
-        print(f"[KnowledgeAcquisition] Search terms: {search_terms}")
-
-        # Step 2: Search for official sources directly (Google AI, DuckDuckGo, KB fallback)
-        candidate_source = self.search_official_sources(search_terms)
-        if not candidate_source:
-            print("[KnowledgeAcquisition] No candidate source found, using original answer")
-            return None
-
-        url = candidate_source.get("url")
-        print(f"[KnowledgeAcquisition] Found candidate: {url}")
-
-        # Step 3: Fetch content from URL (if not a knowledge base reference)
-        content = None
-        if candidate_source.get("source_type") != "knowledge_base_ref":
-            content = self._fetch_content_from_url(url)
-            if content:
-                print(f"[KnowledgeAcquisition] Successfully fetched content from {url}")
-            else:
-                print(f"[KnowledgeAcquisition] Could not fetch content from {url}, using snippet")
-                content = candidate_source.get("snippet", "")
-
-        # Step 4: Build enhanced response using web result
-        enhanced_response = f"{draft_answer}\n\n📌 Fuente adicional encontrada:\n{candidate_source.get('title', 'Source')}\nURL: {url}\n\n{content or candidate_source.get('snippet', '')}"
-        
-        # Log successful acquisition
-        self._log_acquisition_attempt(query, info_type, candidate_source, True)
-        
-        print(f"[KnowledgeAcquisition] ✅ Enhanced answer with web search result")
-        
-        # Return enhanced result
-        return {
-            "response": enhanced_response,
-            "grounding_score": 0.6,  # Mark as improved
-            "sources": [candidate_source],
-            "acquisition_used": True,
-            "ai_metrics": {
-                "search_mode": "knowledge_acquisition_web",
-                "response_mode": "web_enhanced",
-                "faithfulness": 0.7,
-                "grounded": True,
-                "abstained": False,
-            }
-        }
 
     def _log_acquisition_attempt(
         self,
         query: str,
         info_type: str,
         source: Dict,
-        success: bool,
-    ) -> None:
-        """Log knowledge acquisition attempts for monitoring."""
+        status: str,
+        correlation_id: str = "",
+        source_id: Optional[str] = None,
+        version_id: Optional[str] = None,
+        transaction_success: bool = False,
+        rejection_reason: Optional[str] = None,
+        query_language: Optional[str] = None,
+    ) -> Dict:
+        """Log the final state of one acquisition attempt."""
+        success = bool(
+            transaction_success
+            and status == "indexed"
+            and source_id
+            and version_id
+        )
         log_entry = {
             "timestamp": datetime.utcnow().isoformat(),
-            "query": query,
+            **_query_trace_fields(query, query_language),
             "info_type": info_type,
             "source_url": source.get("url"),
             "success": success,
+            "status": status,
+            "source_id": source_id,
+            "version_id": version_id,
+            "correlation_id": correlation_id,
+            "transaction_success": success,
+            "rejection_reason": rejection_reason,
         }
 
-        # Append to log file
+        outcome = {
+            "acquisition_log_written": False,
+            "candidate_enqueued": False,
+            "enqueue_error": None,
+        }
         try:
             logs = []
             if self.acquisition_log_path.exists():
@@ -689,28 +735,60 @@ class KnowledgeAcquisitionAgent:
                     logs = json.load(f)
             
             logs.append(log_entry)
-            
-            with open(self.acquisition_log_path, "w", encoding="utf-8") as f:
-                json.dump(logs, f, ensure_ascii=False, indent=2)
 
-            # Push discovered source to candidate queue for scheduled validation.
-            if success and source.get("url"):
-                try:
-                    from kb_refresh import KnowledgeBaseRefresher
-
-                    refresher = KnowledgeBaseRefresher(project_root=Path(__file__).resolve().parent.parent)
-                    refresher.enqueue_candidate_source(
-                        url=source.get("url"),
-                        domain=source.get("domain") or source.get("url", "").split("/")[2],
-                        source_type=info_type or "candidate",
-                        confidence=0.8,
-                        discovered_from=query,
-                        snippet=source.get("snippet", ""),
-                    )
-                except Exception as e:
-                    print(f"[KnowledgeAcquisition] Candidate enqueue skipped: {e}")
+            atomic_write_json(self.acquisition_log_path, logs)
+            outcome["acquisition_log_written"] = True
         except Exception as e:
+            outcome["log_error"] = str(e)
             print(f"[KnowledgeAcquisition] Error logging attempt: {e}")
+        return outcome
+
+    def _record_external_search_event(
+        self,
+        *,
+        correlation_id: str,
+        query: str,
+        evidence_assessment,
+        grounding_result: Dict,
+        activation_reason: str,
+        candidate_source: Optional[Dict],
+        validation_result,
+        error: Optional[str],
+        duration_ms: float,
+    ) -> None:
+        """Persist and emit one observable event for an activation attempt."""
+        providers = list(self._providers_invoked)
+        if not providers and candidate_source:
+            providers = [
+                candidate_source.get("provider")
+                or candidate_source.get("source_type")
+                or type(self).__name__
+            ]
+        event = {
+            "event": "external_search_activation",
+            "timestamp": datetime.utcnow().isoformat(),
+            "correlation_id": correlation_id,
+            "public_acquisition_enabled": bool(
+                (validation_result or {}).get("public_acquisition_enabled", False)
+            ),
+            **_query_trace_fields(query),
+            "evidence_assessment": _json_safe(evidence_assessment),
+            "grounding_result": _json_safe(grounding_result),
+            "activation_reason": activation_reason,
+            "provider_invoked": providers or [type(self).__name__],
+            "candidate_discovered": _json_safe(candidate_source),
+            "validation_result": validation_result,
+            "error": error,
+            "duration_ms": round(duration_ms, 2),
+        }
+        serialized = json.dumps(event, ensure_ascii=False, default=str)
+        print(f"[EXTERNAL_SEARCH_EVENT] {serialized}")
+        try:
+            self.external_search_events_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.external_search_events_path.open("a", encoding="utf-8") as event_file:
+                event_file.write(serialized + "\n")
+        except Exception as event_error:
+            print(f"[KnowledgeAcquisition] Error recording activation event: {event_error}")
 
     async def reindex_and_retry(
         self,
@@ -745,6 +823,10 @@ class KnowledgeAcquisitionAgent:
         retrieved_docs: List[Dict],
         evaluation: Dict,
         rag_module=None,
+        correlation_id: str = "",
+        evidence_assessment=None,
+        grounding_result: Optional[Dict] = None,
+        activation_reason: str = "",
     ) -> Optional[Dict]:
         """
         Synchronous handler for low-grounding scenarios (non-async version).
@@ -761,53 +843,122 @@ class KnowledgeAcquisitionAgent:
         Returns:
             Updated result dict or None if no enhancement found
         """
-        grounding_score = evaluation.get("score", 0)
-        
-        print(f"[KnowledgeAcquisition] Detected low grounding: {grounding_score:.2f}")
-        
-        # Step 1: Detect missing info
-        info_type, search_terms = self.detect_missing_info(
-            query, draft_answer, evaluation.get("missing_entities", [])
-        )
-        
-        print(f"[KnowledgeAcquisition] Missing info type: {info_type}")
-        print(f"[KnowledgeAcquisition] Search terms: {search_terms}")
-        
-        # Step 2: Search using SYNCHRONOUS method
-        candidate_source = self.search_official_sources(search_terms)
-        
-        if not candidate_source:
-            print("[KnowledgeAcquisition] No candidate source found")
+        started_at = time.perf_counter()
+        candidate_source = None
+        acquisition_logged = False
+        info_type = "general"
+        validation_result = {"status": "not_started"}
+        error = None
+        grounding_result = grounding_result or {}
+        try:
+            grounding_score = evaluation.get("score", 0)
+            print(f"[KnowledgeAcquisition] Detected low grounding: {grounding_score:.2f}")
+
+            info_type, search_terms = self.detect_missing_info(
+                query, draft_answer, evaluation.get("missing_entities", [])
+            )
+            print(f"[KnowledgeAcquisition] Missing info type: {info_type}")
+            print(f"[KnowledgeAcquisition] Search terms: {search_terms}")
+
+            candidate_source = self.search_official_sources(search_terms)
+            if not candidate_source:
+                validation_result = {"status": "no_candidate"}
+                print("[KnowledgeAcquisition] No candidate source found")
+                return None
+
+            url = candidate_source.get("url")
+            print(f"[KnowledgeAcquisition] Found candidate: {url}")
+            if rag_module is None:
+                acquisition_outcome = self._log_acquisition_attempt(
+                    query,
+                    info_type,
+                    candidate_source,
+                    "pending",
+                    correlation_id=correlation_id,
+                )
+                acquisition_logged = True
+                validation_result = {
+                    **(acquisition_outcome or {}),
+                    "status": "candidate_discovered_not_applied",
+                }
+                return {
+                    "acquisition_used": False,
+                    "candidate": candidate_source,
+                    "acquisition_result": validation_result,
+                    "correlation_id": correlation_id,
+                }
+
+            from kb_refresh import KnowledgeBaseRefresher
+
+            refresher = KnowledgeBaseRefresher(
+                project_root=self.project_root,
+                rag_module=rag_module,
+                fetcher=self.fetcher,
+                controlled_fixture=self.controlled_fixture,
+            )
+            queued_candidate = {
+                "url": url,
+                "domain": candidate_source.get("domain") or url.split("/")[2],
+                "type": candidate_source.get("type") or info_type or "candidate",
+                "confidence": float(candidate_source.get("confidence", 0.8)),
+                "snippet": candidate_source.get("snippet", ""),
+                "title": candidate_source.get("title") or "Official source",
+                "origin": "reactive_query",
+                **_query_trace_fields(query),
+            }
+            transaction = refresher.acquire_refresh_and_index_candidate(
+                queued_candidate,
+                correlation_id=correlation_id,
+            )
+            acquisition_outcome = self._log_acquisition_attempt(
+                query,
+                info_type,
+                candidate_source,
+                _acquisition_status(transaction),
+                correlation_id=correlation_id,
+                source_id=transaction.source_id,
+                version_id=transaction.version_id,
+                transaction_success=transaction.success,
+                rejection_reason=transaction.error,
+            )
+            acquisition_logged = True
+            validation_result = transaction.to_dict()
+            validation_result["candidate_enqueued"] = False
+            validation_result["acquisition_log_written"] = bool(
+                (acquisition_outcome or {}).get("acquisition_log_written")
+            )
+            return {
+                "acquisition_used": transaction.success,
+                "candidate": candidate_source,
+                "acquisition_result": transaction.to_dict(),
+                "correlation_id": correlation_id,
+            }
+        except Exception as exc:
+            error = str(exc)
+            validation_result = {"status": "error"}
+            if candidate_source is not None and not acquisition_logged:
+                self._log_acquisition_attempt(
+                    query,
+                    info_type,
+                    candidate_source,
+                    "transaction_failed",
+                    correlation_id=correlation_id,
+                    rejection_reason=error,
+                )
+            print(f"[KnowledgeAcquisition] External search activation failed: {exc}")
             return None
-        
-        url = candidate_source.get("url")
-        print(f"[KnowledgeAcquisition] Found candidate: {url}")
-        
-        # Step 3: Fetch content from URL (if not a KB reference)
-        content = None
-        if candidate_source.get("source_type") != "knowledge_base_ref":
-            content = self._fetch_content_from_url(url)
-            if content:
-                print(f"[KnowledgeAcquisition] Successfully fetched content")
-            else:
-                print(f"[KnowledgeAcquisition] Could not fetch content, using snippet")
-                content = candidate_source.get("snippet", "")
-        
-        # Step 4: Build enhanced response
-        enhanced_response = f"{draft_answer}\n\n📌 Fuente adicional:\n{candidate_source.get('title', 'Source')}\n{content or candidate_source.get('snippet', '')}"
-        
-        # Log successful acquisition
-        self._log_acquisition_attempt(query, info_type, candidate_source, True)
-        
-        print(f"[KnowledgeAcquisition] ✅ Enhanced with web search")
-        
-        # Return enhanced result
-        return {
-            "response": enhanced_response,
-            "grounding_score": 0.6,
-            "sources": [candidate_source],
-            "acquisition_used": True,
-        }
+        finally:
+            self._record_external_search_event(
+                correlation_id=correlation_id,
+                query=query,
+                evidence_assessment=evidence_assessment,
+                grounding_result=grounding_result,
+                activation_reason=activation_reason,
+                candidate_source=candidate_source,
+                validation_result=validation_result,
+                error=error,
+                duration_ms=(time.perf_counter() - started_at) * 1000.0,
+            )
 
 
 # Singleton instance
