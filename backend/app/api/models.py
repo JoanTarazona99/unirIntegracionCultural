@@ -4,8 +4,29 @@ Pydantic models for KubGU Assistant API.
 Contains request/response schemas used across all endpoints.
 """
 
-from pydantic import BaseModel, field_validator
-from typing import List, Optional, Dict
+from pydantic import BaseModel, Field, field_validator
+from typing import Dict, List, Literal, Optional
+
+
+SUPPORTED_LANGUAGES = {
+    "es": "español",
+    "en": "English",
+    "ru": "русский язык",
+    "fr": "français",
+    "de": "Deutsch",
+    "zh": "中文 (chino simplificado)",
+    "ar": "العربية (árabe)",
+    "vi": "Tiếng Việt (vietnamita)",
+    "hy": "հայերեն (armenio)",
+    "kk": "қазақ тілі (kazajo)",
+    "pt": "português",
+    "it": "italiano",
+    "tr": "Türkçe",
+}
+EVIDENCE_LANGUAGES = ("es", "en", "ru")
+LanguageCode = Literal[
+    "es", "en", "ru", "fr", "de", "zh", "ar", "vi", "hy", "kk", "pt", "it", "tr"
+]
 
 
 def _validate_non_empty_text(value: str, max_length: int = 2000) -> str:
@@ -151,6 +172,129 @@ class ProfileResponse(BaseModel):
     exists: bool
     profile: Optional[Dict] = None
     message: Optional[str] = None
+
+
+# ==================== PROCEDURAL RECOMMENDATION MODELS ====================
+
+ProcedureType = Literal[
+    "visa",
+    "registration",
+    "enrollment",
+    "housing",
+    "migration",
+    "other",
+]
+ProcedureStatus = Literal["complete", "needs_clarification", "abstained"]
+
+
+class ProcedureStep(BaseModel):
+    """One actionable step with field-level evidence traceability."""
+
+    step_number: int = Field(ge=1)
+    title: str
+    description: str
+    required_documents: List[str] = Field(default_factory=list)
+    deadline_days: Optional[int] = Field(default=None, ge=0)
+    deadline_text: Optional[str] = None
+    responsible_entity: Optional[str] = None
+    source_url: str
+    source_title: str
+    evidence_confidence: float = Field(ge=0.0, le=1.0)
+    evidence_chunk_ids: List[str] = Field(default_factory=list)
+    source_version_id: Optional[str] = None
+
+    @field_validator("title", "description", "source_title")
+    @classmethod
+    def validate_required_text(cls, value):
+        return _validate_non_empty_text(value)
+
+    @field_validator("source_url")
+    @classmethod
+    def validate_source_url(cls, value):
+        normalized = _validate_non_empty_text(value)
+        if not normalized.startswith(("http://", "https://")):
+            raise ValueError("source_url must be an HTTP(S) URL")
+        return normalized
+
+
+class ProcedureClassification(BaseModel):
+    """Classifier decision and the evidence needed to interpret it."""
+
+    procedure_type: ProcedureType
+    detected_language: LanguageCode
+    confidence: float = Field(ge=0.0, le=1.0)
+    matched_terms: List[str] = Field(default_factory=list)
+    alternative_candidates: Dict[str, float] = Field(default_factory=dict)
+    missing_profile_fields: List[str] = Field(default_factory=list)
+    clarification_questions: List[str] = Field(default_factory=list)
+
+
+class ProceduralProfile(BaseModel):
+    """Optional profile fields that can refine a procedural request."""
+
+    country: Optional[str] = None
+    visa_type: Optional[str] = None
+    russian_level: Optional[str] = None
+    academic_level: Optional[str] = None
+    housing_type: Optional[str] = None
+
+
+class ProceduralRequest(BaseModel):
+    """Request for a personalized, evidence-checked procedure."""
+
+    query: str
+    user_id: Optional[str] = None
+    language: Optional[LanguageCode] = None
+    profile: Optional[ProceduralProfile] = None
+    context: Dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("query")
+    @classmethod
+    def validate_query(cls, value):
+        return _validate_non_empty_text(value)
+
+
+class ProceduralRecommendation(BaseModel):
+    """Structured procedure or an explicit clarification/abstention response."""
+
+    status: ProcedureStatus
+    procedure_type: ProcedureType
+    language: LanguageCode = "es"
+    detected_language: LanguageCode = "es"
+    evidence_language: Literal["es", "en", "ru"] = "es"
+    translation_applied: bool = False
+    classification_confidence: float = Field(ge=0.0, le=1.0)
+    user_profile_context: Dict = Field(default_factory=dict)
+    steps: List[ProcedureStep] = Field(default_factory=list)
+    total_estimated_days: Optional[int] = Field(default=None, ge=0)
+    warnings: List[str] = Field(default_factory=list)
+    missing_information: List[str] = Field(default_factory=list)
+    clarification_questions: List[str] = Field(default_factory=list)
+    evidence_sufficient: bool
+    abstention_reason: Optional[str] = None
+    retrieval_mode: str
+    correlation_id: str
+
+
+class ProcedureEvaluation(BaseModel):
+    """Machine-readable quality assessment for one recommendation."""
+
+    completeness: float = Field(ge=0.0, le=1.0)
+    evidence: float = Field(ge=0.0, le=1.0)
+    citation_validity: float = Field(ge=0.0, le=1.0)
+    required_slot_coverage: float = Field(ge=0.0, le=1.0)
+    sufficient: bool
+    reasons: List[str] = Field(default_factory=list)
+
+
+class ProcedureTestCase(BaseModel):
+    """Deterministic scenario used to validate procedural behavior."""
+
+    case_id: str
+    procedure_type: ProcedureType
+    query: str
+    profile_context: Dict = Field(default_factory=dict)
+    expected_status: ProcedureStatus
 
 
 # ==================== AUDIO SERVICE MODELS ====================

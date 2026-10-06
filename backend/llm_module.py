@@ -7,14 +7,17 @@ Falls back to template responses if Ollama is not available
 import os
 import json
 import asyncio
+import importlib
 from typing import List, Dict, Optional, Generator, AsyncGenerator
 from dataclasses import dataclass, field
 from datetime import datetime
+from app.api.models import SUPPORTED_LANGUAGES
 
 # Try to import ollama
 OLLAMA_AVAILABLE = False
+ollama = None
 try:
-    import ollama
+    ollama = importlib.import_module("ollama")
     OLLAMA_AVAILABLE = True
     print("[LLM] ollama library loaded - Local LLM enabled")
 except ImportError:
@@ -269,14 +272,7 @@ class LLMModule:
         if not self.is_available():
             return None
 
-        lang_names = {
-            'es': 'español', 'en': 'English', 'ru': 'русский язык',
-            'fr': 'français', 'de': 'Deutsch', 'zh': '中文 (chino simplificado)',
-            'ar': 'العربية (árabe)', 'vi': 'Tiếng Việt (vietnamita)',
-            'hy': 'հայերեն (armenio)', 'kk': 'қазақ тілі (kazajo)',
-            'pt': 'português', 'it': 'italiano', 'tr': 'Türkçe',
-        }
-        target = lang_names.get(target_language, target_language)
+        target = SUPPORTED_LANGUAGES.get(target_language, target_language)
         prompt = (
             f"Traduce el siguiente texto al {target}. "
             "Reglas: conserva EXACTAMENTE los números, teléfonos, precios, URLs y los "
@@ -326,7 +322,12 @@ class LLMModule:
                 'de': 'WICHTIG: Antworten Sie NUR auf Deutsch. Verwenden Sie keine andere Sprache.',
                 'zh': '重要：请只用简体中文回答。不要使用其他任何语言。',
                 'ar': 'مهم: أجب فقط باللغة العربية. لا تستخدم أي لغة أخرى.',
-                'vi': 'QUAN TRỌNG: Chỉ trả lời bằng tiếng Việt. Không sử dụng bất kỳ ngôn ngữ nào khác.'
+                'vi': 'QUAN TRỌNG: Chỉ trả lời bằng tiếng Việt. Không sử dụng bất kỳ ngôn ngữ nào khác.',
+                'hy': 'ԿԱՐԵՎՈՐ. Պատասխանիր ՄԻԱՅՆ հայերենով։ Մի օգտագործիր այլ լեզու։',
+                'kk': 'МАҢЫЗДЫ: ТЕК қазақ тілінде жауап беріңіз. Басқа тілді қолданбаңыз.',
+                'pt': 'IMPORTANTE: Responda APENAS em português. Não use outro idioma.',
+                'it': 'IMPORTANTE: Rispondi SOLO in italiano. Non usare altre lingue.',
+                'tr': 'ÖNEMLİ: YALNIZCA Türkçe yanıt verin. Başka dil kullanmayın.',
             }.get(language, 'IMPORTANT: Respond only in the language of the user query.')
 
             # Build messages
@@ -436,42 +437,28 @@ class LLMModule:
             except Exception as e:
                 print(f"[LLM] Translation failed: {e}, using original content")
 
-        # Language-specific templates
-        if language == 'ru' or not language:
-            return f"""📌 ОФИЦИАЛЬНАЯ ИНФОРМАЦИЯ: {query}
-
-📄 Источник: {source}
-
-{content}
-
-🔗 Подробнее: {source_url}"""
-
-        elif language == 'es':
-            return f"""📌 INFORMACIÓN OFICIAL: {query}
-
-📄 Fuente: {source}
-
-{content}
-
-🔗 Más información: {source_url}"""
-
-        elif language == 'fr':
-            return f"""📌 INFORMATION OFFICIELLE: {query}
-
-📄 Source: {source}
-
-{content}
-
-🔗 Plus d'infos: {source_url}"""
-
-        else:  # English
-            return f"""📌 OFFICIAL INFORMATION: {query}
-
-📄 Source: {source}
-
-{content}
-
-🔗 More info: {source_url}"""
+        labels = {
+            'es': ('INFORMACIÓN OFICIAL', 'Fuente', 'Más información'),
+            'en': ('OFFICIAL INFORMATION', 'Source', 'More info'),
+            'ru': ('ОФИЦИАЛЬНАЯ ИНФОРМАЦИЯ', 'Источник', 'Подробнее'),
+            'fr': ('INFORMATION OFFICIELLE', 'Source', "Plus d'infos"),
+            'de': ('OFFIZIELLE INFORMATIONEN', 'Quelle', 'Weitere Informationen'),
+            'zh': ('官方信息', '来源', '更多信息'),
+            'ar': ('معلومات رسمية', 'المصدر', 'مزيد من المعلومات'),
+            'vi': ('THÔNG TIN CHÍNH THỨC', 'Nguồn', 'Thông tin thêm'),
+            'hy': ('ՊԱՇՏՈՆԱԿԱՆ ՏԵՂԵԿԱՏՎՈՒԹՅՈՒՆ', 'Աղբյուր', 'Մանրամասն'),
+            'kk': ('РЕСМИ АҚПАРАТ', 'Дереккөз', 'Толығырақ'),
+            'pt': ('INFORMAÇÃO OFICIAL', 'Fonte', 'Mais informações'),
+            'it': ('INFORMAZIONI UFFICIALI', 'Fonte', 'Maggiori informazioni'),
+            'tr': ('RESMİ BİLGİ', 'Kaynak', 'Daha fazla bilgi'),
+        }
+        heading, source_label, more_label = labels.get(language or 'ru', labels['en'])
+        return (
+            f"📌 {heading}: {query}\n\n"
+            f"📄 {source_label}: {source}\n\n"
+            f"{content}\n\n"
+            f"🔗 {more_label}: {source_url}"
+        )
 
     def _no_context_response(self, query: str, language: str) -> str:
         """Response when no context found"""
@@ -479,7 +466,16 @@ class LLMModule:
             'ru': f"К сожалению, я не нашел информацию по запросу '{query}'. Обратитесь в администрацию КубГУ: +7-861-XXX-XXXX или посетите https://kubsu.ru",
             'es': f"No encontré información sobre '{query}'. Contacte a la administración de KubGU: +7-861-XXX-XXXX o visite https://kubsu.ru",
             'en': f"Sorry, I couldn't find information about '{query}'. Contact KubGU administration: +7-861-XXX-XXXX or visit https://kubsu.ru",
-            'fr': f"Désolé, je n'ai pas trouvé d'informations sur '{query}'. Contactez l'administration de KubGU: +7-861-XXX-XXXX ou visitez https://kubsu.ru"
+            'fr': f"Désolé, je n'ai pas trouvé d'informations sur '{query}'. Contactez l'administration de KubGU: +7-861-XXX-XXXX ou visitez https://kubsu.ru",
+            'de': f"Leider habe ich keine Informationen zu '{query}' gefunden. Kontaktieren Sie KubGU oder besuchen Sie https://kubsu.ru",
+            'zh': f"抱歉，我没有找到关于“{query}”的信息。请联系 KubGU 或访问 https://kubsu.ru",
+            'ar': f"عذرًا، لم أجد معلومات عن «{query}». تواصل مع KubGU أو زر https://kubsu.ru",
+            'vi': f"Xin lỗi, tôi không tìm thấy thông tin về '{query}'. Hãy liên hệ KubGU hoặc truy cập https://kubsu.ru",
+            'hy': f"Չհաջողվեց տեղեկություն գտնել «{query}» հարցման համար։ Կապվեք KubGU-ի հետ կամ այցելեք https://kubsu.ru",
+            'kk': f"'{query}' сұрауы бойынша ақпарат табылмады. KubGU-мен хабарласыңыз немесе https://kubsu.ru сайтына кіріңіз",
+            'pt': f"Não encontrei informações sobre '{query}'. Contacte a KubGU ou visite https://kubsu.ru",
+            'it': f"Non ho trovato informazioni su '{query}'. Contatta KubGU o visita https://kubsu.ru",
+            'tr': f"'{query}' hakkında bilgi bulamadım. KubGU ile iletişime geçin veya https://kubsu.ru adresini ziyaret edin",
         }
         return responses.get(language, responses['en'])
 

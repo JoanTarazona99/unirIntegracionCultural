@@ -1,0 +1,157 @@
+{
+  "query": "¿Qué necesito para solicitar y prorrogar una visa de estudiante?",
+  "selection_mode": "curated_active_corpus",
+  "source_chunk_ids": [
+    "Госуслуги::2",
+    "МВД РФ::1",
+    "ГУВМ МВД::1"
+  ],
+  "recommendation": {
+    "status": "complete",
+    "procedure_type": "visa",
+    "language": "es",
+    "detected_language": "es",
+    "evidence_language": "es",
+    "translation_applied": false,
+    "classification_confidence": 1.0,
+    "user_profile_context": {
+      "country": "Vietnam",
+      "visa_type": "student",
+      "russian_level": "A1"
+    },
+    "steps": [
+      {
+        "step_number": 1,
+        "title": "Тип визы Student visa Тип студенческой визы",
+        "description": "Тип визы Student visa Тип студенческой визы",
+        "required_documents": [
+          "Паспорт (действителен мин. 18 месяцев)",
+          "Приглашение от КубГУ",
+          "Анкета визовая",
+          "Фото 3х4 см",
+          "Справка о несудимости"
+        ],
+        "deadline_days": null,
+        "deadline_text": "зависит от программы обучения",
+        "responsible_entity": "Portal Госуслуги / organismo seleccionado",
+        "source_url": "https://www.gosuslugi.ru",
+        "source_title": "Тип визы Student visa Тип студенческой визы",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "Госуслуги::2"
+        ],
+        "source_version_id": null
+      },
+      {
+        "step_number": 2,
+        "title": "Подайте документы за 1 месяц до истечения",
+        "description": "Подайте документы за 1 месяц до истечения",
+        "required_documents": [
+          "Письмо-приглашение от вуза",
+          "Медицинская справка (HIV, туберкулёз)",
+          "Финансовые гарантии",
+          "Страховка (медицинская или туристическая)"
+        ],
+        "deadline_days": null,
+        "deadline_text": "1 год (с возможностью продления)",
+        "responsible_entity": "МФЦ или УФМС",
+        "source_url": "https://мвд.рф",
+        "source_title": "Типы виз",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "МВД РФ::1"
+        ],
+        "source_version_id": null
+      },
+      {
+        "step_number": 3,
+        "title": "La oficina internacional de KubGU prepara los documentos / Международный отдел готовит документы",
+        "description": "La oficina internacional de KubGU prepara los documentos / Международный отдел готовит документы",
+        "required_documents": [
+          "Pasaporte y visa / Паспорт и виза",
+          "Carta de la universidad / Ходатайство вуза",
+          "Tarjeta de migración / Миграционная карта",
+          "Registro vigente / Действующая регистрация"
+        ],
+        "deadline_days": 20,
+        "deadline_text": "Presenta la solicitud 20 días antes del vencimiento / Подать заявление за 20 дней до окончания",
+        "responsible_entity": "Dirección General de Migración del МВД (ГУВМ МВД)",
+        "source_url": "https://мвд.рф/mvd/structure1/Glavnie_upravlenija/guvm",
+        "source_title": "Продление визы / Prórroga de la visa de estudiante",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "ГУВМ МВД::1"
+        ],
+        "source_version_id": null
+      },
+      {
+        "step_number": 4,
+        "title": "Presenta la solicitud 20 días antes del vencimiento / Подать заявление за 20 дней до окончания",
+        "description": "Presenta la solicitud 20 días antes del vencimiento / Подать заявление за 20 дней до окончания",
+        "required_documents": [],
+        "deadline_days": 20,
+        "deadline_text": "Presenta la solicitud 20 días antes del vencimiento / Подать заявление за 20 дней до окончания",
+        "responsible_entity": "Dirección General de Migración del МВД (ГУВМ МВД)",
+        "source_url": "https://мвд.рф/mvd/structure1/Glavnie_upravlenija/guvm",
+        "source_title": "Продление визы / Prórroga de la visa de estudiante",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "ГУВМ МВД::1"
+        ],
+        "source_version_id": null
+      },
+      {
+        "step_number": 5,
+        "title": "Paga la tasa estatal / Оплатить госпошлину: 1600 руб.",
+        "description": "Paga la tasa estatal / Оплатить госпошлину: 1600 руб.",
+        "required_documents": [],
+        "deadline_days": 20,
+        "deadline_text": "Presenta la solicitud 20 días antes del vencimiento / Подать заявление за 20 дней до окончания",
+        "responsible_entity": "Dirección General de Migración del МВД (ГУВМ МВД)",
+        "source_url": "https://мвд.рф/mvd/structure1/Glavnie_upravlenija/guvm",
+        "source_title": "Продление визы / Prórroga de la visa de estudiante",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "ГУВМ МВД::1"
+        ],
+        "source_version_id": null
+      },
+      {
+        "step_number": 6,
+        "title": "Espera la resolución del ГУВМ МВД / Ожидать решение: 20 дней",
+        "description": "Espera la resolución del ГУВМ МВД / Ожидать решение: 20 дней",
+        "required_documents": [],
+        "deadline_days": 20,
+        "deadline_text": "Presenta la solicitud 20 días antes del vencimiento / Подать заявление за 20 дней до окончания",
+        "responsible_entity": "Dirección General de Migración del МВД (ГУВМ МВД)",
+        "source_url": "https://мвд.рф/mvd/structure1/Glavnie_upravlenija/guvm",
+        "source_title": "Продление визы / Prórroga de la visa de estudiante",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "ГУВМ МВД::1"
+        ],
+        "source_version_id": null
+      }
+    ],
+    "total_estimated_days": null,
+    "warnings": [],
+    "missing_information": [],
+    "clarification_questions": [],
+    "evidence_sufficient": true,
+    "abstention_reason": null,
+    "retrieval_mode": "curated_active_corpus",
+    "correlation_id": "5fb4d805-e26f-547e-a68d-6ca02f732568"
+  },
+  "evaluation": {
+    "completeness": 1.0,
+    "evidence": 0.6,
+    "citation_validity": 1.0,
+    "required_slot_coverage": 1.0,
+    "sufficient": true,
+    "reasons": []
+  },
+  "limitations": [
+    "Corpus-grounded example; not legal advice or live-source validation.",
+    "Usefulness has not been evaluated by human participants."
+  ]
+}

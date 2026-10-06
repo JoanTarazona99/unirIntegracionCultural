@@ -1912,6 +1912,80 @@ class EnhancedRAGModule:
             search_mode = "fallback"
         return results, search_mode
 
+    def retrieve_evidence(self, query: str) -> Dict:
+        """Retrieve and assess evidence without generation or external acquisition."""
+        results, search_mode = self._retrieve(query)
+        try:
+            from retrieval import build_chunks_from_library
+
+            chunks = build_chunks_from_library(self.document_library)
+            by_identity = {
+                (chunk.source, chunk.title, chunk.content.strip()): chunk
+                for chunk in chunks
+            }
+            for result in results:
+                chunk = by_identity.get(
+                    (
+                        result.get("source"),
+                        result.get("title"),
+                        str(result.get("content") or "").strip(),
+                    )
+                )
+                if chunk is not None:
+                    result["id"] = result.get("id") or chunk.id
+                    metadata = dict(chunk.metadata)
+                    metadata.update(result.get("metadata") or {})
+                    result["metadata"] = metadata
+        except Exception as error:
+            logger.warning(
+                "procedural_chunk_trace_enrichment_failed",
+                extra={"error_type": type(error).__name__},
+            )
+        try:
+            from trust import assess_evidence_sufficiency
+
+            assessment = assess_evidence_sufficiency(
+                query,
+                results,
+                retrieval_top_k=self._retrieval_config.get("top_k", 5),
+                retrieval_mode=search_mode,
+                query_relevance_threshold=self._retrieval_config.get(
+                    "query_relevance_threshold", 0.5
+                ),
+                query_entity_coverage_threshold=self._retrieval_config.get(
+                    "query_entity_coverage_threshold", 1.0
+                ),
+            )
+            assessment_payload = {
+                "sufficient": assessment.sufficient,
+                "score": round(assessment.score, 3),
+                "query_relevance": assessment.query_relevance,
+                "query_term_coverage": assessment.query_term_coverage,
+                "query_entity_coverage": assessment.query_entity_coverage,
+                "requested_slot_coverage": assessment.requested_slot_coverage,
+                "retrieval_confidence": assessment.retrieval_confidence,
+                "reasons": list(assessment.reasons),
+                "missing_terms": list(assessment.missing_terms),
+                "missing_entities": dict(assessment.missing_entities),
+            }
+        except Exception as error:
+            logger.warning(
+                "procedural_evidence_assessment_failed",
+                extra={"error_type": type(error).__name__},
+            )
+            assessment_payload = {
+                "sufficient": False,
+                "score": 0.0,
+                "reasons": ["evidence_assessment_error"],
+                "missing_terms": [],
+                "missing_entities": {},
+            }
+        return {
+            "results": results,
+            "search_mode": search_mode,
+            "evidence_assessment": assessment_payload,
+        }
+
     def apply_refreshed_source(self, source: Dict, content: str, version_id: str) -> List[str]:
         """Apply a refreshed source payload into KB and invalidate stale retriever state."""
         source_key = source.get('target_source') or source.get('source_id') or 'KB Refresh'

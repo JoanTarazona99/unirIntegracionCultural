@@ -1,0 +1,35 @@
+[
+  {
+    "case_id": "spbu-spanish-natural-query",
+    "provenance": "artifacts/real-source-tests/spbu-20260901/README.md",
+    "procedure_type": "enrollment",
+    "query": "¿Qué programas ofrece SPbU?",
+    "source": "Saint Petersburg State University",
+    "source_url": "https://spbu.ru",
+    "source_title": "SPbU home page",
+    "documented_excerpt": "The acquired page mentions programs, but the Spanish query did not retrieve SPbU and the response abstained.",
+    "expected_status": "abstained"
+  },
+  {
+    "case_id": "unam-irrelevant-academic-body",
+    "provenance": "artifacts/real-source-tests/unam-20260901/README.md",
+    "procedure_type": "enrollment",
+    "query": "¿Qué programas ofrece la UNAM?",
+    "source": "Oferta Académica UNAM",
+    "source_url": "https://www.oferta.unam.mx/",
+    "source_title": "Oferta Académica UNAM",
+    "documented_excerpt": "The indexed body contained photography placeholder text and did not provide an enrollment procedure.",
+    "expected_status": "abstained"
+  },
+  {
+    "case_id": "uba-short-query-low-overlap",
+    "provenance": "artifacts/real-source-tests/uba-20260901/README.md",
+    "procedure_type": "enrollment",
+    "query": "Posgrado UBA",
+    "source": "Universidad de Buenos Aires",
+    "source_url": "https://www.uba.ar",
+    "source_title": "UBA home page",
+    "documented_excerpt": "Acquisition succeeded, but only one of three queries retrieved pertinent content and no complete enrollment procedure was established.",
+    "expected_status": "abstained"
+  }
+]

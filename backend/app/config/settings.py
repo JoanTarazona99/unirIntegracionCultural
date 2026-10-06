@@ -197,6 +197,7 @@ class Settings(BaseSettings):
     )
     dense_model: str = Field(
         default="paraphrase-multilingual-MiniLM-L12-v2",
+        min_length=1,
         description="Sentence-transformers model for dense retrieval",
     )
     reranker_model: str = Field(
@@ -213,6 +214,8 @@ class Settings(BaseSettings):
     )
     retrieval_top_k: int = Field(
         default=5,
+        ge=1,
+        le=20,
         description="Number of chunks returned by the retriever",
     )
 

@@ -1,0 +1,148 @@
+{
+  "query": "¿Cómo completo la matrícula como estudiante extranjero en KubGU?",
+  "selection_mode": "curated_active_corpus",
+  "source_chunk_ids": [
+    "КубГУ::0",
+    "КубГУ::4",
+    "Документы::0"
+  ],
+  "recommendation": {
+    "status": "complete",
+    "procedure_type": "enrollment",
+    "language": "es",
+    "detected_language": "es",
+    "evidence_language": "es",
+    "translation_applied": false,
+    "classification_confidence": 1.0,
+    "user_profile_context": {
+      "country": "Vietnam",
+      "visa_type": "student",
+      "russian_level": "A1",
+      "academic_level": "bachelor"
+    },
+    "steps": [
+      {
+        "step_number": 1,
+        "title": "Подайте документы через портал вузов (https://cabinet.rt.asurso.ru)",
+        "description": "Подайте документы через портал вузов (https://cabinet.rt.asurso.ru)",
+        "required_documents": [],
+        "deadline_days": null,
+        "deadline_text": null,
+        "responsible_entity": "Universidad Estatal de Kubán (КубГУ)",
+        "source_url": "https://kubsu.ru",
+        "source_title": "Приём иностранных студентов",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "КубГУ::0"
+        ],
+        "source_version_id": null
+      },
+      {
+        "step_number": 2,
+        "title": "Получите письмо-приглашение",
+        "description": "Получите письмо-приглашение",
+        "required_documents": [],
+        "deadline_days": null,
+        "deadline_text": null,
+        "responsible_entity": "Universidad Estatal de Kubán (КубГУ)",
+        "source_url": "https://kubsu.ru",
+        "source_title": "Приём иностранных студентов",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "КубГУ::0"
+        ],
+        "source_version_id": null
+      },
+      {
+        "step_number": 3,
+        "title": "Подготовьте документы для визы",
+        "description": "Подготовьте документы для визы",
+        "required_documents": [],
+        "deadline_days": null,
+        "deadline_text": null,
+        "responsible_entity": "Universidad Estatal de Kubán (КубГУ)",
+        "source_url": "https://kubsu.ru",
+        "source_title": "Приём иностранных студентов",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "КубГУ::0"
+        ],
+        "source_version_id": null
+      },
+      {
+        "step_number": 4,
+        "title": "Зарегистрируйтесь в МФЦ или МВД",
+        "description": "Зарегистрируйтесь в МФЦ или МВД",
+        "required_documents": [],
+        "deadline_days": null,
+        "deadline_text": null,
+        "responsible_entity": "Universidad Estatal de Kubán (КубГУ)",
+        "source_url": "https://kubsu.ru",
+        "source_title": "Приём иностранных студентов",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "КубГУ::0"
+        ],
+        "source_version_id": null
+      },
+      {
+        "step_number": 5,
+        "title": "Matrícula y costos académicos",
+        "description": "Matrícula y costos académicos",
+        "required_documents": [],
+        "deadline_days": null,
+        "deadline_text": "antes del 1 de septiembre",
+        "responsible_entity": "Universidad Estatal de Kubán (КубГУ)",
+        "source_url": "https://kubsu.ru",
+        "source_title": "Matrícula y costos académicos",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "КубГУ::4"
+        ],
+        "source_version_id": null
+      },
+      {
+        "step_number": 6,
+        "title": "Трудовая книжка и документы / Documentos legales",
+        "description": "Трудовая книжка и документы / Documentos legales",
+        "required_documents": [
+          "Pasaporte (válido por lo menos 18 meses) / Паспорт",
+          "Diploma o certificado de educación anterior / Аттестат о среднем образовании",
+          "Expediente académico / Académicos transcripts",
+          "Carta de recomendación (opcional) / Рекомендательное письмо",
+          "Certificado médico (HIV negativo, tuberculosis negativo) / Медицинская справка"
+        ],
+        "deadline_days": null,
+        "deadline_text": null,
+        "responsible_entity": "Universidad y autoridad documental competente",
+        "source_url": "https://мвд.рф",
+        "source_title": "Трудовая книжка и документы / Documentos legales",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "Документы::0"
+        ],
+        "source_version_id": null
+      }
+    ],
+    "total_estimated_days": null,
+    "warnings": [],
+    "missing_information": [],
+    "clarification_questions": [],
+    "evidence_sufficient": true,
+    "abstention_reason": null,
+    "retrieval_mode": "curated_active_corpus",
+    "correlation_id": "6b02694c-8256-5bfc-a74a-c77268ff98dc"
+  },
+  "evaluation": {
+    "completeness": 1.0,
+    "evidence": 0.6,
+    "citation_validity": 1.0,
+    "required_slot_coverage": 1.0,
+    "sufficient": true,
+    "reasons": []
+  },
+  "limitations": [
+    "Corpus-grounded example; not legal advice or live-source validation.",
+    "Usefulness has not been evaluated by human participants."
+  ]
+}

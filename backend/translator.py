@@ -6,25 +6,10 @@ Soporta traducción de respuestas a múltiples idiomas
 from typing import Dict, List, Optional
 import os
 import re
+from app.api.models import SUPPORTED_LANGUAGES as CONTRACT_SUPPORTED_LANGUAGES
 
 # Idiomas soportados con códigos ISO
-SUPPORTED_LANGUAGES = {
-    'en': 'English',
-    'es': 'Español',
-    'fr': 'Français',
-    'de': 'Deutsch',
-    'pt': 'Português',
-    'it': 'Italiano',
-    'ru': 'Русский',
-    'zh': '中文',
-    'ja': '日本語',
-    'ar': 'العربية',
-    'ko': '한국어',
-    'tr': 'Türkçe',
-    'pl': 'Polski',
-    'nl': 'Nederlands',
-    'vi': 'Tiếng Việt'
-}
+SUPPORTED_LANGUAGES = dict(CONTRACT_SUPPORTED_LANGUAGES)
 
 class MultiLanguageTranslator:
     """Traductor multiidioma para respuestas RAG"""
@@ -204,7 +189,7 @@ class MultiLanguageTranslator:
         Returns:
             Texto traducido
         """
-        if target_language == source_language or target_language == 'es':
+        if target_language == source_language:
             return text
         
         if not self.has_translator:

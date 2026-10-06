@@ -67,12 +67,15 @@ def build_chunks_from_flat(flat_documents: List[Dict]) -> List[Chunk]:
         per_source_index[source] = idx + 1
         chunks.append(
             Chunk(
-                id=f"{source}::{idx}",
+                id=doc.get("chunk_id") or f"{source}::{idx}",
                 source=source,
                 title=doc.get("title", "") or "",
                 content=(doc.get("content", "") or "").strip(),
                 source_url=doc.get("source_url"),
-                metadata={"aliases": list(doc.get("aliases", []) or [])},
+                metadata={
+                    "aliases": list(doc.get("aliases", []) or []),
+                    "version_id": doc.get("version_id"),
+                },
             )
         )
     return chunks

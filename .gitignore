@@ -122,7 +122,11 @@ data/kb_scheduler.leader.lock
 *.temp
 *.pid
 .tmp/
-.github/agents/
+.github/agents/*
+!.github/agents/procedural-designer.agent.md
+!.github/agents/procedure-classifier.agent.md
+!.github/agents/procedure-generator.agent.md
+!.github/agents/procedure-evaluator.agent.md
 .neural_extended_114_20260830_v1.staging/
 
 # Telegram bot

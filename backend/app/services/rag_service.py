@@ -4,7 +4,7 @@ RAG Service: wrapper around EnhancedRAGModule.
 Encapsulates RAG logic with clean interface and structured error handling.
 Does not modify the underlying module.
 
-Limited to: search(), get_sources(), get_status()
+    Limited to: search(), retrieve_evidence(), get_sources(), get_status()
 TODO (Sprint 2): Add streaming support when conversation/cache layer is refactored.
 """
 
@@ -216,6 +216,37 @@ class RAGService:
                     **error_metadata,
                     "language": language,
                 },
+            ) from None
+
+    def retrieve_evidence(
+        self,
+        query: str,
+        *,
+        correlation_id: Optional[str] = None,
+    ) -> Dict:
+        """Retrieve source chunks without generation or external acquisition."""
+        query_metadata = _query_log_metadata(query, correlation_id)
+        try:
+            result = self.rag_module.retrieve_evidence(query)
+            logger.info(
+                "rag_evidence_retrieved",
+                result_count=len(result.get("results", [])),
+                search_mode=result.get("search_mode"),
+                evidence_sufficient=(
+                    result.get("evidence_assessment", {}).get("sufficient", False)
+                ),
+                **query_metadata,
+            )
+            return result
+        except Exception as error:
+            logger.error(
+                "rag_evidence_retrieval_failed",
+                error_type=type(error).__name__,
+                **query_metadata,
+            )
+            raise RAGError(
+                "RAG evidence retrieval failed",
+                context={"error_type": type(error).__name__},
             ) from None
     
     def get_sources(self) -> Dict:

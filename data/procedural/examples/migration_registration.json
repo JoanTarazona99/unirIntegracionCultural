@@ -1,0 +1,86 @@
+{
+  "query": "¿Cómo hago el registro migratorio después de llegar a Rusia?",
+  "selection_mode": "curated_active_corpus",
+  "source_chunk_ids": [
+    "МВД РФ::0",
+    "МФЦ::0"
+  ],
+  "recommendation": {
+    "status": "complete",
+    "procedure_type": "registration",
+    "language": "es",
+    "detected_language": "es",
+    "evidence_language": "es",
+    "translation_applied": false,
+    "classification_confidence": 1.0,
+    "user_profile_context": {
+      "country": "Vietnam",
+      "visa_type": "student",
+      "russian_level": "A1"
+    },
+    "steps": [
+      {
+        "step_number": 1,
+        "title": "Регистрация по месту пребывания",
+        "description": "Регистрация по месту пребывания",
+        "required_documents": [
+          "Паспорт",
+          "Визовый листок (виза)",
+          "Миграционная карта (выдана при входе)",
+          "Договор найма или справка о проживании от общежития"
+        ],
+        "deadline_days": 7,
+        "deadline_text": "В течение 7 дней после прибытия в Россию",
+        "responsible_entity": "Ministerio del Interior de la Federación Rusa (МВД РФ)",
+        "source_url": "https://мвд.рф",
+        "source_title": "Регистрация по месту пребывания",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "МВД РФ::0"
+        ],
+        "source_version_id": null
+      },
+      {
+        "step_number": 2,
+        "title": "Регистрация иностранцев",
+        "description": "Регистрация иностранцев",
+        "required_documents": [
+          "Паспорт (оригинал и копия)",
+          "Виза (копия)",
+          "Миграционная карта",
+          "Справка о месте проживания (от хозяина жилья или вуза)"
+        ],
+        "deadline_days": 5,
+        "deadline_text": "3-5 рабочих дней",
+        "responsible_entity": "Centro Multifuncional (МФЦ)",
+        "source_url": "https://mfc.krasnodar.ru",
+        "source_title": "Регистрация иностранцев",
+        "evidence_confidence": 0.6,
+        "evidence_chunk_ids": [
+          "МФЦ::0"
+        ],
+        "source_version_id": null
+      }
+    ],
+    "total_estimated_days": null,
+    "warnings": [],
+    "missing_information": [],
+    "clarification_questions": [],
+    "evidence_sufficient": true,
+    "abstention_reason": null,
+    "retrieval_mode": "curated_active_corpus",
+    "correlation_id": "3bf52f51-9b31-52b3-a6ca-a6e46e83e697"
+  },
+  "evaluation": {
+    "completeness": 1.0,
+    "evidence": 0.6,
+    "citation_validity": 1.0,
+    "required_slot_coverage": 1.0,
+    "sufficient": true,
+    "reasons": []
+  },
+  "limitations": [
+    "Corpus-grounded example; not legal advice or live-source validation.",
+    "Usefulness has not been evaluated by human participants."
+  ]
+}

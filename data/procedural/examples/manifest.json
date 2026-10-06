@@ -1,0 +1,37 @@
+{
+  "schema_version": "procedural-examples-v1",
+  "generation_mode": "offline_deterministic",
+  "llm_used": false,
+  "network_used": false,
+  "examples": [
+    {
+      "path": "migration_registration.json",
+      "sha256": "a660bafc277f7011b3e49c56ac1d51144524800ee3174ccfe3cf527769a7c16e",
+      "correlation_id": "3bf52f51-9b31-52b3-a6ca-a6e46e83e697",
+      "source_chunk_ids": [
+        "МВД РФ::0",
+        "МФЦ::0"
+      ]
+    },
+    {
+      "path": "university_enrollment.json",
+      "sha256": "3f00aaf58ef4be77c45dcf21e1e15988023d035b43b0f5e747cb9f56355326c4",
+      "correlation_id": "6b02694c-8256-5bfc-a74a-c77268ff98dc",
+      "source_chunk_ids": [
+        "КубГУ::0",
+        "КубГУ::4",
+        "Документы::0"
+      ]
+    },
+    {
+      "path": "student_visa.json",
+      "sha256": "eb67f16f900d6e072ad3ef8865d8a7162e8c1a5777ff45877c116fefa1865c76",
+      "correlation_id": "5fb4d805-e26f-547e-a68d-6ca02f732568",
+      "source_chunk_ids": [
+        "Госуслуги::2",
+        "МВД РФ::1",
+        "ГУВМ МВД::1"
+      ]
+    }
+  ]
+}

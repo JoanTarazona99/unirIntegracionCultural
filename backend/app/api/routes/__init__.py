@@ -14,6 +14,7 @@ from .info import router as info_router
 from .metrics import router as metrics_router
 from .eval import router as eval_router
 from .sources import router as sources_router
+from .procedural import router as procedural_router
 
 __all__ = [
     "health_router",
@@ -26,4 +27,5 @@ __all__ = [
     "metrics_router",
     "eval_router",
     "sources_router",
+    "procedural_router",
 ]

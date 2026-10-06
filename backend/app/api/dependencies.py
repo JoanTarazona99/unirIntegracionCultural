@@ -167,6 +167,13 @@ def get_profile_service():
     return ProfileService(personalization_engine)
 
 
+def get_procedural_service():
+    """Get the procedural recommendation orchestration service."""
+    from app.services.procedural_service import ProceduralService
+
+    return ProceduralService(get_rag_service(), get_profile_service(), get_translator())
+
+
 def get_audio_service():
     """Get audio service instance.
     
