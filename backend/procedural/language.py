@@ -41,7 +41,10 @@ class ProcedureLanguageRouter:
             "um", "estudante", "visto",
         },
         "it": {"come", "richiedere", "visto", "alloggio", "iscrizione", "immatricolazione"},
-        "tr": {"nasil", "nasıl", "basvur", "başvur", "vize", "kayit", "kayıt", "yurt"},
+        "tr": {
+            "nasil", "nasıl", "basvur", "başvur", "vize", "kayit", "kayıt",
+            "yurt", "kabul",
+        },
     }
     _CRITICAL_RE = re.compile(
         r"https?://\S+|[\w.+-]+@[\w.-]+\.\w+|\b\d+(?:[.,-]\d+)*\b|"
@@ -97,8 +100,7 @@ class ProcedureLanguageRouter:
 
     @classmethod
     def preserves_critical_information(cls, source: str, translated: str) -> bool:
-        translated_normalized = translated.casefold()
-        return all(token in translated_normalized for token in cls.critical_tokens(source))
+        return cls.critical_tokens(source) == cls.critical_tokens(translated)
 
     @classmethod
     def translate_checked(

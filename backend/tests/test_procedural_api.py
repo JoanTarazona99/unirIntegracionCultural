@@ -52,6 +52,15 @@ class _FakeRAGService:
             ],
         }
 
+    def retrieve_evidence_adaptive(self, query, language, *, correlation_id=None):
+        self.adaptive_language = language
+        payload = self.retrieve_evidence(query, correlation_id=correlation_id)
+        payload["search_mode"] = "adaptive_weighted_rrf"
+        payload["adaptive_retrieval"] = {
+            "translated_targets": ["es"] if language == "fr" else []
+        }
+        return payload
+
 
 class _FakeTranslator:
     def __init__(self, *, lose_critical=False):
@@ -165,7 +174,8 @@ def test_service_translates_french_query_and_response_safely():
         profile={"country": "France", "visa_type": "student"},
     )
     result = service.recommend(request, correlation_id="corr-fr")
-    assert rag_service.last_query == "¿Cómo hago el registro migratorio?"
+    assert rag_service.last_query == "Comment faire l'enregistrement migratoire ?"
+    assert rag_service.adaptive_language == "fr"
     assert result.status == "complete"
     assert result.detected_language == "fr"
     assert result.language == "fr"
@@ -188,3 +198,14 @@ def test_service_abstains_when_translation_loses_critical_information():
     assert result.status == "abstained"
     assert result.steps == []
     assert result.abstention_reason == "response_translation_unavailable_or_unsafe"
+
+
+def test_translation_integrity_rejects_added_or_removed_critical_values():
+    assert ProceduralService.validate_translation_integrity(
+        "Presentar en МВД dentro de 7 días: https://мвд.рф",
+        "Submit to МВД within 7 days: https://мвд.рф",
+    )
+    assert not ProceduralService.validate_translation_integrity(
+        "Presentar en МВД dentro de 7 días: https://мвд.рф",
+        "Submit to МВД within 10 days: https://мвд.рф",
+    )

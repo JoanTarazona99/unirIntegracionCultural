@@ -124,8 +124,27 @@ class ProceduralService:
             )
             if translated is None:
                 return None
+            if not self.validate_translation_integrity(value, translated):
+                logger.warning(
+                    "procedural_translation_integrity_failed",
+                    original_critical=sorted(self.language_router.critical_tokens(value)),
+                    translated_critical=sorted(self.language_router.critical_tokens(translated)),
+                )
+                return None
             translated_values.append(translated)
         return translated_values
+
+    @classmethod
+    def validate_translation_integrity(
+        cls,
+        original_response: str,
+        translated_response: str,
+    ) -> bool:
+        """Require exact preservation of numbers, URLs, emails, and institutions."""
+        router = ProcedureLanguageRouter()
+        return router.critical_tokens(original_response) == router.critical_tokens(
+            translated_response
+        )
 
     def _localize_recommendation(
         self,
@@ -148,6 +167,17 @@ class ProceduralService:
                 )
                 if translated is None:
                     return False
+                if not self.validate_translation_integrity(field, translated):
+                    logger.warning(
+                        "procedural_translation_integrity_failed",
+                        original_critical=sorted(
+                            self.language_router.critical_tokens(field)
+                        ),
+                        translated_critical=sorted(
+                            self.language_router.critical_tokens(translated)
+                        ),
+                    )
+                    return False
                 translated_fields.append(translated)
                 translation_applied = translation_applied or applied
             step.title = translated_fields[0]
@@ -166,6 +196,17 @@ class ProceduralService:
                 )
                 if translated is None:
                     return False
+                if not self.validate_translation_integrity(document, translated):
+                    logger.warning(
+                        "procedural_translation_integrity_failed",
+                        original_critical=sorted(
+                            self.language_router.critical_tokens(document)
+                        ),
+                        translated_critical=sorted(
+                            self.language_router.critical_tokens(translated)
+                        ),
+                    )
+                    return False
                 translated_documents.append(translated)
                 translation_applied = translation_applied or applied
             step.required_documents = translated_documents
@@ -182,7 +223,15 @@ class ProceduralService:
         initial_classification = self.classifier.classify(request.query, profile)
         detected_language = initial_classification.detected_language
         response_language = request.language or detected_language
-        evidence_language = self.language_router.evidence_language(detected_language)
+        triage = self.rag_service.triage_service.classify_procedure_type(
+            request.query,
+            detected_language,
+        ) if hasattr(self.rag_service, "triage_service") else None
+        evidence_language = (
+            triage["primary_target"]
+            if triage is not None
+            else self.language_router.evidence_language(detected_language)
+        )
 
         if initial_classification.confidence < 0.6 or initial_classification.missing_profile_fields:
             questions = initial_classification.clarification_questions
@@ -212,50 +261,29 @@ class ProceduralService:
                 clarification_questions=questions,
             )
 
-        retrieval_query = request.query
-        query_translation_applied = False
-        if detected_language != evidence_language:
-            retrieval_query, query_translation_applied = self.language_router.translate_checked(
+        if hasattr(self.rag_service, "retrieve_evidence_adaptive"):
+            evidence = self.rag_service.retrieve_evidence_adaptive(
                 request.query,
-                source_language=detected_language,
-                target_language=evidence_language,
-                translator=self.translator,
+                detected_language,
+                correlation_id=correlation_id,
             )
-            if retrieval_query is None:
-                return self._abstention_response(
-                    initial_classification,
-                    profile,
-                    "not_run",
-                    correlation_id,
-                    response_language=response_language,
-                    evidence_language=evidence_language,
-                    reasons=["query_translation_unavailable_or_unsafe"],
-                )
-            translated_classification = self.classifier.classify(retrieval_query, profile)
-            if translated_classification.procedure_type != initial_classification.procedure_type:
-                return self._abstention_response(
-                    initial_classification,
-                    profile,
-                    "not_run",
-                    correlation_id,
-                    response_language=response_language,
-                    evidence_language=evidence_language,
-                    reasons=["query_translation_changed_procedure_intent"],
-                    translation_applied=True,
-                )
-
-        evidence = self.rag_service.retrieve_evidence(
-            retrieval_query,
-            correlation_id=correlation_id,
-        )
+        else:
+            evidence = self.rag_service.retrieve_evidence(
+                request.query,
+                correlation_id=correlation_id,
+            )
         results = list(evidence.get("results") or [])
         retrieval_mode = evidence.get("search_mode") or "unknown"
         classification = self.classifier.classify(
-            retrieval_query,
+            request.query,
             profile,
             retrieved_chunks=results,
         )
         classification.detected_language = detected_language
+        adaptive_metadata = evidence.get("adaptive_retrieval") or {}
+        query_translation_applied = bool(
+            adaptive_metadata.get("translated_targets")
+        )
 
         if classification.confidence < 0.6 or classification.missing_profile_fields:
             return self._clarification_response(

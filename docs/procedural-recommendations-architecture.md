@@ -9,13 +9,20 @@ El módulo transforma evidencia recuperada en instrucciones procedimentales pers
 ```mermaid
 flowchart TD
     A[POST /api/procedural] --> B[Resolver perfil guardado e inline]
-    B --> C[Retrieval-only sin adquisición externa]
-    C --> D[Detectar idioma y clasificar trámite]
-    D --> E{Intención y perfil suficientes}
+  B --> C[Detectar idioma y clasificar trámite]
+  C --> D[Nivel 1: dense original y BM25 si ES/EN/RU]
+  D --> D1{Evidencia suficiente}
+  D1 -- No --> D2[Nivel 2: traducción al target primario del trámite]
+  D2 --> D3{Evidencia suficiente}
+  D3 -- No --> D4[Nivel 3: canales ES/EN/RU restantes en paralelo]
+  D4 --> D5[Weighted RRF y deduplicación por chunk_id]
+  D5 --> D6{Score mayor que 0.4 y coverage mayor que 0.6}
+  D6 -- No --> H[abstained: insufficient_multilingual_evidence]
+  D1 -- Sí --> E{Intención y perfil suficientes}
+  D3 -- Sí --> E
+  D6 -- Sí --> E
     E -- No --> F[needs_clarification]
-    E -- Sí --> G{Evidencia global suficiente}
-    G -- No --> H[abstained]
-    G -- Sí --> I[Extraer pasos y slots]
+  E -- Sí --> I[Extraer pasos y slots]
     I --> J[Asociar URL título chunk y versión]
     J --> K[Evaluar completitud evidencia y citas]
     K --> L{Todos los checks pasan}
@@ -23,7 +30,55 @@ flowchart TD
     L -- Sí --> M[complete]
 ```
 
-La adquisición externa no se activa en este endpoint. Primero se estabiliza el contrato fail-closed sobre el corpus activo; una integración futura podrá reutilizar la adquisición transaccional antes de repetir retrieval.
+La adquisición externa no se activa en este endpoint. El fallback multilingüe se agota antes de devolver abstención; una integración futura podrá reutilizar la adquisición transaccional después del nivel 4.
+
+## Retrieval multilingüe adaptativo
+
+El routing usa el tipo de trámite, nunca la región o nacionalidad del usuario:
+
+| Tipo | Target primario | Motivo |
+|---|---|---|
+| visa, registro, migración | `ru` | Las fuentes normativas principales son МВД, ГУВМ МВД y Госуслуги. |
+| matrícula, vivienda | `es` | El corpus KubGU y las guías de adaptación contienen secciones en español. |
+| ambiguo/other | `en` | Inglés funciona como fallback internacional, sin convertirlo en evidencia suficiente por sí mismo. |
+
+### Canales y pesos iniciales
+
+| Canal | Peso | Activación |
+|---|---:|---|
+| `dense_original` | 1.0 | Siempre que dense esté disponible. |
+| `bm25_original` | 0.8 | Solo para consultas originales ES/EN/RU. |
+| `dense_ru_translated` | 0.9 | Traducción prioritaria o fallback hacia ruso. |
+| `dense_es_translated` | 0.6 | Evidencia secundaria en español. |
+| `dense_en_translated` | 0.6 | Evidencia secundaria internacional. |
+
+Los pesos son iniciales y deben calibrarse en el benchmark procedural separado. No proceden de B3. `best-score` no se usa en producción porque BM25, coseno y RRF tienen escalas distintas.
+
+### Weighted RRF
+
+Cada canal aporta como máximo una vez por `chunk_id`:
+
+$$
+\operatorname{score}(d)=\sum_{c \in C_d}\frac{w_c}{k+\operatorname{rank}_c(d)},\qquad k=60
+$$
+
+La salida conserva por canal el rango, peso, contribución y score bruto solo como telemetría. El orden fusionado usa exclusivamente weighted RRF.
+
+### Fallback y suficiencia
+
+1. **Nivel 1:** consulta original mediante dense; añade BM25 si la consulta ya está en ES/EN/RU.
+2. **Nivel 2:** traduce al target primario determinado por trámite. Rechaza la traducción si cambia la clasificación.
+3. **Nivel 3:** traduce a los targets ES/EN/RU restantes; las traducciones y los canales dense se ejecutan en paralelo.
+4. **Nivel 4:** abstención con `insufficient_multilingual_evidence`.
+
+Después de cada nivel se exige simultáneamente:
+
+- evaluación de evidencia existente marcada como suficiente;
+- score agregado conservador mayor que `0.4`;
+- cobertura de términos mayor que `0.6`;
+- preservación de entidades críticas durante traducción.
+
+Si dense no puede cargarse, el chat conserva la ruta legacy y registra `legacy_fallback_reason=dense_unavailable_or_empty`; no etiqueta BM25 como dense.
 
 ## Idiomas soportados
 
@@ -55,7 +110,10 @@ La lista proporcionada y `backend/llm_module.py` contienen **13 códigos, no 14*
 |---|---|
 | `procedural.language.ProcedureLanguageRouter` | Detección de 13 idiomas, routing a ES/EN/RU y validación de información crítica en traducciones. |
 | `procedural.classifier.ProcedureClassifier` | Clasificación determinista multilingüe `visa`, `registration`, `enrollment`, `housing`, `migration` u `other`; confianza, alternativas y aclaraciones. |
+| `app.services.triage_service.TriageService` | Selección del target primario y secundarios según trámite. |
 | `EnhancedRAGModule.retrieve_evidence()` | Retrieval-only y evaluación de suficiencia sin generación ni búsqueda externa. |
+| `EnhancedRAGModule.retrieve_adaptive_channels()` | Ejecución de dense/BM25 original y dense traducido. |
+| `RAGService.retrieve_evidence_adaptive()` | Orquestación de niveles, traducciones, fusión y abstención. |
 | `procedural.generator.ProcedureGenerator` | Extracción de listas, documentos, plazos y organismos; trazabilidad campo-a-chunk. |
 | `procedural.evaluator.ProcedureEvaluator` | Completitud, evidencia, citas, cobertura de slots y decisión fail-closed. |
 | `ProceduralService` | Resolución de perfil y orquestación del caso de uso. |
@@ -165,6 +223,31 @@ Por ello los tests exigen abstención. No se presentan esos artefactos como tres
 - **Validez de citas**: proporción de pasos con URL, título y chunk.
 - **Comportamiento seguro**: tasa de casos insuficientes que terminan en aclaración o abstención.
 
+### Benchmark procedural multilingüe separado
+
+`backend/tests/test_multilingual_retrieval.py` genera 65 consultas deterministas: 13 idiomas por cinco tipos de trámite. No modifica ni reutiliza B3 ni el conjunto exploratorio de 114 consultas.
+
+Resultado del fixture sintético controlado:
+
+| Método | Hit@5 | nDCG@5 | Abstención |
+|---|---:|---:|---:|
+| weighted RRF | 1.0000 | 1.0000 | 0.0000 |
+| best-score diagnóstico | 0.4923 | 0.2120 | 0.5077 |
+| single-channel | 0.5077 | 0.1964 | 0.4923 |
+
+El baseline best-score existe únicamente para demostrar en el fixture el problema de comparar scores incompatibles. No forma parte del runtime.
+
+El microbenchmark de Python obtuvo p95 inferior a 3 s en nivel 1 e inferior a 5 s en nivel 3. Estos valores miden clasificación/fusión con resultados simulados.
+
+También se ejecutó un probe neuronal real y offline con el entorno dedicado (`PyTorch 2.4.1+cpu`, `sentence-transformers 5.6.0`), snapshots locales y cero descargas:
+
+| Medición warm, 65 ejecuciones | p95 | Máximo |
+|---|---:|---:|
+| Nivel 1: dense original + BM25 aplicable | 0.026 s | 0.037 s |
+| Nivel 3: original + canales dense ES/EN/RU aplicables | 0.029 s | 0.034 s |
+
+El primer probe, que incluyó construcción del índice adaptativo, tardó 2.113 s y devolvió cinco resultados dense. Las mediciones warm no incluyen latencia de un proveedor de traducción, red, generación LLM ni arranque del proceso; por tanto validan el objetivo de retrieval local, no un SLA HTTP end-to-end.
+
 ### Evaluación de tesis pendiente
 
 - exactitud macro-F1 del clasificador sobre escenarios revisados por humanos;
@@ -182,3 +265,4 @@ No se han ejecutado evaluaciones humanas y no se afirma utilidad medida. B3 y el
 - La respuesta en idiomas fuera de ES/EN/RU depende de un traductor disponible y pasa controles conservadores; si no puede verificarse, el sistema se abstiene.
 - Los procedimientos pueden distribuir sus slots entre varios chunks; la combinación es conservadora y mantiene procedencia por paso.
 - El LLM no interviene en la primera versión del generador; una futura reformulación deberá validar JSON y grounding y conservar todos los valores factuales.
+- Los pesos y thresholds son hipótesis iniciales; requieren calibración con escenarios procedimentales revisados independientemente.

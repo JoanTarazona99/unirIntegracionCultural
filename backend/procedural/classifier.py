@@ -31,25 +31,27 @@ class ProcedureClassifier:
             "registro", "registrar", "registration", "register", "регистрац",
             "empadronamiento", "mfc", "мфц", "ufms", "уфмс", "enregistrement",
             "anmeldung", "registrierung", "registrazione", "kayıt", "kayit", "登记",
-            "تسجيل", "đăng ký", "գրանցում", "тіркеу",
+            "تسجيل", "đăng ký", "đăng", "գրանցում", "тіркеу",
         },
         "enrollment": {
             "matricula", "inscripcion", "admision", "enrollment", "enrolment",
             "admission", "apply", "поступ", "зачислен", "прием", "приём",
             "inscription", "einschreibung", "zulassung", "iscrizione", "immatricolazione",
-            "入学", "التحاق", "nhập học", "ընդունելություն", "қабылдау",
+            "入学", "التحاق", "nhập học", "nhập", "ընդունելություն", "қабылдау",
+            "kabul",
         },
         "housing": {
             "vivienda", "alojamiento", "dormitorio", "residencia", "housing",
             "accommodation", "dormitory", "hostel", "общежит", "жиль", "logement",
             "wohnheim", "unterkunft", "moradia", "alloggio", "yurt", "konut", "住宿",
             "سكن", "nhà ở", "ký túc xá", "հանրակացարան", "жатақхана",
+            "nhà",
         },
         "migration": {
             "migracion", "migratorio", "migration", "migration card",
-            "tarjeta de migracion", "миграцион", "миграционная карта", "guvm", "гувм",
+            "tarjeta de migracion", "миграц", "миграционная карта", "guvm", "гувм",
             "migrazione", "migração", "migration", "göç", "移民", "هجرة", "di trú",
-            "միգրացիա", "көші-қон",
+            "trú", "միգրացիա", "көші-қон", "көші",
         },
     }
     _PHRASES = {

@@ -100,7 +100,7 @@ def get_rag_service():
     """
     from app.services.rag_service import RAGService
     rag_module = get_rag_module()
-    return RAGService(rag_module)
+    return RAGService(rag_module, translator=get_translator())
 
 
 def get_translation_service():

@@ -12,6 +12,7 @@ from app.services.conversation_service import ConversationService
 from app.services.cache_service import CacheService
 from app.services.profile_service import ProfileService
 from app.services.audio_service import AudioService
+from app.services.triage_service import TriageService
 
 __all__ = [
     "RAGService",
@@ -21,4 +22,5 @@ __all__ = [
     "CacheService",
     "ProfileService",
     "AudioService",
+    "TriageService",
 ]

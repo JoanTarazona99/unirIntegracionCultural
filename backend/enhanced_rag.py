@@ -1817,6 +1817,8 @@ class EnhancedRAGModule:
         # Advanced retrieval (bm25/dense/hybrid) is built lazily and only used
         # when settings.retrieval_mode != 'keyword'. Defaults keep legacy behaviour.
         self._retriever = None
+        self._adaptive_dense_retriever = None
+        self._adaptive_bm25_retriever = None
         self._retrieval_config = self._load_retrieval_config()
 
         # Initialize LLM if available (lazy - check done on first request)
@@ -1881,6 +1883,169 @@ class EnhancedRAGModule:
             print(f"[RAG] Advanced retriever unavailable, using keyword search: {e}")
             self._retriever = None
         return self._retriever
+
+    def _get_adaptive_retrievers(self):
+        """Build shared dense/BM25 indexes lazily for adaptive channels."""
+        if (
+            self._adaptive_dense_retriever is not None
+            and self._adaptive_bm25_retriever is not None
+        ):
+            return self._adaptive_dense_retriever, self._adaptive_bm25_retriever
+
+        from retrieval import BM25Retriever, DenseRetriever, build_chunks_from_library
+
+        chunks = build_chunks_from_library(self.document_library)
+        dense = DenseRetriever(
+            model_name=self._retrieval_config["dense_model"],
+            use_query_expansion=False,
+            rrf_k=self._retrieval_config["rrf_k"],
+        )
+        bm25 = BM25Retriever(
+            use_query_expansion=False,
+            rrf_k=self._retrieval_config["rrf_k"],
+        )
+        dense.index(chunks)
+        bm25.index(chunks)
+        self._adaptive_dense_retriever = dense
+        self._adaptive_bm25_retriever = bm25
+        return dense, bm25
+
+    def retrieve_adaptive_channels(
+        self,
+        query: str,
+        language: str,
+        *,
+        translated_queries: Optional[Dict[str, str]] = None,
+        top_k: Optional[int] = None,
+    ) -> Dict:
+        """Run original and translated channels without generation."""
+        evidence_languages = {"es", "en", "ru"}
+        limit = top_k or self._retrieval_config.get("top_k", 5)
+        dense, bm25 = self._get_adaptive_retrievers()
+        channels = {
+            "dense_original": dense.search(query, top_k=limit),
+        }
+        if language in evidence_languages:
+            channels["bm25_original"] = bm25.search(query, top_k=limit)
+
+        translated_items = list((translated_queries or {}).items())
+        for target_language, _ in translated_items:
+            if target_language not in evidence_languages:
+                raise ValueError(f"Unsupported evidence language: {target_language}")
+        if translated_items:
+            from concurrent.futures import ThreadPoolExecutor
+
+            def search_translated(item):
+                target_language, translated_query = item
+                return (
+                    f"dense_{target_language}_translated",
+                    dense.search(translated_query, top_k=limit),
+                )
+
+            with ThreadPoolExecutor(max_workers=len(translated_items)) as executor:
+                for channel, results in executor.map(
+                    search_translated,
+                    translated_items,
+                ):
+                    channels[channel] = results
+        return {
+            "channels": channels,
+            "dense_available": bool(dense.is_available()),
+            "bm25_available": bool(bm25.is_available()),
+        }
+
+    def fuse_adaptive_channels(
+        self,
+        results_by_channel: Dict,
+        *,
+        weights: Dict[str, float],
+        top_k: Optional[int] = None,
+    ) -> List:
+        """Fuse adaptive rankings using weighted RRF and stable chunk IDs."""
+        from retrieval.fusion import weighted_reciprocal_rank_fusion
+
+        return weighted_reciprocal_rank_fusion(
+            results_by_channel,
+            weights,
+            k=self._retrieval_config.get("rrf_k", 60),
+            top_k=top_k or self._retrieval_config.get("top_k", 5),
+        )
+
+    @staticmethod
+    def render_adaptive_results(results: List) -> List[Dict]:
+        """Render fused hits while retaining RRF and strongest channel score."""
+        rendered = []
+        for result in results:
+            channel_details = result.trace.get("channels", {})
+            raw_scores = [
+                float(details.get("raw_score", 0.0))
+                for details in channel_details.values()
+            ]
+            payload = result.chunk.to_result_dict(
+                max(raw_scores, default=0.0),
+                "adaptive_weighted_rrf",
+            )
+            payload["adaptive_rrf_score"] = float(result.score)
+            payload["retrieval_trace"] = dict(result.trace)
+            rendered.append(payload)
+        return rendered
+
+    def evaluate_adaptive_evidence(
+        self,
+        query_variants: List[str],
+        fused_results: List,
+    ) -> Dict:
+        """Use the strongest valid query-to-evidence assessment across variants."""
+        from trust import assess_evidence_sufficiency
+
+        rendered = self.render_adaptive_results(fused_results)
+        assessments = []
+        for query_variant in query_variants:
+            assessment = assess_evidence_sufficiency(
+                query_variant,
+                rendered,
+                retrieval_top_k=self._retrieval_config.get("top_k", 5),
+                retrieval_mode="adaptive_weighted_rrf",
+                query_relevance_threshold=self._retrieval_config.get(
+                    "query_relevance_threshold", 0.5
+                ),
+                query_entity_coverage_threshold=self._retrieval_config.get(
+                    "query_entity_coverage_threshold", 1.0
+                ),
+            )
+            assessments.append((assessment.score, assessment, query_variant))
+
+        if not assessments:
+            return {
+                "sufficient": False,
+                "score": 0.0,
+                "query_term_coverage": 0.0,
+                "reasons": ["no_query_variants"],
+            }
+        _, best, assessment_query = max(assessments, key=lambda item: item[0])
+        adaptive_reasons = list(best.reasons)
+        if best.score <= 0.4:
+            adaptive_reasons.append("adaptive_score_below_threshold")
+        if best.query_term_coverage <= 0.6:
+            adaptive_reasons.append("adaptive_coverage_below_threshold")
+        adaptive_sufficient = bool(
+            best.sufficient
+            and best.score > 0.4
+            and best.query_term_coverage > 0.6
+        )
+        return {
+            "sufficient": adaptive_sufficient,
+            "score": round(best.score, 3),
+            "query_relevance": best.query_relevance,
+            "query_term_coverage": best.query_term_coverage,
+            "query_entity_coverage": best.query_entity_coverage,
+            "requested_slot_coverage": best.requested_slot_coverage,
+            "retrieval_confidence": best.retrieval_confidence,
+            "reasons": sorted(set(adaptive_reasons)),
+            "missing_terms": list(best.missing_terms),
+            "missing_entities": dict(best.missing_entities),
+            "assessment_query": assessment_query,
+        }
 
     def _retrieve(self, query: str) -> Tuple[List[Dict], str]:
         """
@@ -2004,6 +2169,8 @@ class EnhancedRAGModule:
 
         # Retriever and semantic index are rebuilt lazily only when needed.
         self._retriever = None
+        self._adaptive_dense_retriever = None
+        self._adaptive_bm25_retriever = None
 
         if getattr(self.document_library, 'semantic_engine', None) and self.document_library._use_semantic:
             try:
@@ -2022,6 +2189,8 @@ class EnhancedRAGModule:
 
         # BM25/dense/hybrid retriever is rebuilt lazily on next query.
         self._retriever = None
+        self._adaptive_dense_retriever = None
+        self._adaptive_bm25_retriever = None
 
         # Keep semantic index synchronized with updated active sections.
         if getattr(self.document_library, 'semantic_engine', None) and self.document_library._use_semantic:
@@ -2057,6 +2226,9 @@ class EnhancedRAGModule:
         use_llm: bool = True,
         correlation_id: str = None,
         allow_external: bool = True,
+        retrieved_results: Optional[List[Dict]] = None,
+        retrieval_mode_override: Optional[str] = None,
+        evidence_query: Optional[str] = None,
     ) -> Dict:
         """
         Search documents and generate contextualized response
@@ -2081,7 +2253,11 @@ class EnhancedRAGModule:
 
         # Search in document library (keyword baseline or advanced retrieval)
         _t_retrieval_start = time.perf_counter()
-        results, search_mode = self._retrieve(query)
+        if retrieved_results is None:
+            results, search_mode = self._retrieve(query)
+        else:
+            results = list(retrieved_results)
+            search_mode = retrieval_mode_override or "adaptive_weighted_rrf"
         retrieval_ms = (time.perf_counter() - _t_retrieval_start) * 1000.0
 
         evidence_assessment = None
@@ -2094,7 +2270,7 @@ class EnhancedRAGModule:
                 from trust import assess_evidence_sufficiency
 
                 evidence_assessment = assess_evidence_sufficiency(
-                    query,
+                    evidence_query or query,
                     results,
                     retrieval_top_k=self._retrieval_config.get("top_k", 5),
                     retrieval_mode=search_mode,

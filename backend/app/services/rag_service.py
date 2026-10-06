@@ -11,14 +11,46 @@ TODO (Sprint 2): Add streaming support when conversation/cache layer is refactor
 import hashlib
 import json
 import os
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 from app.config.logging_config import get_logger
 from app.config.settings import settings
 from app.domain.exceptions import RAGError
+from app.api.models import EVIDENCE_LANGUAGES
+from app.services.triage_service import TriageService
+from procedural.language import ProcedureLanguageRouter
+from retrieval.base import RetrievalResult
+from retrieval.fusion import weighted_reciprocal_rank_fusion
 
 logger = get_logger(__name__)
+
+
+ADAPTIVE_CHANNEL_WEIGHTS = {
+    "dense_original": 1.0,
+    "bm25_original": 0.8,
+    "dense_ru_translated": 0.9,
+    "dense_es_translated": 0.6,
+    "dense_en_translated": 0.6,
+}
+
+
+def weighted_rrf(
+    results_by_channel: Mapping[str, List[RetrievalResult]],
+    weights: Mapping[str, float] = ADAPTIVE_CHANNEL_WEIGHTS,
+    *,
+    k: int = 60,
+    top_k: Optional[int] = None,
+) -> List[RetrievalResult]:
+    """Compatibility wrapper around the retrieval-layer weighted RRF."""
+    return weighted_reciprocal_rank_fusion(
+        results_by_channel,
+        weights,
+        k=k,
+        top_k=top_k,
+    )
 
 
 def _sha256(value: str) -> str:
@@ -96,6 +128,8 @@ class RAGService:
         *,
         project_root: Optional[Path] = None,
         use_llm: bool = True,
+        translator=None,
+        triage_service: Optional[TriageService] = None,
     ):
         """Initialize with an EnhancedRAGModule instance.
         
@@ -120,7 +154,176 @@ class RAGService:
                 context={"reason": "rag_module is None"}
             )
         self.rag_module = rag_module
+        self.translator = translator
+        self.triage_service = triage_service or TriageService()
+        self.language_router = ProcedureLanguageRouter()
         logger.info("rag_service_initialized", module_type=type(rag_module).__name__)
+
+    def _translate_adaptive_query(
+        self,
+        query: str,
+        *,
+        source_language: str,
+        target_language: str,
+        expected_procedure_type: str,
+        correlation_id: Optional[str],
+    ) -> Optional[str]:
+        translated, _ = self.language_router.translate_checked(
+            query,
+            source_language=source_language,
+            target_language=target_language,
+            translator=self.translator,
+        )
+        if translated is None:
+            logger.warning(
+                "adaptive_query_translation_rejected",
+                source_language=source_language,
+                target_language=target_language,
+                correlation_id=correlation_id,
+                query_sha256=_sha256(query),
+                reason="unavailable_or_critical_information_changed",
+            )
+            return None
+
+        translated_triage = self.triage_service.classify_procedure_type(
+            translated,
+            target_language,
+        )
+        if translated_triage["procedure_type"] != expected_procedure_type:
+            logger.warning(
+                "adaptive_query_translation_rejected",
+                source_language=source_language,
+                target_language=target_language,
+                correlation_id=correlation_id,
+                query_sha256=_sha256(query),
+                translated_query_sha256=_sha256(translated),
+                reason="procedure_intent_changed",
+            )
+            return None
+        return translated
+
+    def _adaptive_snapshot(
+        self,
+        channels: Dict[str, List[RetrievalResult]],
+        query_variants: List[str],
+    ) -> tuple[List[RetrievalResult], Dict, List[Dict]]:
+        fused = self.rag_module.fuse_adaptive_channels(
+            channels,
+            weights=ADAPTIVE_CHANNEL_WEIGHTS,
+            top_k=settings.retrieval_top_k,
+        )
+        assessment = self.rag_module.evaluate_adaptive_evidence(
+            query_variants,
+            fused,
+        )
+        rendered = self.rag_module.render_adaptive_results(fused)
+        return fused, assessment, rendered
+
+    def retrieve_evidence_adaptive(
+        self,
+        query: str,
+        language: str,
+        *,
+        correlation_id: Optional[str] = None,
+    ) -> Dict:
+        """Run evidence-driven multilingual fallback with at most three translations."""
+        started = time.perf_counter()
+        triage = self.triage_service.classify_procedure_type(query, language)
+        channels: Dict[str, List[RetrievalResult]] = {}
+        query_variants = [query]
+        translations: Dict[str, str] = {}
+        translation_failures: List[str] = []
+
+        level_one = self.rag_module.retrieve_adaptive_channels(query, language)
+        channels.update(level_one["channels"])
+        _, assessment, rendered = self._adaptive_snapshot(channels, query_variants)
+        completed_level = 1
+
+        if not assessment.get("sufficient", False):
+            primary = triage["primary_target"]
+            if primary != language:
+                translated = self._translate_adaptive_query(
+                    query,
+                    source_language=language,
+                    target_language=primary,
+                    expected_procedure_type=triage["procedure_type"],
+                    correlation_id=correlation_id,
+                )
+                if translated is not None:
+                    translations[primary] = translated
+                    query_variants.append(translated)
+                    level_two = self.rag_module.retrieve_adaptive_channels(
+                        query,
+                        language,
+                        translated_queries={primary: translated},
+                    )
+                    channels.update(level_two["channels"])
+                    _, assessment, rendered = self._adaptive_snapshot(
+                        channels,
+                        query_variants,
+                    )
+                else:
+                    translation_failures.append(primary)
+            completed_level = 2
+
+        if not assessment.get("sufficient", False):
+            remaining_targets = [
+                target
+                for target in EVIDENCE_LANGUAGES
+                if target != language and target not in translations
+            ]
+
+            def translate_target(target_language: str):
+                return target_language, self._translate_adaptive_query(
+                    query,
+                    source_language=language,
+                    target_language=target_language,
+                    expected_procedure_type=triage["procedure_type"],
+                    correlation_id=correlation_id,
+                )
+
+            if remaining_targets:
+                with ThreadPoolExecutor(max_workers=len(remaining_targets)) as executor:
+                    for target, translated in executor.map(
+                        translate_target,
+                        remaining_targets,
+                    ):
+                        if translated is None:
+                            translation_failures.append(target)
+                        else:
+                            translations[target] = translated
+                            query_variants.append(translated)
+                if translations:
+                    level_three = self.rag_module.retrieve_adaptive_channels(
+                        query,
+                        language,
+                        translated_queries=translations,
+                    )
+                    channels.update(level_three["channels"])
+                    _, assessment, rendered = self._adaptive_snapshot(
+                        channels,
+                        query_variants,
+                    )
+            completed_level = 3
+
+        sufficient = bool(assessment.get("sufficient", False))
+        abstention_reason = None if sufficient else "insufficient_multilingual_evidence"
+        return {
+            "results": rendered,
+            "search_mode": "adaptive_weighted_rrf",
+            "evidence_assessment": assessment,
+            "adaptive_retrieval": {
+                "completed_level": completed_level if sufficient else 4,
+                "channels": list(channels),
+                "triage": triage,
+                "translated_targets": list(translations),
+                "translation_failures": sorted(set(translation_failures)),
+                "dense_available": level_one.get("dense_available", False),
+                "bm25_available": level_one.get("bm25_available", False),
+                "abstention_reason": abstention_reason,
+                "latency_ms": round((time.perf_counter() - started) * 1000.0, 1),
+            },
+        }
     
     def search(
         self,
@@ -154,13 +357,57 @@ class RAGService:
                 **query_metadata,
             )
             
-            result = self.rag_module.search_and_generate(
-                query=query,
-                context_type=context_type,
-                language=language,
-                session_id=session_id,
-                correlation_id=correlation_id,
+            adaptive = None
+            if hasattr(self.rag_module, "retrieve_adaptive_channels"):
+                try:
+                    adaptive = self.retrieve_evidence_adaptive(
+                        query,
+                        language,
+                        correlation_id=correlation_id,
+                    )
+                except Exception as adaptive_error:
+                    logger.warning(
+                        "adaptive_retrieval_fallback",
+                        reason="adaptive_error",
+                        error_type=type(adaptive_error).__name__,
+                        **query_metadata,
+                    )
+
+            adaptive_metadata = (adaptive or {}).get("adaptive_retrieval", {})
+            use_adaptive = bool(
+                adaptive
+                and adaptive.get("results")
+                and adaptive_metadata.get("dense_available")
             )
+            if use_adaptive:
+                result = self.rag_module.search_and_generate(
+                    query=query,
+                    context_type=context_type,
+                    language=language,
+                    session_id=session_id,
+                    correlation_id=correlation_id,
+                    retrieved_results=adaptive["results"],
+                    retrieval_mode_override="adaptive_weighted_rrf",
+                    evidence_query=adaptive.get("evidence_assessment", {}).get(
+                        "assessment_query"
+                    ),
+                    allow_external=False,
+                )
+                result["adaptive_retrieval"] = adaptive_metadata
+            else:
+                result = self.rag_module.search_and_generate(
+                    query=query,
+                    context_type=context_type,
+                    language=language,
+                    session_id=session_id,
+                    correlation_id=correlation_id,
+                )
+                if adaptive is not None:
+                    result["adaptive_retrieval"] = {
+                        **adaptive_metadata,
+                        "legacy_fallback": True,
+                        "legacy_fallback_reason": "dense_unavailable_or_empty",
+                    }
             
             response = result.get("response")
             success_metadata = {
