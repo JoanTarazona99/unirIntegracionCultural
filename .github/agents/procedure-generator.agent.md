@@ -23,7 +23,8 @@ Work only in:
 - Preserve source URL, title, chunk ID, source version, and evidence confidence for every step.
 - Generate presentation in the original supported query language without changing factual values.
 - Abstain when translation loses numbers, URLs, institutional identifiers, deadlines, or other critical evidence.
-- Use `backend/llm_module.py` only to rephrase already extracted claims when Ollama is available.
+- Deterministic generation and tests must not require Ollama.
+- Use `backend/llm_module.py` to rephrase already extracted claims with local Ollama only when the task explicitly authorizes it and the workflow does not require execution without connections.
 - Fall back deterministically when LLM output is unavailable or invalid.
 
 ## Constraints
@@ -35,4 +36,4 @@ Work only in:
 
 ## Validation
 
-Test claim extraction, ordering, multilingual rendering, provenance, malformed LLM output, and abstention with insufficient chunks. Make no network calls.
+Test claim extraction, ordering, multilingual rendering, provenance, malformed LLM output, and abstention with insufficient chunks without requiring Ollama. Do not enable external network access. Do not call Ollama or any other inference service unless explicitly authorized by the task and compatible with the workflow's connection requirements.

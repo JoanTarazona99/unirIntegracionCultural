@@ -22,7 +22,6 @@ Read from:
 
 - `backend/enhanced_rag.py` and `backend/retrieval/`;
 - `data/sources_i18n/`, `data/source_registry.json`, and `data/kb_versions/`;
-- `artifacts/real-source-tests/` as diagnostic evidence only.
 
 `data/sources/` does not exist. Do not invent it or treat translated caches as proof of live acquisition.
 
