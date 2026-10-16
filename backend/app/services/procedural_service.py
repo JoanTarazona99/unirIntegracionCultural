@@ -2,23 +2,63 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+import json
+import os
+from pathlib import Path
+import threading
 from typing import Dict, Iterable, Optional
 
-from app.api.models import ProceduralRecommendation, ProceduralRequest
+from pydantic import ValidationError as PydanticValidationError
+
+from app.api.models import (
+    ProceduralFeedback,
+    ProceduralFeedbackGroupSummary,
+    ProceduralFeedbackStored,
+    ProceduralFeedbackSummary,
+    ProceduralMetricStats,
+    ProceduralRecommendation,
+    ProceduralRequest,
+)
 from app.config.logging_config import get_logger
+from app.domain.exceptions import AppError
+from atomic_json import atomic_write_json
 from procedural import ProcedureClassifier, ProcedureEvaluator, ProcedureGenerator
 from procedural.language import ProcedureLanguageRouter
 
 logger = get_logger(__name__)
 
+_DEFAULT_FEEDBACK_DIR = (
+    Path(__file__).resolve().parents[3] / "data" / "procedural" / "feedback"
+)
+_FEEDBACK_WRITE_LOCK = threading.Lock()
+
+
+class DuplicateFeedbackError(AppError):
+    """Raised when feedback for a correlation_id has already been recorded."""
+
+    def __init__(self, correlation_id: str):
+        super().__init__(
+            message="Feedback already exists for this correlation_id",
+            error_code="DUPLICATE_FEEDBACK",
+            context={"correlation_id": correlation_id},
+        )
+
 
 class ProceduralService:
     """Orchestrate profile resolution, retrieval, generation, and fail-closed checks."""
 
-    def __init__(self, rag_service, profile_service, translator=None):
+    def __init__(
+        self,
+        rag_service,
+        profile_service,
+        translator=None,
+        feedback_dir: Optional[Path] = None,
+    ):
         self.rag_service = rag_service
         self.profile_service = profile_service
         self.translator = translator
+        self.feedback_dir = Path(feedback_dir) if feedback_dir else _DEFAULT_FEEDBACK_DIR
         self.classifier = ProcedureClassifier()
         self.generator = ProcedureGenerator()
         self.evaluator = ProcedureEvaluator()
@@ -344,3 +384,158 @@ class ProceduralService:
             step_count=len(recommendation.steps),
         )
         return recommendation
+
+    def save_feedback(self, feedback: ProceduralFeedback) -> ProceduralFeedbackStored:
+        """Persist one procedural feedback item atomically, rejecting duplicates.
+
+        Concurrency guarantee:
+        1. An in-process ``threading.Lock`` serializes concurrent worker threads.
+        2. An exclusive lockfile (``os.open(..., O_CREAT | O_EXCL)``) guards the
+           reservation window across OS processes on the same local filesystem
+           while ``atomic_write_json`` stages and publishes ``target_path``.
+        """
+        timestamp_utc = datetime.now(timezone.utc).isoformat()
+        target_path = self.feedback_dir / f"feedback_{feedback.correlation_id}.json"
+        lock_path = self.feedback_dir / f".feedback_{feedback.correlation_id}.lock"
+        payload = feedback.model_dump(mode="json")
+        payload["timestamp_utc"] = timestamp_utc
+
+        with _FEEDBACK_WRITE_LOCK:
+            self.feedback_dir.mkdir(parents=True, exist_ok=True)
+            if target_path.exists():
+                logger.warning(
+                    "procedural_feedback_duplicate_rejected",
+                    correlation_id=feedback.correlation_id,
+                )
+                raise DuplicateFeedbackError(feedback.correlation_id)
+
+            lock_fd = None
+            try:
+                lock_fd = os.open(
+                    str(lock_path),
+                    os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+                )
+            except FileExistsError as error:
+                logger.warning(
+                    "procedural_feedback_duplicate_rejected",
+                    correlation_id=feedback.correlation_id,
+                )
+                raise DuplicateFeedbackError(feedback.correlation_id) from error
+
+            try:
+                if target_path.exists():
+                    logger.warning(
+                        "procedural_feedback_duplicate_rejected",
+                        correlation_id=feedback.correlation_id,
+                    )
+                    raise DuplicateFeedbackError(feedback.correlation_id)
+                atomic_write_json(target_path, payload)
+            finally:
+                if lock_fd is not None:
+                    try:
+                        os.close(lock_fd)
+                    except OSError:
+                        pass
+                try:
+                    lock_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+
+        logger.info(
+            "procedural_feedback_saved",
+            correlation_id=feedback.correlation_id,
+            procedure_type=feedback.procedure_type,
+            language=feedback.language,
+        )
+        return ProceduralFeedbackStored(**payload)
+
+    @staticmethod
+    def _compute_metric_averages(records: list[dict]) -> ProceduralMetricStats:
+        if not records:
+            return ProceduralMetricStats(
+                precision=0.0,
+                completeness=0.0,
+                usefulness=0.0,
+                clarity=0.0,
+            )
+        count = len(records)
+        return ProceduralMetricStats(
+            precision=round(
+                sum(float(item["precision_score"]) for item in records) / count, 3
+            ),
+            completeness=round(
+                sum(float(item["completeness_score"]) for item in records) / count, 3
+            ),
+            usefulness=round(
+                sum(float(item["usefulness_score"]) for item in records) / count, 3
+            ),
+            clarity=round(
+                sum(float(item["clarity_score"]) for item in records) / count, 3
+            ),
+        )
+
+    def get_feedback_summary(self) -> ProceduralFeedbackSummary:
+        """Load stored feedback files and compute aggregate and grouped averages."""
+        records: list[dict] = []
+        invalid_files_skipped = 0
+        if self.feedback_dir.exists():
+            for path in sorted(self.feedback_dir.glob("feedback_*.json")):
+                if not path.is_file():
+                    continue
+                try:
+                    raw_text = path.read_text(encoding="utf-8")
+                except OSError as error:
+                    logger.error(
+                        "procedural_feedback_io_read_failed",
+                        filename=path.name,
+                        error_type=type(error).__name__,
+                    )
+                    raise
+
+                try:
+                    raw = json.loads(raw_text)
+                    if not isinstance(raw, dict):
+                        raise ValueError("Feedback JSON root must be an object")
+                    validated = ProceduralFeedbackStored.model_validate(raw)
+                    if path.name != f"feedback_{validated.correlation_id}.json":
+                        raise ValueError("Feedback filename does not match correlation_id")
+                    records.append(validated.model_dump(mode="json"))
+                except (
+                    json.JSONDecodeError,
+                    PydanticValidationError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                ) as error:
+                    invalid_files_skipped += 1
+                    logger.warning(
+                        "procedural_feedback_file_skipped",
+                        filename=path.name,
+                        reason=type(error).__name__,
+                    )
+
+        by_procedure: Dict[str, list[dict]] = {}
+        by_language: Dict[str, list[dict]] = {}
+        for item in records:
+            by_procedure.setdefault(item["procedure_type"], []).append(item)
+            by_language.setdefault(item["language"], []).append(item)
+
+        return ProceduralFeedbackSummary(
+            total_feedbacks=len(records),
+            invalid_files_skipped=invalid_files_skipped,
+            averages=self._compute_metric_averages(records),
+            by_procedure_type={
+                proc_type: ProceduralFeedbackGroupSummary(
+                    count=len(group),
+                    averages=self._compute_metric_averages(group),
+                )
+                for proc_type, group in sorted(by_procedure.items())
+            },
+            by_language={
+                lang: ProceduralFeedbackGroupSummary(
+                    count=len(group),
+                    averages=self._compute_metric_averages(group),
+                )
+                for lang, group in sorted(by_language.items())
+            },
+        )

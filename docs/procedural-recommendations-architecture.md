@@ -116,8 +116,10 @@ La lista proporcionada y `backend/llm_module.py` contienen **13 códigos, no 14*
 | `RAGService.retrieve_evidence_adaptive()` | Orquestación de niveles, traducciones, fusión y abstención. |
 | `procedural.generator.ProcedureGenerator` | Extracción de listas, documentos, plazos y organismos; trazabilidad campo-a-chunk. |
 | `procedural.evaluator.ProcedureEvaluator` | Completitud, evidencia, citas, cobertura de slots y decisión fail-closed. |
-| `ProceduralService` | Resolución de perfil y orquestación del caso de uso. |
+| `ProceduralService` | Resolución de perfil, orquestación del caso de uso y persistencia/agregación de feedback. |
 | `POST /api/procedural` | Contrato HTTP con rate limiting y correlation ID generado por el servidor. |
+| `POST /api/procedural/feedback` | Registro atómico de calificaciones (0-5) asociadas a `correlation_id`. |
+| `GET /api/procedural/feedback/summary` | Agregación de métricas promedio globales y desglose por trámite e idioma. |
 
 ## Esquema de datos
 
@@ -257,6 +259,22 @@ El primer probe, que incluyó construcción del índice adaptativo, tardó 2.113
 - calibración de confianza y tasa de abstención correcta.
 
 No se han ejecutado evaluaciones humanas y no se afirma utilidad medida. B3 y el conjunto exploratorio de 114 consultas no se modifican ni se reutilizan como benchmark procedural.
+
+## User Feedback Collection
+
+El sistema incorpora infraestructura de recolección y agregación de feedback procedimental para registrar valoraciones sobre respuestas identificadas por un `correlation_id`:
+
+- **`POST /api/procedural/feedback`**: recibe un payload (`ProceduralFeedback`) con puntuaciones enteras estrictas (`StrictInt`, de `0` a `5`, rechazando booleanos y conversiones implícitas) en cuatro dimensiones (`precision_score`, `completeness_score`, `usefulness_score`, `clarity_score`), metadatos enviados por el cliente (`procedure_type`, `language`, `correlation_id` con caracteres ASCII `[A-Za-z0-9_-]{1,128}`) y campos opcionales (`comments` hasta 2000 caracteres, `user_id` hasta 128 caracteres).
+- **Política de duplicados y concurrencia (1 feedback por `correlation_id`)**: esta versión admite únicamente un registro de feedback por cada `correlation_id` (no es un sistema de evaluación multiusuario por respuesta). Si ya existe `feedback_{correlation_id}.json`, un nuevo `POST` con el mismo `correlation_id` se rechaza con **HTTP 409 Conflict** sin sobrescribir el archivo existente. La reserva y publicación combinan un `threading.Lock` en el proceso con un archivo de bloqueo exclusivo (`os.open(..., O_CREAT | O_EXCL)`) y escritura atómica (`atomic_write_json`), evitando condiciones de carrera entre hilos del mismo proceso y entre procesos locales sobre el mismo sistema de archivos, pero sin coordinación distribuida entre múltiples hosts.
+- **Almacenamiento atómico y privacidad local**: cada registro se guarda en `data/procedural/feedback/feedback_{correlation_id}.json` incluyendo `timestamp_utc` en formato ISO-8601 UTC. El directorio `data/procedural/feedback/` está excluido de Git mediante `.gitignore`; no obstante, dicha exclusión solo evita su seguimiento en control de versiones y **no implica cifrado en reposo ni anonimización** de `comments` o `user_id` en el disco local. La respuesta pública de `POST /api/procedural/feedback` no expone rutas del sistema de archivos (`path`).
+- **`GET /api/procedural/feedback/summary`**: recorre los archivos `feedback_*.json`, valida su esquema estricto (`ProceduralFeedbackStored`) y devuelve `total_feedbacks`, `invalid_files_skipped` (archivos con JSON malformado o esquema incompatible ignorados sin ocultar fallos reales de lectura/I/O), los promedios globales de las cuatro métricas y el desglose por `procedure_type` y `language` (sin exponer `comments`, `user_id` ni `correlation_id`).
+
+### Limitaciones de vinculación, acceso y alcance metodológico
+
+- **Sin vinculación server-side ni autenticación**: el servidor no persiste un almacén de recomendaciones emitidas por `POST /api/procedural`. En consecuencia, `POST /api/procedural/feedback` únicamente valida el formato de `correlation_id` (`[A-Za-z0-9_-]{1,128}`) y acepta `procedure_type` y `language` tal como los declara el cliente. Ambos endpoints cuentan solo con limitación de tasa por IP (`check_rate_limit`), sin autenticación de usuarios; por ello, el feedback almacenado constituye **feedback autodeclarado por el cliente**, nunca feedback verificado criptográfica o institucionalmente.
+- **Naturaleza subjetiva de las puntuaciones**: las dimensiones registradas (`precision_score`, `completeness_score`, `usefulness_score`, `clarity_score`) representan **valoraciones subjetivas autodeclaradas**. En particular, una puntuación alta en `precision_score` refleja la percepción de quien envía el formulario y **no verifica por sí misma la exactitud factual o vigencia jurídica** del procedimiento.
+- **Estado actual (solo infraestructura, 0 evaluaciones realizadas)**: la presencia de este módulo implementa únicamente la capacidad técnica de captura y agregación. **Todavía no se ha realizado autoevaluación del desarrollador ni evaluación con estudiantes**. Asimismo, el número de archivos o registros (`total_feedbacks`) mide envíos recibidos y **no permite deducir el número de participantes humanos distintos** (un mismo usuario puede registrar múltiples `correlation_id` con o sin `user_id`).
+- **Trabajo futuro posible**: si en una etapa posterior se diseñara una evaluación humana formal (por ejemplo, con un grupo de entre 10 y 15 estudiantes internacionales bajo un protocolo controlado), sería necesario incorporar gestión de sesiones de evaluación/identidad de evaluadores, vinculación persistente entre recomendación generada y feedback, o soporte multi-evaluador por consulta antes de extraer conclusiones empíricas.
 
 ## Limitaciones
 

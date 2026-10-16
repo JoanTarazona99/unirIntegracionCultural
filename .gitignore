@@ -110,6 +110,7 @@ redis_dump.rdb
 *.ogg
 data/tts_cache/
 data/audio/
+data/procedural/feedback/
 data/kb_scheduler.leader.lock
 
 # Backup files

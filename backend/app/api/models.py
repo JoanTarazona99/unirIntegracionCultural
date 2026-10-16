@@ -4,7 +4,8 @@ Pydantic models for KubGU Assistant API.
 Contains request/response schemas used across all endpoints.
 """
 
-from pydantic import BaseModel, Field, field_validator
+import re
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 from typing import Dict, List, Literal, Optional
 
 
@@ -295,6 +296,98 @@ class ProcedureTestCase(BaseModel):
     query: str
     profile_context: Dict = Field(default_factory=dict)
     expected_status: ProcedureStatus
+
+
+_CORRELATION_ID_ASCII_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+
+
+class ProceduralFeedback(BaseModel):
+    """Client-submitted feedback for a procedural recommendation."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    correlation_id: str
+    procedure_type: ProcedureType
+    language: LanguageCode
+    precision_score: StrictInt = Field(ge=0, le=5)
+    completeness_score: StrictInt = Field(ge=0, le=5)
+    usefulness_score: StrictInt = Field(ge=0, le=5)
+    clarity_score: StrictInt = Field(ge=0, le=5)
+    comments: str | None = None
+    user_id: str | None = None
+
+    @field_validator("correlation_id")
+    @classmethod
+    def validate_correlation_id(cls, value: str) -> str:
+        cleaned = _validate_non_empty_text(value, max_length=128)
+        if not _CORRELATION_ID_ASCII_RE.fullmatch(cleaned):
+            raise ValueError(
+                "correlation_id must contain only ASCII letters, digits, hyphens, or underscores (A-Za-z0-9_-)"
+            )
+        return cleaned
+
+    @field_validator("comments")
+    @classmethod
+    def validate_comments(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        stripped = value.strip()
+        if not stripped:
+            return None
+        return _validate_non_empty_text(stripped, max_length=2000)
+
+    @field_validator("user_id")
+    @classmethod
+    def validate_user_id(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        stripped = value.strip()
+        if not stripped:
+            return None
+        return _validate_non_empty_text(stripped, max_length=128)
+
+
+class ProceduralMetricStats(BaseModel):
+    """Average scores across the four procedural evaluation dimensions."""
+
+    precision: float = Field(ge=0.0, le=5.0)
+    completeness: float = Field(ge=0.0, le=5.0)
+    usefulness: float = Field(ge=0.0, le=5.0)
+    clarity: float = Field(ge=0.0, le=5.0)
+
+
+class ProceduralFeedbackGroupSummary(BaseModel):
+    """Feedback count and averages for a specific procedure_type or language."""
+
+    count: int = Field(ge=0)
+    averages: ProceduralMetricStats
+
+
+class ProceduralFeedbackStored(ProceduralFeedback):
+    """Persisted procedural feedback record with server-assigned UTC timestamp."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    timestamp_utc: str
+
+    @field_validator("timestamp_utc")
+    @classmethod
+    def validate_timestamp_utc(cls, value: str) -> str:
+        return _validate_non_empty_text(value, max_length=64)
+
+
+class ProceduralFeedbackSummary(BaseModel):
+    """Aggregated summary of stored procedural feedback records."""
+
+    total_feedbacks: int = Field(ge=0)
+    invalid_files_skipped: int = Field(default=0, ge=0)
+    averages: ProceduralMetricStats
+    by_procedure_type: Dict[str, ProceduralFeedbackGroupSummary] = Field(
+        default_factory=dict
+    )
+    by_language: Dict[str, ProceduralFeedbackGroupSummary] = Field(
+        default_factory=dict
+    )
 
 
 # ==================== AUDIO SERVICE MODELS ====================
