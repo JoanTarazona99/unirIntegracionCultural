@@ -17,13 +17,20 @@ from collections import Counter, deque
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple
 from urllib.parse import urlsplit
 
 import pytest
-import requests
 
-from kb_refresh import FetchResult
+if TYPE_CHECKING:
+    from kb_refresh import FetchResult
+
+try:
+    import requests
+except ModuleNotFoundError as exc:
+    if exc.name != "requests":
+        raise
+    requests = None
 
 
 _ORIGINAL_SOCKET_CONNECT = socket.socket.connect
@@ -394,7 +401,9 @@ class ScriptedResponse:
     location: Optional[str] = None
     exception: Optional[BaseException] = None
 
-    def build(self, url: str) -> FetchResult:
+    def build(self, url: str) -> "FetchResult":
+        from kb_refresh import FetchResult
+
         if self.exception is not None:
             raise self.exception
         headers = dict(self.headers)
@@ -429,7 +438,7 @@ class ScriptedFetcher:
         self.requests = []
         self.count_by_url = Counter()
 
-    def __call__(self, url: str) -> FetchResult:
+    def __call__(self, url: str) -> "FetchResult":
         self.request_count += 1
         self.requests.append(url)
         self.count_by_url[url] += 1
@@ -485,7 +494,7 @@ def block_external_network(monkeypatch, request):
         monkeypatch.setattr(socket.socket, "connect", blocked)
         monkeypatch.setattr(socket, "create_connection", blocked)
     monkeypatch.setattr(urllib.request, "urlopen", blocked)
-    if not production_transport:
+    if not production_transport and requests is not None:
         monkeypatch.setattr(requests.sessions.Session, "request", blocked)
         monkeypatch.setattr(requests.api, "request", blocked)
     return audit
