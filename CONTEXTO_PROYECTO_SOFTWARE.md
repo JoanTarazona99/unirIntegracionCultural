@@ -5,7 +5,9 @@
 **Fecha de corte:** 2026-09-23  
 **Ventana de cambios:** 2026-08-26 a 2026-09-23  
 **Actualización de implementación:** 2026-09-27, rama `feature/procedural-recommendations`  
-**Fuentes de evidencia:** código, tests, historial Git, documentación versionada, resultados de evaluación y `C:\xampp\htdocs\proyectos\unirIntegracionCultural\курсовая_090403_Тарасона.docx`.
+**Actualización documental:** 2026-10-17, corte en el commit `7a90d80` de `main` (2026-10-16). Los cambios procedimentales desarrollados en `feature/procedural-recommendations` están integrados en `main` mediante `a6e7a22` y `1dcd551`; ver §7.0.\
+**Actualización posterior:** 2026-10-18, limitada a la incorporación a CI de la selección procedimental, de feedback y multilingüe en el commit `fc0d15d` y a su validación (§7.0.1, §9.1.1 y §10). El resto del documento conserva el corte `7a90d80`; la auditoría previa no se repitió.\
+**Fuentes de evidencia:** código, tests, historial Git, documentación versionada, resultados de evaluación y `C:\xampp\htdocs\proyectos\unirIntegracionCultural\курсовая_090403_Тарасона.docx`. La actualización del 2026-10-17 se basa en inspección estática del código y del historial al commit de corte, y en el log remoto de una ejecución de GitHub Actions identificada; no se ejecutaron tests locales durante esa actualización.
 
 > El archivo de tesis encontrado no tiene exactamente el nombre indicado en la solicitud (`kursovaia_090403_Tarasona-comments.docx`). El documento disponible es `C:\xampp\htdocs\proyectos\unirIntegracionCultural\курсовая_090403_Тарасона.docx`. Se consultó su contenido de texto sin modificarlo. Las prioridades de los requisitos se marcan como no especificadas porque ni el código ni la tesis definen una escala de prioridad verificable.
 
@@ -35,7 +37,8 @@ El contrato procedural reconoce 13 idiomas: español, inglés, ruso, francés, a
 | `C:\xampp\htdocs\proyectos\unirIntegracionCultural\data` | Base RAG, registro y versiones de fuentes, colas y logs, frases, audio, SQLite y datos de evaluación. |
 | `C:\xampp\htdocs\proyectos\unirIntegracionCultural\artifacts` | Diagnósticos y experimentos de adquisición y retrieval multilingüe. |
 | `C:\xampp\htdocs\proyectos\unirIntegracionCultural\docs` | Informes de evaluación, protocolos, auditoría de tesis y persistencia transaccional. |
-| `C:\xampp\htdocs\proyectos\unirIntegracionCultural\.github` | Agentes especializados y workflow de tests offline. |
+| `C:\xampp\htdocs\proyectos\unirIntegracionCultural\.github` | Agentes especializados, instrucciones de Copilot para todo el repositorio (`copilot-instructions.md`) y workflow de tests offline (dos jobs independientes desde `fc0d15d`; ver §9.1 y §9.1.1). |
+| `C:\xampp\htdocs\proyectos\unirIntegracionCultural\agents.md` | Guía operativa para agentes: localización de configuración y tests, verificación durante cada tarea y alcance declarado del CI. |
 
 ## 2. Procesos Principales
 
@@ -76,6 +79,8 @@ Dentro de `EnhancedRAGModule`:
 3. BM25 usa `rank-bm25`; dense usa `sentence-transformers`; hybrid fusiona rankings mediante Reciprocal Rank Fusion; `hybrid_rerank` añade un cross-encoder.
 4. La expansión léxica multilingüe está implementada en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\retrieval\expansion.py` y se integra en los retrievers dense e híbrido.
 5. `assess_evidence_sufficiency()` del paquete `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\trust` evalúa relevancia, cobertura de términos, entidades y slots antes de permitir generación.
+
+Desde `1dcd551` (integrado en `main`), `RAGService.search()` intenta primero `RAGService.retrieve_evidence_adaptive()` cuando el módulo RAG expone `retrieve_adaptive_channels()`. Solo usa ese resultado si existe y dense está disponible; en caso contrario, o ante una excepción del camino adaptativo, conserva la ruta legacy descrita arriba y registra el motivo del fallback. El diseño del retrieval adaptativo (routing por tipo de trámite mediante `TriageService`, canales dense/BM25 originales y traducidos, weighted RRF y abstención `insufficient_multilingual_evidence`) se documenta en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\docs\procedural-recommendations-architecture.md`. La disponibilidad de dense depende de la configuración y del entorno de modelos; la presencia de este camino no demuestra que se active en una ejecución concreta.
 
 `POST /api/chat` añade caché, rate limiting, memoria de conversación, persistencia opcional y métricas de transparencia. La clave de caché se deriva de consulta e idioma; el TTL utilizado por la ruta es 3600 segundos.
 
@@ -136,6 +141,11 @@ Los IDs siguientes normalizan capacidades verificadas; no son identificadores or
 | RF-021 | Generar recomendaciones procedimentales personalizadas y trazables, solicitar aclaraciones ante datos de perfil insuficientes y abstenerse si faltan documentos, plazos, organismo o evidencia oficial. | No especificada |
 
 Evidencia principal: routers en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\app\api\routes`, modelos en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\app\api\models.py`, tests en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\tests` y descripción funcional de interfaces, voz, retrieval y base oficial en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\курсовая_090403_Тарасона.docx`.
+
+**Notas de actualización al commit `7a90d80`** (no modifican el significado de los requisitos ni crean IDs nuevos):
+
+- **RF-009**: desde `1dcd551`, la obtención de evidencia para consultas procedimentales (y para `RAGService.search()` cuando dense está disponible) usa retrieval multilingüe adaptativo: routing por tipo de trámite en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\app\services\triage_service.py`, canales originales y traducidos y `weighted_reciprocal_rank_fusion()` en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\retrieval\fusion.py`, con orquestación en `RAGService.retrieve_evidence_adaptive()`. Los pesos de canal y los umbrales de suficiencia son hipótesis iniciales sin calibrar sobre escenarios revisados por humanos.
+- **RF-021**: sin cambios de significado. Como **capacidad complementaria**, `c420ee7` añade captura y agregación de feedback sobre recomendaciones procedimentales (`POST /api/procedural/feedback` y `GET /api/procedural/feedback/summary`). Es infraestructura técnica; no forma parte de la generación de recomendaciones ni acredita una evaluación realizada (ver §9.2).
 
 ## 4. Casos de Uso
 
@@ -201,6 +211,7 @@ Evidencia principal: routers en `C:\xampp\htdocs\proyectos\unirIntegracionCultur
 - **Precondiciones**: backend iniciado; consulta válida; perfil persistido o inline cuando el trámite requiere país, visa, nivel académico o vivienda.
 - **Flujo principal**: el actor envía `POST /api/procedural`; el sistema recupera evidencia sin generación ni adquisición externa; clasifica el trámite; solicita aclaraciones si faltan datos; extrae pasos, documentos, plazos y organismo; asocia URL, título, chunk y versión; evalúa completitud y evidencia.
 - **Postcondiciones**: devuelve `complete` con pasos trazables, `needs_clarification` sin acciones o `abstained` sin pasos cuando la evidencia no supera la política fail-closed.
+- **Extensión complementaria (desde `c420ee7`)**: el consumidor API puede enviar una valoración de la recomendación mediante `POST /api/procedural/feedback`, identificándola con el `correlation_id` recibido. El servidor no conserva un registro de recomendaciones emitidas, por lo que no verifica que ese `correlation_id`, `procedure_type` o `language` correspondan a una respuesta real; acepta un único feedback por `correlation_id` y rechaza duplicados con HTTP 409. Una búsqueda textual de `procedural` en `frontend/` y `telegram_bot/`, realizada el 2026-10-17, no encontró coincidencias. Esta comprobación no demuestra por sí sola la ausencia de integración con `/api/procedural` o sus endpoints de feedback: no descarta URLs construidas dinámicamente, mecanismos indirectos ni otros clientes.
 
 ## 5. Componentes del Sistema
 
@@ -216,7 +227,9 @@ Evidencia principal: routers en `C:\xampp\htdocs\proyectos\unirIntegracionCultur
 - **Personalización**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\personalization.py`.
 - **Voz**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\audio_module.py` y router de audio.
 - **Evaluación**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\eval`; métricas Hit, Recall, Precision, MRR y nDCG, desgloses, bootstrap y publicación.
-- **Recomendaciones procedimentales**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\procedural` y `backend\app\services\procedural_service.py`; clasificación, extracción, trazabilidad y evaluación de suficiencia.
+- **Recomendaciones procedimentales**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\procedural` y `backend\app\services\procedural_service.py`; clasificación, extracción, trazabilidad y evaluación de suficiencia. Desde `c420ee7`, `ProceduralService` también persiste y agrega feedback (`save_feedback()`, `get_feedback_summary()`).
+- **Triage y retrieval adaptativo**: `backend\app\services\triage_service.py`, `RAGService.retrieve_evidence_adaptive()` en `backend\app\services\rag_service.py` y `weighted_reciprocal_rank_fusion()` en `backend\retrieval\fusion.py`.
+- **Guía para agentes de desarrollo**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\.github\copilot-instructions.md`, `C:\xampp\htdocs\proyectos\unirIntegracionCultural\agents.md` y `C:\xampp\htdocs\proyectos\unirIntegracionCultural\.github\agents`. No forman parte del runtime.
 
 ### 5.2 Servicios Externos
 
@@ -232,6 +245,7 @@ Evidencia principal: routers en `C:\xampp\htdocs\proyectos\unirIntegracionCultur
 ### 5.3 Bases de Datos
 
 - **JSON versionado**: registro, candidatas, versiones y logs bajo `C:\xampp\htdocs\proyectos\unirIntegracionCultural\data`.
+- **Feedback procedimental**: un archivo JSON por `correlation_id` en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\data\procedural\feedback`, escrito atómicamente y excluido de Git por `.gitignore`. La exclusión no implica cifrado en reposo ni anonimización de `comments` o `user_id`.
 - **SQLite**: URL predeterminada `sqlite:///./data/assistant.db`; archivo presente en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\data\assistant.db`; persistencia desactivada por defecto.
 - **PostgreSQL**: backend opcional mediante SQLAlchemy, `asyncpg` y `psycopg2-binary`.
 - **Redis**: caché distribuida y lock de líder opcionales; fallback a LRU en proceso.
@@ -244,7 +258,7 @@ Evidencia principal: routers en `C:\xampp\htdocs\proyectos\unirIntegracionCultur
 - **Dashboard**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\frontend\dashboard.html`; métricas del sistema y ejecución/consulta de evaluaciones.
 - **Diagnóstico de refresh**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\frontend\refresh_probe.html`.
 - **Telegram**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\telegram_bot\bot.py`.
-- **REST/OpenAPI**: FastAPI expone documentación automática en `/docs` y registra once routers, incluido `POST /api/procedural`.
+- **REST/OpenAPI**: FastAPI expone documentación automática en `/docs` y registra once routers, incluido `POST /api/procedural`. El router procedimental expone además `POST /api/procedural/feedback` y `GET /api/procedural/feedback/summary` desde `c420ee7`.
 
 ## 6. Estructura del Código
 
@@ -264,6 +278,46 @@ Patrones observados:
 Dependencias principales verificadas en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\requirements.txt`: FastAPI, Uvicorn, Pydantic/Pydantic Settings, structlog, NumPy, pandas, SQLAlchemy, SQLite/asyncpg/PostgreSQL, Redis, python-telegram-bot, aiohttp, requests, rank-bm25, sentence-transformers, PyTorch CPU, gTTS, SpeechRecognition, httpx, python-multipart y librerías de traducción. Las dependencias específicas de evaluación neuronal están separadas en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\requirements-neural-eval.txt` y su lock.
 
 ## 7. Avance de Cambios (Últimas 4 Semanas)
+
+### 7.0 Cambios posteriores a la ventana original (2026-10-06 a 2026-10-16, corte `7a90d80`)
+
+Esta subsección se añadió el 2026-10-17. Los commits listados están en `main`; la descripción procede del diff de cada commit y de la inspección estática del código al commit de corte, no solo de sus mensajes.
+
+#### Commit: 7a90d80 - fix(tests): decouple shared fixtures from acquisition dependencies (2026-10-16)
+
+- **Archivos**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\tests\conftest.py` (15 inserciones, 6 eliminaciones).
+- **Funcionalidad**: `requests` pasa a importarse de forma opcional (solo se tolera `ModuleNotFoundError` del propio `requests`); la importación de `FetchResult` desde `kb_refresh` se difiere hasta que las fixtures de adquisición la usan; el bloqueo de red sobre `requests` se mantiene cuando el paquete está disponible. Permite cargar `conftest.py` con las dependencias mínimas de `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\requirements-eval.txt`. Validación remota en §9.1.
+
+#### Commit: c420ee7 - feat(procedural): add feedback collection and aggregation (2026-10-16)
+
+- **Archivos**: `backend\app\api\models.py`, `backend\app\api\routes\procedural.py`, `backend\app\services\procedural_service.py`, `backend\tests\test_procedural_api.py`, `docs\procedural-recommendations-architecture.md` y `.gitignore` (añade `data/procedural/feedback/`).
+- **Funcionalidad**: endpoints de envío y resumen de feedback; puntuaciones enteras estrictas 0-5 en cuatro dimensiones; formato restringido de `correlation_id` y límites de longitud; un registro por `correlation_id` con rechazo HTTP 409 de duplicados mediante lock en proceso, archivo de bloqueo exclusivo y escritura atómica; agregación global y por trámite e idioma que contabiliza por separado archivos inválidos y propaga fallos reales de I/O. Alcance metodológico en §9.2.
+
+#### Commit: b8aafc4 - chore(copilot): add repository-wide development safeguards (2026-10-16)
+
+- **Archivos**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\.github\copilot-instructions.md` (nuevo), `C:\xampp\htdocs\proyectos\unirIntegracionCultural\agents.md` (sustituye la descripción general previa por una guía para agentes) y dos agentes de `.github\agents`.
+- **Funcionalidad**: reglas de preservación del árbol de trabajo, selección explícita de intérprete, separación B3/114, datos protegidos bajo `data/eval`, privacidad, uso opcional de Ollama local y autorización explícita para stage, commit y push. No modifica código de ejecución.
+
+#### Commit: 1dcd551 - feat: Implement adaptive multilingual retrieval with triage-based routing (2026-10-06)
+
+- **Archivos**: `backend\app\services\triage_service.py` (nuevo), `backend\app\services\rag_service.py`, `backend\app\services\procedural_service.py`, `backend\enhanced_rag.py`, `backend\retrieval\fusion.py`, `backend\procedural\classifier.py`, `backend\procedural\language.py`, `backend\tests\test_multilingual_retrieval.py` (nuevo) y documentación de arquitectura.
+- **Funcionalidad**: routing de evidencia por tipo de trámite, canales dense/BM25 originales y dense traducidos, weighted RRF con deduplicación por `chunk_id`, niveles de fallback con umbrales de score y cobertura, rechazo de traducciones que cambian la intención y uso del resultado adaptativo en `RAGService.search()` cuando dense está disponible.
+
+#### Commit: a6e7a22 - Implement procedural recommendations system (2026-10-06)
+
+- **Archivos**: paquete `backend\procedural`, servicio y router procedimentales, modelos, cuatro agentes procedimentales, ejemplos en `data\procedural\examples`, fixtures de casos negativos, tests procedimentales y de configuración, `docs\procedural-recommendations-architecture.md` y la primera versión de este documento.
+- **Funcionalidad**: integra en `main` el módulo procedimental descrito en §9 y desarrollado en `feature/procedural-recommendations`, junto con los cuatro tests antes no versionados mencionados en §9 (`test_configuration.py`, `test_edge_cases.py`, `test_multilingual_universities.py` y `test_performance.py`).
+
+### 7.0.1 Cambio posterior al corte `7a90d80` (commit `fc0d15d`, añadido el 2026-10-18)
+
+Esta subsección registra un único commit posterior al corte. No implica que se haya repetido la inspección del resto del repositorio.
+
+#### Commit: fc0d15d - Add offline procedural-feedback CI job (2026-10-18 00:23 +03:00)
+
+- **Archivos**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\requirements-procedural.txt` (nuevo) y `C:\xampp\htdocs\proyectos\unirIntegracionCultural\.github\workflows\tests.yml` (añade un job; 2 archivos, 54 inserciones y 1 eliminación). La única línea eliminada es la última del job `retrieval-evaluation`, reescrita idéntica con salto de línea final.
+- **Funcionalidad**: nuevo job independiente `procedural-feedback` (sin `needs`), que instala un manifiesto mínimo offline separado y ejecuta siete archivos procedimentales, de feedback y multilingües con cobertura diagnóstica. El job `retrieval-evaluation` no cambia funcionalmente. No modifica código de aplicación, tests ni `conftest.py`. Validación en §9.1.1.
+
+### 7.1 Ventana original (2026-08-26 a 2026-09-23)
 
 El comando `git log --oneline --since="4 weeks ago"` devuelve 28 commits entre el 28 de agosto y el 2 de septiembre de 2026. No hay commits posteriores dentro de la ventana hasta la fecha de corte.
 
@@ -451,6 +505,9 @@ La fecha procede del commit que añadió el archivo o de la fecha declarada dent
 | `C:\xampp\htdocs\proyectos\unirIntegracionCultural\artifacts\real-source-tests\spbu-20260901\README.md` | 2026-09-01 | Prueba controlada de fuente real | Adquisición SPbU exitosa, pero la consulta natural española no seleccionó la fuente; resultado parcial y sin commit. |
 | `C:\xampp\htdocs\proyectos\unirIntegracionCultural\artifacts\real-source-tests\unam-20260901\README.md` | 2026-09-01 | Prueba controlada de fuente real | UNAM/UBA en español: transacciones válidas, pero solo una de seis consultas fue sustantivamente pertinente; identifica falsos positivos de grounding. Artefacto local no versionado. |
 | `C:\xampp\htdocs\proyectos\unirIntegracionCultural\artifacts\real-source-tests\uba-20260901\README.md` | 2026-09-01 | Control alternativo de fuente real | Resumen del control UBA; remite al informe UNAM para interpretación comparada. Artefacto local no versionado. |
+| `C:\xampp\htdocs\proyectos\unirIntegracionCultural\docs\procedural-recommendations-architecture.md` | 2026-10-06; actualizado 2026-10-16 | Arquitectura y limitaciones | Fuera de la ventana original. Diseño procedimental, retrieval multilingüe adaptativo, resultados de un fixture sintético de 65 consultas, probe neuronal warm, feedback y limitaciones metodológicas. |
+| `https://github.com/JoanTarazona99/unirIntegracionCultural/actions/runs/38953797132` | 2026-10-16 | Ejecución de CI (externa al repositorio) | Fuera de la ventana original. Workflow `Offline retrieval evaluation tests` sobre `7a90d80`; ver §9.1. |
+| `https://github.com/JoanTarazona99/unirIntegracionCultural/actions/runs/39070747217` | 2026-10-17 (UTC) | Ejecución de CI (externa al repositorio) | Posterior al corte `7a90d80`. Mismo workflow sobre `fc0d15d`, con los jobs `retrieval-evaluation` y `procedural-feedback`; ver §9.1.1. |
 
 ## 9. Estado Actual
 
@@ -458,25 +515,76 @@ El sistema dispone de API FastAPI modular, web Vue 3, bot Telegram, retrieval co
 
 La evidencia de evaluación más sólida publicada en la ventana es B3, con 36 consultas y cinco métodos. La auditoría de tesis indica que dense obtuvo las mejores métricas globales en B3 y que el bootstrap solo sustenta una mejora de `hybrid_rerank` frente a BM25 en MRR@5 y nDCG@5; no demuestra superioridad frente a dense. El conjunto de 114 consultas es exploratorio, sintético y revisado con asistencia de IA (`official_evaluation_eligible=false`, `human_review_completed=false`).
 
-El diagnóstico del 2 de septiembre muestra una limitación actual: fuentes largas se convierten en chunks monolíticos y el modelo dense puede truncarlos a 128 tokens. La consulta rusa de SPbU quedó por debajo de КубГУ; la recomendación verificada es mejorar chunking y validar aliases/control léxico con un benchmark focal.
+El diagnóstico del 2 de septiembre de 2026 documentó, para la ruta y configuración evaluadas entonces, chunks monolíticos y truncamiento del modelo dense a 128 tokens. La consulta rusa de SPbU quedó por debajo de КубГУ; la recomendación de ese diagnóstico es mejorar chunking y validar aliases/control léxico con un benchmark focal. No se ha comprobado si ese comportamiento persiste en el flujo actual. En la inspección estática del 2026-10-17, `build_chunks_from_flat()` y `build_chunks_from_library()` de `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\retrieval\chunks.py` crean chunks por documento o sección sin división por longitud; no se inspeccionó si las etapas anteriores de adquisición o preparación segmentan el contenido. Los puntos 1 y 2 de §10 permanecen pendientes de verificación.
 
 Las pruebas locales de fuentes reales refuerzan que una adquisición técnicamente correcta no garantiza relevancia ni grounding. Los controles del 31 de agosto y 1 de septiembre incluyen resultados fallidos o parciales, y están ignorados por Git; deben tratarse como evidencia diagnóstica local, no como validación de producción ni como avance integrado en `main`.
 
-El árbol de trabajo no estaba limpio al momento del análisis: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\app\config\settings.py` tenía modificaciones locales y había cuatro tests no versionados (`test_configuration.py`, `test_edge_cases.py`, `test_multilingual_universities.py` y `test_performance.py` en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\tests`). Este documento no modifica ni interpreta esos cambios como parte del historial de `main`.
+El árbol de trabajo no estaba limpio al momento del análisis original (fecha de corte 2026-09-23): `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\app\config\settings.py` tenía modificaciones locales y había cuatro tests no versionados (`test_configuration.py`, `test_edge_cases.py`, `test_multilingual_universities.py` y `test_performance.py` en `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\tests`). Este documento no modifica ni interpreta esos cambios como parte del historial de `main`. Esos cuatro tests y un cambio en `settings.py` se integraron posteriormente en `main` con `a6e7a22`.
 
-No se afirma que todos los tests actuales pasen. El informe del 28 de agosto registró 38/38 en su suite focalizada, pero también 128 aprobados, 3 fallidos y 5 errores en una ejecución exploratoria completa, con incompatibilidad Starlette/httpx y fallos preexistentes. Las cifras promocionales antiguas de otros documentos no sustituyen una ejecución actual.
+**Observación local del 2026-10-17** (no es una garantía permanente): antes de esta actualización documental, en la rama `main` con HEAD `7a90d80`, `git status --short` y `git diff --check` no mostraron cambios. Ese estado puede variar en cualquier momento y debe volver a comprobarse antes de cada tarea.
 
-En la rama `feature/procedural-recommendations` se implementó el primer módulo de recomendaciones procedimentales: contratos Pydantic, detección y clasificación en 13 idiomas, routing de evidencia hacia ES/EN/RU, traducción verificada fail-closed, retrieval-only, extracción estructurada, evaluación, endpoint API, cuatro agentes especializados y tres ejemplos JSON escritos atómicamente. Los artefactos SPbU/UNAM/UBA se conservan como pruebas negativas de abstención, no como procedimientos completos.
+No se afirma que todos los tests actuales pasen. El informe del 28 de agosto registró 38/38 en su suite focalizada, pero también 128 aprobados, 3 fallidos y 5 errores en una ejecución exploratoria completa, con incompatibilidad Starlette/httpx y fallos preexistentes. Las cifras promocionales antiguas de otros documentos no sustituyen una ejecución actual. Esta actualización documental no encontró ni realizó una nueva ejecución documentada de la suite completa.
+
+En la rama `feature/procedural-recommendations` se implementó el primer módulo de recomendaciones procedimentales: contratos Pydantic, detección y clasificación en 13 idiomas, routing de evidencia hacia ES/EN/RU, traducción verificada fail-closed, retrieval-only, extracción estructurada, evaluación, endpoint API, cuatro agentes especializados y tres ejemplos JSON escritos atómicamente. Los artefactos SPbU/UNAM/UBA se conservan como pruebas negativas de abstención, no como procedimientos completos. Ese trabajo está integrado en `main` desde `a6e7a22` y se amplió con el retrieval multilingüe adaptativo (`1dcd551`) y la captura de feedback (`c420ee7`); ver §7.0.
+
+### 9.1 Validación offline y CI (ejecución fechada)
+
+- **Selección del job (al corte `7a90d80`; desde `fc0d15d` es el job `retrieval-evaluation`)**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\.github\workflows\tests.yml` instala solo `backend/requirements-eval.txt` (NumPy, rank-bm25, pytest y pytest-cov) y ejecuta cinco archivos: `test_eval_metrics.py`, `test_evaluator_unit.py`, `test_evaluator_integration.py`, `test_retrieval.py` y `test_retrieval_phase3.py`, con cobertura de `eval` y `retrieval`. Fija `ENABLE_SEMANTIC_SEARCH=0` y el modo offline de Hugging Face.
+- **Ejecución remota verificada**: run `38953797132` del workflow `Offline retrieval evaluation tests`, evento `push`, `headSha` `7a90d80099c1ea9494cded5b67c475400f0e519e`, creado el 2026-10-16T19:17:18Z, `status: completed`, `conclusion: success`. Su log (Ubuntu, Python 3.11.17) registra `38 passed in 0.93s` y una cobertura total del 17%. Metadatos y log se consultaron con `gh run view` el 2026-10-17.
+- **Interpretación del 17%**: es la cobertura de los paquetes `eval` y `retrieval` obtenida al ejecutar solo esos cinco archivos. No mide la cobertura de toda la aplicación, del módulo procedimental ni del feedback, y no indica tests fallidos.
+- **Tests fuera del job**: los tests procedimentales (`test_procedural_*.py`), multilingües (`test_multilingual_retrieval.py`, `test_multilingual_universities.py`, `test_multilingual_expansion.py`) y de feedback (incluidos en `test_procedural_api.py`) no forman parte de la selección de este workflow. `test_procedural_api.py`, que incluye los tests de feedback, importa directamente FastAPI, Starlette y Pydantic, paquetes no declarados en `requirements-eval.txt`. Los demás archivos presentan distintas cadenas de importación; esta revisión no verificó exhaustivamente sus dependencias transitivas y no les atribuye en conjunto esos mismos requisitos. En particular, los imports directos inspeccionados de `test_multilingual_expansion.py` pertenecen a `retrieval`, lo que por sí solo no permite concluir que necesite FastAPI, Starlette o Pydantic. Este documento no les atribuye un resultado de ejecución. *Situación posterior: desde `fc0d15d`, siete de estos archivos se ejecutan en el job separado `procedural-feedback`; `test_multilingual_universities.py` sigue fuera de CI. Ver §9.1.1.*
+- **Validación local reportada (no verificada en esta actualización)**: según el informe de validación local del usuario del 2026-10-16, los cinco archivos del workflow pasaron (38 tests, 0 omitidos) en un entorno virtual aislado sin `requests` ni `pydantic_settings`. El mismo informe menciona 42 tests de adquisición omitidos en Windows. Esas omisiones significan que esos tests no se validaron en ese entorno; no son fallos demostrados.
+- **Inventario estático**, que no equivale a resultados: al commit de corte, `test_procedural_api.py` define 21 funciones de test, de las cuales 12 se refieren a feedback (dos parametrizadas), y `test_multilingual_retrieval.py` define 13 funciones (dos parametrizadas). El número de casos parametrizados ejecutables no se ha contado aquí.
+
+### 9.1.1 Actualización posterior: job `procedural-feedback` (commit `fc0d15d`, ejecuciones fechadas)
+
+Añadida el 2026-10-18. Registra resultados de ejecuciones identificadas; no es una nueva auditoría del repositorio.
+
+- **Manifiesto**: `C:\xampp\htdocs\proyectos\unirIntegracionCultural\backend\requirements-procedural.txt` fija `fastapi==0.104.1`, `starlette==0.27.0`, `pydantic==2.5.0`, `pydantic-settings==2.1.0`, `structlog==23.2.0`, `python-multipart==0.0.32`, `numpy==1.24.3`, `rank-bm25==0.2.2`, `pytest==7.4.3` y `pytest-cov==4.1.0`. No declara paquetes de inferencia neuronal ni SDK de proveedores LLM. `python-multipart` es necesario porque FastAPI lo comprueba al registrar la ruta con `UploadFile`/`File` de `backend\app\api\routes\audio.py`, cargada a través de `app.api.routes`.
+- **Job**: `procedural-feedback` en `.github\workflows\tests.yml`, independiente de `retrieval-evaluation`: `ubuntu-latest`, Python 3.11, `working-directory: backend`, variables `ENABLE_SEMANTIC_SEARCH=0`, `ENABLE_EXTERNAL_SEARCH=0`, `RETRIEVAL_MODE=keyword`, `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` y `HF_HUB_DISABLE_TELEMETRY=1`, con la instalación en un paso separado de la ejecución. Ejecuta `test_procedural_api.py` (incluye los tests de feedback), `test_procedural_classifier.py`, `test_procedural_generator.py`, `test_procedural_examples.py`, `test_procedural_evaluator.py`, `test_multilingual_retrieval.py` y `test_multilingual_expansion.py`, con cobertura de `procedural` y `app.services.procedural_service` y sin umbral.
+- **Exclusión**: `test_multilingual_universities.py` no se incluye. Dos de sus tres tests requieren snapshots locales en `artifacts/real-source-tests/` (UNAM y UBA), ignorados por Git y no versionados. No se modificó el código de los tests ni se añadieron skips; el archivo completo queda excluido de la selección de este job; la decisión sobre esos snapshots sigue pendiente (§10, punto 14).
+- **Validación aislada local (Windows)**, 2026-10-18: entorno temporal fuera del repositorio, Python 3.11.5, instalación desde PyPI del manifiesto exacto. `pip check` no encontró dependencias rotas y `torch` y `sentence-transformers` no estaban instalados. Resultado: `92 passed, 5 warnings` y cobertura diagnóstica TOTAL del 82%. Previamente, una ejecución complementaria en un entorno completo (`venv311`, pytest 9.1.1, con bibliotecas neuronales instaladas e importadas, aunque sin instanciar modelos) dio `92 passed, 3 warnings` sin cobertura.
+- **Validación remota (Linux)**: run `39070747217` del workflow `Offline retrieval evaluation tests`, evento `push`, `headSha` `fc0d15da4565b5aad2a243440986d9b4949306bd`, creado el 2026-10-17T21:23:37Z, `status: completed`, `conclusion: success`. Estado, logs y anotaciones se consultaron con `gh` el 2026-10-18.
+  - `procedural-feedback`: `success` (18 s). Python 3.11.17: `92 passed, 5 warnings in 1.81s`. Cobertura diagnóstica sobre `procedural` y `app.services.procedural_service`: TOTAL 82% (`procedural_service.py` 76%, `classifier.py` 94%, `evaluator.py` 82%, `generator.py` 81%, `language.py` 87%; un archivo omitido del informe por cobertura completa). El `coverage.xml` se genera en el runner y no se publica como artefacto.
+  - `retrieval-evaluation`: `success` (13 s), `38 passed in 0.86s`, cobertura diagnóstica TOTAL del 17% sobre `eval` y `retrieval`, igual que en el run `38953797132`.
+- **Interpretación**: el 82% y el 17% miden objetivos distintos y no se suman ni representan la cobertura de la aplicación. Ambos jobs juntos ejecutan doce archivos de test; **la suite completa no se ha validado** (§10, punto 7). La ausencia de conexiones de red **no se ha medido**: la evidencia es la configuración preventiva y la fixture autouse `block_external_network` de `conftest.py`. Estos resultados no acreditan una evaluación humana ni constituyen resultados de la tesis (§9.2).
+- **Avisos registrados como mantenimiento pendiente, no resueltos** (§10, punto 15):
+  - warnings de pytest en ambos entornos: 3× `PendingDeprecationWarning` de `starlette/formparsers.py:10` («Please use `import python_multipart` instead.») y 2× `UserWarning` de `rank_bm25.py:4` («The NumPy module was reloaded (imported a second time)…»), no investigado;
+  - anotaciones de Actions en ambos jobs: warning sobre la deprecación de Node.js 20 en `actions/checkout@v4` y `actions/setup-python@v5` (forzados a Node.js 24) y notice sobre la migración de la etiqueta `ubuntu-latest` a Ubuntu 26 a partir del 2026-10-19;
+  - avisos de Node en `setup-python`: `[DEP0040]` (`punycode`) y `[DEP0169]` (`url.parse()`).
+
+### 9.2 Alcance metodológico del feedback y del retrieval adaptativo
+
+- La implementación de feedback acredita una **capacidad técnica** de captura y agregación, no una evaluación humana realizada. `C:\xampp\htdocs\proyectos\unirIntegracionCultural\docs\procedural-recommendations-architecture.md` declara 0 evaluaciones realizadas.
+- Las puntuaciones son autodeclaradas por el cliente, sin autenticación ni vínculo en el servidor con la recomendación emitida. El número de registros mide envíos recibidos y no permite deducir el número de participantes distintos.
+- Los tests de feedback usan directorios temporales y, en parte, monkeypatch; demuestran el contrato de persistencia y validación, no uso real.
+- Las métricas del retrieval adaptativo documentadas (Hit@5, nDCG@5 y abstención en 65 consultas) proceden de un **fixture sintético controlado**. Las latencias p95 de 0.026 s y 0.029 s son **mediciones warm** de un probe neuronal offline local, no latencia HTTP end-to-end, cold start ni rendimiento de traducción externa.
+- Ninguno de estos cambios constituye un avance o resultado de la tesis. Su posible uso académico requiere una tarea y una revisión metodológica propias.
 
 ## 10. Próximos Pasos
 
+La numeración no expresa prioridad. Ni el repositorio ni la tesis definen un orden de prioridades verificable, y este documento no atribuye al usuario decisiones de priorización.
+
 Los siguientes pasos están respaldados por los informes y diagnósticos versionados:
 
-1. Dividir páginas adquiridas extensas en chunks semánticos que respeten la ventana del modelo y conserven título, fuente y aliases.
-2. Incorporar aliases institucionales multilingües y validar su efecto con qrels focalizados, especialmente para entidades como SPbU frente a КубГУ.
+1. Dividir páginas adquiridas extensas en chunks semánticos que respeten la ventana del modelo y conserven título, fuente y aliases. *Estado al 2026-10-17: pendiente de verificación. No se identificó un cambio dedicado, pero tampoco se inspeccionó el código lo suficiente para declararlo ausente.*
+2. Incorporar aliases institucionales multilingües y validar su efecto con qrels focalizados, especialmente para entidades como SPbU frente a КубГУ. *Estado al 2026-10-17: pendiente de verificación, con la misma salvedad que el punto 1.*
 3. Establecer un corpus canónico versionado y eliminar la ambigüedad entre corpus en memoria y archivos `rag_database.json` heredados.
 4. Construir un benchmark con consultas reales, revisión humana independiente, protocolo documentado y acuerdo entre anotadores; mantener separado el conjunto sintético de 114 consultas.
 5. Ejecutar una comparación estadística planificada entre dense e hybrid_rerank antes de afirmar superioridad general del enfoque híbrido.
-6. Actualizar la tesis con las correcciones de `C:\xampp\htdocs\proyectos\unirIntegracionCultural\docs\thesis_evaluation_claims_audit.md`, separando resultados primarios y exploratorios y retirando afirmaciones de impacto no medido.
-7. Resolver y volver a ejecutar la suite completa en un entorno de dependencias compatible, incluyendo el conflicto Starlette/httpx documentado y cobertura reproducible.
+6. Actualizar la tesis con las correcciones de `C:\xampp\htdocs\proyectos\unirIntegracionCultural\docs\thesis_evaluation_claims_audit.md`, separando resultados primarios y exploratorios y retirando afirmaciones de impacto no medido. *(Tarea académica, separada del avance del software.)*
+7. Resolver y volver a ejecutar la suite completa en un entorno de dependencias compatible, incluyendo el conflicto Starlette/httpx documentado y cobertura reproducible. *Precisión al 2026-10-17: el CI actual valida solo los cinco archivos de evaluación/retrieval descritos en §9.1; este punto sigue abierto. Actualización del 2026-10-18: desde `fc0d15d` el CI ejecuta además los siete archivos de §9.1.1; la suite completa sigue sin validarse.*
 8. Validar en entorno de despliegue los componentes desactivados por defecto (Ollama, semantic search, Redis, base de datos y adquisición pública) antes de declarar disponibilidad operacional de esas capacidades.
+
+Pendientes y propuestas añadidos el 2026-10-17. Son propuestas de la actualización documental, no decisiones previas:
+
+9. Valorar si los tests procedimentales, multilingües y de feedback deben incorporarse a CI, lo que requeriría un manifiesto de dependencias adicional y autorización para modificar el workflow. *Completado el 2026-10-18 para la selección acordada de siete archivos: commit `fc0d15d`, run `39070747217` en `success`; ver §9.1.1. Siguen abiertos la suite completa (punto 7) y `test_multilingual_universities.py` (punto 14).*
+10. Validar en un entorno con las dependencias de adquisición los 42 tests omitidos en Windows según el informe local del 2026-10-16, sin presuponer su resultado.
+11. Calibrar los pesos de canal y los umbrales del retrieval adaptativo con escenarios procedimentales revisados independientemente, como ya indica la documentación de arquitectura.
+12. Antes de cualquier evaluación humana con feedback, diseñar el protocolo y resolver las limitaciones documentadas: vínculo en el servidor entre recomendación y feedback, identidad o sesión de evaluadores y soporte de varios evaluadores. La búsqueda textual descrita en CU-009 no encontró uso de estos endpoints en la web ni en el bot, sin que ello demuestre por sí solo su ausencia.
+13. Revisar el estado de los documentos de la raíz identificados solo por nombre (por ejemplo `FASE_*`, `ESTADO_FINAL_*`, `RESUMEN_*` y `PLAN_EJECUCION_3_SEMANAS.md`). No se revisaron en esta actualización, por lo que no se clasifican como vigentes ni como históricos. `C:\xampp\htdocs\proyectos\unirIntegracionCultural\DIAGNOSTICO_Y_ROADMAP_MAESTRIA.md` (último commit `65f8d36`, 2026-06-30) contiene un roadmap por fases anterior a las decisiones documentadas aquí; no se ha comprobado si alguna parte sigue vigente.
+
+Pendientes añadidos el 2026-10-18. Tampoco son decisiones previas del usuario:
+
+14. Decidir, con autorización independiente y previa revisión de contenido, procedencia y datos sensibles, si los snapshots de `artifacts/real-source-tests/` que requiere `test_multilingual_universities.py` deben versionarse o sustituirse por fixtures, y entonces incorporar ese archivo a CI.
+15. Atender el mantenimiento de los avisos registrados en §9.1.1: deprecación de Node.js 20 en las acciones del workflow, migración de `ubuntu-latest` a Ubuntu 26, `PendingDeprecationWarning` de `python-multipart` vía Starlette y recarga de NumPy desde `rank_bm25`. Ninguno impidió la ejecución de `39070747217`, pero no se han resuelto.
