@@ -37,3 +37,42 @@ jobs:
           --cov=retrieval
           --cov-report=term-missing
           --cov-report=xml
+
+  procedural-feedback:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      ENABLE_SEMANTIC_SEARCH: "0"
+      ENABLE_EXTERNAL_SEARCH: "0"
+      RETRIEVAL_MODE: keyword
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      HF_HUB_DISABLE_TELEMETRY: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements-procedural.txt
+      - name: Install procedural and feedback test dependencies
+        run: python -m pip install -r requirements-procedural.txt
+      # test_multilingual_universities.py is excluded: it needs unversioned
+      # snapshots under artifacts/real-source-tests/.
+      - name: Run offline procedural, feedback and multilingual tests with coverage
+        run: >-
+          python -m pytest
+          tests/test_procedural_api.py
+          tests/test_procedural_classifier.py
+          tests/test_procedural_generator.py
+          tests/test_procedural_examples.py
+          tests/test_procedural_evaluator.py
+          tests/test_multilingual_retrieval.py
+          tests/test_multilingual_expansion.py
+          --cov=procedural
+          --cov=app.services.procedural_service
+          --cov-report=term-missing
+          --cov-report=xml
